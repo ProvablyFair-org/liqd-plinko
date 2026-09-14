@@ -1,0 +1,752 @@
+{
+  "audit": "LIQD Plinko",
+  "artifact": "payout-table cell coverage (informational, not a scored step)",
+  "generatedAt": "2026-09-12T11:04:01.370Z",
+  "datasetSha256": "871c485ef0d55ca38af2cece4880abdc32fe8b62584468c5d4cfdfd01506fc95",
+  "note": "INFO only — payout-table cell coverage is a property of capture design, not a scored integrity check. Step 7 verifies that every OBSERVED payout matches the pinned table; the unexercised cells rest on the hash-pinned plinkoConfig.json (see AUDIT_CONTEXT.md#scope-and-coverage), not on live data.",
+  "totalConfigs": 28,
+  "totalCells": 365,
+  "cellsExercised": 285,
+  "cellsUnexercised": 80,
+  "coveragePct": 78.1,
+  "rtpShareUnexercisedSummed": 0.07408553821551163,
+  "configsWithUnhitCells": 25,
+  "fullyExercisedConfigs": [
+    "rows 8 risk 1",
+    "rows 8 risk 3",
+    "rows 9 risk 2"
+  ],
+  "wtfTails": {
+    "slot0Observed": false,
+    "slot13Observed": false,
+    "note": "WTF 1000x tails slots 0 and 13 were never observed in the capture — they rest on the hash-pinned config."
+  },
+  "perConfig": [
+    {
+      "config": "rows 8 risk 1",
+      "rows": 8,
+      "riskLevel": 1,
+      "wtf": false,
+      "slots": 9,
+      "observed": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "unhit": [],
+      "exercised": 9,
+      "rtpShareUnexercised": 0
+    },
+    {
+      "config": "rows 8 risk 2",
+      "rows": 8,
+      "riskLevel": 2,
+      "wtf": false,
+      "slots": 9,
+      "observed": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "unhit": [
+        0
+      ],
+      "exercised": 8,
+      "rtpShareUnexercised": 0.05134281200631912
+    },
+    {
+      "config": "rows 8 risk 3",
+      "rows": 8,
+      "riskLevel": 3,
+      "wtf": false,
+      "slots": 9,
+      "observed": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "unhit": [],
+      "exercised": 9,
+      "rtpShareUnexercised": 0
+    },
+    {
+      "config": "rows 9 risk 1",
+      "rows": 9,
+      "riskLevel": 1,
+      "wtf": false,
+      "slots": 10,
+      "observed": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "unhit": [
+        0,
+        9
+      ],
+      "exercised": 8,
+      "rtpShareUnexercised": 0.022099447513812154
+    },
+    {
+      "config": "rows 9 risk 2",
+      "rows": 9,
+      "riskLevel": 2,
+      "wtf": false,
+      "slots": 10,
+      "observed": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "unhit": [],
+      "exercised": 10,
+      "rtpShareUnexercised": 0
+    },
+    {
+      "config": "rows 9 risk 3",
+      "rows": 9,
+      "riskLevel": 3,
+      "wtf": false,
+      "slots": 10,
+      "observed": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "unhit": [
+        9
+      ],
+      "exercised": 9,
+      "rtpShareUnexercised": 0.08477917981072555
+    },
+    {
+      "config": "rows 10 risk 1",
+      "rows": 10,
+      "riskLevel": 1,
+      "wtf": false,
+      "slots": 11,
+      "observed": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "unhit": [
+        0,
+        10
+      ],
+      "exercised": 9,
+      "rtpShareUnexercised": 0.017557703689090553
+    },
+    {
+      "config": "rows 10 risk 2",
+      "rows": 10,
+      "riskLevel": 2,
+      "wtf": false,
+      "slots": 11,
+      "observed": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "unhit": [
+        0,
+        10
+      ],
+      "exercised": 9,
+      "rtpShareUnexercised": 0.04344391785150079
+    },
+    {
+      "config": "rows 10 risk 3",
+      "rows": 10,
+      "riskLevel": 3,
+      "wtf": false,
+      "slots": 11,
+      "observed": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "unhit": [
+        0,
+        10
+      ],
+      "exercised": 9,
+      "rtpShareUnexercised": 0.1498422712933754
+    },
+    {
+      "config": "rows 11 risk 1",
+      "rows": 11,
+      "riskLevel": 1,
+      "wtf": false,
+      "slots": 12,
+      "observed": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "unhit": [
+        0,
+        10,
+        11
+      ],
+      "exercised": 9,
+      "rtpShareUnexercised": 0.024561057407772736
+    },
+    {
+      "config": "rows 11 risk 2",
+      "rows": 11,
+      "riskLevel": 2,
+      "wtf": false,
+      "slots": 12,
+      "observed": [
+        1,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "unhit": [
+        0,
+        2,
+        11
+      ],
+      "exercised": 9,
+      "rtpShareUnexercised": 0.10502958579881656
+    },
+    {
+      "config": "rows 11 risk 3",
+      "rows": 11,
+      "riskLevel": 3,
+      "wtf": false,
+      "slots": 12,
+      "observed": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "unhit": [
+        0
+      ],
+      "exercised": 11,
+      "rtpShareUnexercised": 0.059090013787669884
+    },
+    {
+      "config": "rows 12 risk 1",
+      "rows": 12,
+      "riskLevel": 1,
+      "wtf": false,
+      "slots": 13,
+      "observed": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "unhit": [
+        0,
+        11,
+        12
+      ],
+      "exercised": 10,
+      "rtpShareUnexercised": 0.01381283607123477
+    },
+    {
+      "config": "rows 12 risk 2",
+      "rows": 12,
+      "riskLevel": 2,
+      "wtf": false,
+      "slots": 13,
+      "observed": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "unhit": [
+        0,
+        1,
+        11,
+        12
+      ],
+      "exercised": 9,
+      "rtpShareUnexercised": 0.08138903960933261
+    },
+    {
+      "config": "rows 12 risk 3",
+      "rows": 12,
+      "riskLevel": 3,
+      "wtf": false,
+      "slots": 13,
+      "observed": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "unhit": [
+        0,
+        11,
+        12
+      ],
+      "exercised": 10,
+      "rtpShareUnexercised": 0.1546874230257648
+    },
+    {
+      "config": "rows 13 risk 1",
+      "rows": 13,
+      "riskLevel": 1,
+      "wtf": false,
+      "slots": 14,
+      "observed": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        12
+      ],
+      "unhit": [
+        0,
+        11,
+        13
+      ],
+      "exercised": 11,
+      "rtpShareUnexercised": 0.030850801479654747
+    },
+    {
+      "config": "rows 13 risk 2",
+      "rows": 13,
+      "riskLevel": 2,
+      "wtf": false,
+      "slots": 14,
+      "observed": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "unhit": [
+        0,
+        1,
+        12,
+        13
+      ],
+      "exercised": 10,
+      "rtpShareUnexercised": 0.05228371313011739
+    },
+    {
+      "config": "rows 13 risk 3",
+      "rows": 13,
+      "riskLevel": 3,
+      "wtf": false,
+      "slots": 14,
+      "observed": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "unhit": [
+        0,
+        1,
+        12,
+        13
+      ],
+      "exercised": 10,
+      "rtpShareUnexercised": 0.1825752722613709
+    },
+    {
+      "config": "rows 14 risk 1",
+      "rows": 14,
+      "riskLevel": 1,
+      "wtf": false,
+      "slots": 15,
+      "observed": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "unhit": [
+        0,
+        1,
+        13,
+        14
+      ],
+      "exercised": 11,
+      "rtpShareUnexercised": 0.007780421943009333
+    },
+    {
+      "config": "rows 14 risk 2",
+      "rows": 14,
+      "riskLevel": 2,
+      "wtf": false,
+      "slots": 15,
+      "observed": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "unhit": [
+        0,
+        13,
+        14
+      ],
+      "exercised": 12,
+      "rtpShareUnexercised": 0.020099635000493245
+    },
+    {
+      "config": "rows 14 risk 3",
+      "rows": 14,
+      "riskLevel": 3,
+      "wtf": false,
+      "slots": 15,
+      "observed": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "unhit": [
+        0,
+        1,
+        2,
+        13,
+        14
+      ],
+      "exercised": 10,
+      "rtpShareUnexercised": 0.24949742856085738
+    },
+    {
+      "config": "rows 15 risk 1",
+      "rows": 15,
+      "riskLevel": 1,
+      "wtf": false,
+      "slots": 16,
+      "observed": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "unhit": [
+        0,
+        1,
+        14,
+        15
+      ],
+      "exercised": 12,
+      "rtpShareUnexercised": 0.008322904015338804
+    },
+    {
+      "config": "rows 15 risk 2",
+      "rows": 15,
+      "riskLevel": 2,
+      "wtf": false,
+      "slots": 16,
+      "observed": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "unhit": [
+        0,
+        1,
+        14,
+        15
+      ],
+      "exercised": 12,
+      "rtpShareUnexercised": 0.02207165272288978
+    },
+    {
+      "config": "rows 15 risk 3",
+      "rows": 15,
+      "riskLevel": 3,
+      "wtf": false,
+      "slots": 16,
+      "observed": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "unhit": [
+        0,
+        1,
+        2,
+        13,
+        14,
+        15
+      ],
+      "exercised": 10,
+      "rtpShareUnexercised": 0.28968535239914944
+    },
+    {
+      "config": "rows 16 risk 1",
+      "rows": 16,
+      "riskLevel": 1,
+      "wtf": false,
+      "slots": 17,
+      "observed": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "unhit": [
+        0,
+        1,
+        14,
+        15,
+        16
+      ],
+      "exercised": 12,
+      "rtpShareUnexercised": 0.008631345965924679
+    },
+    {
+      "config": "rows 16 risk 2",
+      "rows": 16,
+      "riskLevel": 2,
+      "wtf": false,
+      "slots": 17,
+      "observed": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "unhit": [
+        0,
+        1,
+        13,
+        14,
+        15,
+        16
+      ],
+      "exercised": 11,
+      "rtpShareUnexercised": 0.0852743051808919
+    },
+    {
+      "config": "rows 16 risk 3",
+      "rows": 16,
+      "riskLevel": 3,
+      "wtf": false,
+      "slots": 17,
+      "observed": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "unhit": [
+        0,
+        1,
+        16
+      ],
+      "exercised": 14,
+      "rtpShareUnexercised": 0.06289967501834574
+    },
+    {
+      "config": "WTF (rows 13 risk 4)",
+      "rows": 13,
+      "riskLevel": 4,
+      "wtf": true,
+      "slots": 14,
+      "observed": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "unhit": [
+        0,
+        13
+      ],
+      "exercised": 12,
+      "rtpShareUnexercised": 0.2466091245376079
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+# Figures that check-prose.sh P2 cannot trace to an artifact leaf but that are NOT orphans.
+# One raw token per line, exactly as it appears in the prose. Keep this file SHORT: every
+# entry is a figure nobody will check again, so an entry that is really an unsourced number
+# is how a fabricated constant ships. Each one below states why it is exempt.
+#
+# 3.5714  — the Bonferroni threshold quoted in glossary.md as "alpha/28 = 3.5714x10^-4".
+#           It IS emitted: outputs/simulation-results.json -> pass1_fresh_seeds.bonferroniAlpha
+#           = 0.0003571428571428571. P2 only rescales a prose figure by 1, 0.01 and 100 when
+#           matching, so a value written in scientific notation with a 10^-4 exponent cannot
+#           line up with the leaf. Recompute: 0.01 / 28.
+#
+# 22.20   — "@types/node 22.20.1" in CHANGELOG.md, a package version from package-lock.json,
+#           not a measurement. It is verifiable with `npm ls @types/node`.
+
+3.5714
+22.20
+
+# 0.9999999675536809 — the round-4 client-QA reviewer's OWN measured corr(r1Z, runsZ) from a
+#           FRESH Pass 1 run of theirs, quoted verbatim in DL-11 / reproducibility.md to show
+#           that a new experiment legitimately differs from the committed one. It is
+#           deliberately NOT ours and no artifact here emits it; our committed figure is
+#           -0.999999964 (outputs/verification-stats.json -> steps.step16.
+#           serialR1ZRunsZCorrelation). Quoting it is the point of DL-11.
+
+0.9999999675536809
+
+# 1,010,000 — the drops one Pass-2 window contains across the audited seed population, quoted
+#           in MANIFEST.md / AUDIT_CONTEXT.md as the ceiling the round-5 edge-hit forgery
+#           (1,000,000,000) violates. No artifact emits it because it is a property of the
+#           EXPERIMENT, not of a result: it is EXPECTED_SEEDS (202, src/loader.ts) x
+#           floor(PASS2_NONCES_PUBLISHED / 2) (5,000, src/config.ts), computed in code by
+#           `pass2WindowDrops()` in src/domains.ts and printed inside Step 17's own failure
+#           message when the bound fires. Recompute: 202 x 5000.
+
+1,010,000
+1010000

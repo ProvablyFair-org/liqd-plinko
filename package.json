@@ -1,0 +1,36 @@
+{
+  "name": "liqd-plinko-audit",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Provably fair audit \u2014 LIQD.com Plinko",
+  "private": true,
+  "scripts": {
+    "test": "node scripts/check-standalone.mjs && node test.js && node verify.js && node replay.js && node scripts/check-outputs.mjs",
+    "test:fresh-experiment": "mocha && SIM_OUT_DIR=outputs/fresh npm run simulate && SIM_OUT_DIR=outputs/fresh npm run calibrate",
+    "verify": "ts-node tests/verify.ts",
+    "replay": "ts-node src/replay.ts",
+    "simulate": "ts-node src/simulate.ts",
+    "calibrate": "ts-node src/calibrate.ts",
+    "mutate": "node scripts/mutate.mjs",
+    "check-outputs": "node scripts/check-outputs.mjs",
+    "gate": "npm run check:build && npm test && npm run mutate",
+    "report": "PF_EMIT=1 ts-node tests/verify.ts",
+    "test:toolchain": "npm run check:build && mocha && npm run replay && npm run verify && npm run check-outputs",
+    "verify:standalone": "node verify.js",
+    "test:quick": "node scripts/check-standalone.mjs && node test.js && node verify.js && node scripts/check-outputs.mjs",
+    "build": "node scripts/build-standalone.mjs",
+    "check:build": "node scripts/build-standalone.mjs --check",
+    "check:standalone": "node scripts/check-standalone.mjs",
+    "replay:standalone": "node replay.js"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10",
+    "@types/node": "^22",
+    "mocha": "^11",
+    "ts-node": "^10",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

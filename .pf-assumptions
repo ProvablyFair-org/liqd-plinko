@@ -1,0 +1,13 @@
+# Anchored phrases for the ASSUMED rows of AUDIT_CONTEXT.md's Load-Bearing Premises table.
+# check-prose.sh P1 requires every mention of each phrase, in every chapter, to carry a
+# qualification (ASSUMED / PROVISIONAL / "cannot be" / "not verified" / ...). A premise
+# that is qualified in the manifest and stated flat somewhere else is the defect this
+# catches; glossary.md is excluded by the check itself.
+#
+# One anchored phrase per line. Keep them SPECIFIC: a phrase broad enough to match a
+# different claim turns the check into noise. "live tables" alone, for example, also
+# matches R-CONFIG's future-drift sentence, which is not this premise.
+
+operator's live tables
+production parity
+nominal size-0.05 null

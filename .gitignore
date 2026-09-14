@@ -1,0 +1,18 @@
+node_modules/
+dist/
+outputs/*.json
+# Verification writes run reports here and preserves the committed evidence.
+# It is a run record, not audit evidence.
+outputs/run/
+!outputs/.gitkeep
+!outputs/verification-results.json
+!outputs/simulation-results.json
+!outputs/calibration-results.json
+!outputs/coverage-results.json
+!outputs/verification-stats.json
+results/*.json
+!results/.gitkeep
+outputs/*.log
+# A fresh experiment (`npm run simulate`) writes here so it cannot overwrite
+# the artifact of record in outputs/. It is a NEW experiment, not audit evidence.
+outputs/fresh/

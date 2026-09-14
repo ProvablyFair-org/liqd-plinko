@@ -1,0 +1,308 @@
+[
+  {
+    "name": "M00 binomP coefficient corrupted",
+    "file": "src/config.ts",
+    "find": "for (let i = 0; i < k; i++) c = (c * (rows - i)) / (i + 1);",
+    "replace": "for (let i = 0; i < k; i++) c = (c * rows) / (i + 1);",
+    "runner": "verify",
+    "expect": "[FAIL] Step 13",
+    "guard": "Step 13 rejects incorrect binomial coefficients using an independent Pascal recurrence. RTP enumeration and pinned-RTP unit tests also check this calculation."
+  },
+  {
+    "name": "M01 RNG chunk endianness flipped (BE -> LE)",
+    "file": "src/rng.ts",
+    "find": "const chunk = digest.readUInt32BE(offset);",
+    "replace": "const chunk = digest.readUInt32LE(offset);",
+    "runner": "mocha",
+    "expect": "failing",
+    "guard": "The independent HMAC validation vectors and captured-bet unit fixture reject little-endian interpretation of the digest words."
+  },
+  {
+    "name": "M02 payout table cell corrupted (config edited, pin left alone)",
+    "file": "plinkoConfig.json",
+    "find": "0.5,1,1.1,2.1,5.6]",
+    "replace": "0.6,1,1.1,2.1,5.6]",
+    "runner": "mocha",
+    "expect": "SHA-256 mismatch",
+    "guard": "The multiplier-table SHA-256 guard rejects changed table bytes before unit tests use them."
+  },
+  {
+    "name": "M03 duplicate nonce inside an epoch",
+    "file": "tests/verify.ts",
+    "find": "const cfg = loadPlinkoConfig();",
+    "replace": "const cfg = loadPlinkoConfig();\nds.bets[1].nonce = ds.bets[0].nonce; // MUTATION: duplicate nonce",
+    "runner": "verify",
+    "expect": "[FAIL] Step 4",
+    "guard": "Step 4 rejects duplicate nonces and requires each epoch to contain the declared consecutive nonce population."
+  },
+  {
+    "name": "M04 non-numeric winningAmount",
+    "file": "tests/verify.ts",
+    "find": "const cfg = loadPlinkoConfig();",
+    "replace": "const cfg = loadPlinkoConfig();\nds.bets[0].winningAmount = 'not-a-number'; // MUTATION: NaN amount",
+    "runner": "verify",
+    "expect": "[FAIL] Step 8",
+    "guard": "Step 8 rejects non-finite payout operands before comparing winningAmount with betAmount multiplied by the recorded multiplier."
+  },
+  {
+    "name": "M05 bet relabelled to an undeclared phase",
+    "file": "tests/verify.ts",
+    "find": "const cfg = loadPlinkoConfig();",
+    "replace": "const cfg = loadPlinkoConfig();\nds.bets[0].phase = 'Z'; // MUTATION: undeclared phase label",
+    "runner": "verify",
+    "expect": "[FAIL] Step 11",
+    "guard": "Step 11 compares phase labels and counts with the declared capture population and rejects undeclared phases."
+  },
+  {
+    "name": "M06 meta.preCapture removed",
+    "file": "tests/verify.ts",
+    "find": "const cfg = loadPlinkoConfig();",
+    "replace": "const cfg = loadPlinkoConfig();\ndelete ds.meta.preCapture; // MUTATION: drop the pre-capture anchor",
+    "runner": "verify",
+    "expect": "[FAIL] Step 2",
+    "guard": "Step 2 requires the pre-capture commitment link and rejects its absence."
+  },
+  {
+    "name": "M07 Pass 1 statistics blanked on one config",
+    "file": "outputs/simulation-results.json",
+    "find": "\"slotPValue\": 0.9153319029813883,",
+    "replace": "\"slotPValue\": null,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "Step 16 requires finite statistics for every Pass 1 row and rejects a blanked slot p-value instead of counting the row as a statistical pass."
+  },
+  {
+    "name": "M08 Pass 1 simulated RTP drifted off theory",
+    "file": "outputs/simulation-results.json",
+    "find": "\"simRTP\": 0.989274899995375,",
+    "replace": "\"simRTP\": 0.95,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "Step 16 requires each simulated RTP to fall within six standard errors of the theoretical RTP derived from the pinned table."
+  },
+  {
+    "name": "M09 Pass 2 population shrunk (one epoch's row relabelled away)",
+    "file": "outputs/simulation-results.json",
+    "find": "\"epoch\": 5,",
+    "replace": "\"epoch\": 9005,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 derives its epoch population from the dataset. Relabelling a saved result away from a revealed epoch leaves that epoch without a result and must fail."
+  },
+  {
+    "name": "M10 Pass 2 payout-weighted summary fabricated",
+    "file": "outputs/simulation-results.json",
+    "find": "\"countZEarlyBelow1645\": 6,",
+    "replace": "\"countZEarlyBelow1645\": 3,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 rejects a Pass 2 payout-weighted summary that disagrees with recomputation."
+  },
+  {
+    "name": "M11 calibrated expectation inflated in the calibration artifact",
+    "file": "outputs/calibration-results.json",
+    "find": "\"expectedZEarlyBelow1645Calibrated\": 5.8555669877159655",
+    "replace": "\"expectedZEarlyBelow1645Calibrated\": 10.1",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 re-derives the calibrated expectation from the dataset and payout tables instead of trusting the stored summary."
+  },
+  {
+    "name": "M12 calibrated per-config left tail replaced by the naive 0.05",
+    "file": "outputs/calibration-results.json",
+    "find": "\"latticeUnit\": 0.2,\n      \"leftTailProbability\": 0.001893108813446302,",
+    "replace": "\"latticeUnit\": 0.2,\n      \"leftTailProbability\": 0.05,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 re-derives each configuration\u2019s exact left-tail probability and rejects replacement by a generic 5% assumption."
+  },
+  {
+    "name": "M13 calibration paired with a different simulation artifact",
+    "file": "outputs/calibration-results.json",
+    "find": "\"sha256\": \"2500b9b875fef0d7285207095a502a1079a423592bbde212442a7486e1386074\",\n      \"generatedAt\"",
+    "replace": "\"sha256\": \"0000000000000000000000000000000000000000000000000000000000000000\",\n      \"generatedAt\"",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 requires the calibration artifact to identify the SHA-256 of the simulation artifact being assessed."
+  },
+  {
+    "name": "M14 published dataset hash drifted in a chapter",
+    "file": "README.md",
+    "find": "871c485ef0d55ca38af2cece4880abdc32fe8b62584468c5d4cfdfd01506fc95",
+    "replace": "871c485ef0d55ca38af2cece4880abdc32fe8b62584468c5d4cfdfd01506fc96",
+    "runner": "verify",
+    "expect": "[FAIL] Step 20",
+    "guard": "Step 20 scans the published Markdown documents and rejects a dataset hash that differs from the pinned dataset."
+  },
+  {
+    "name": "M15 Pass 1 declares a population the pinned config does not have",
+    "file": "outputs/simulation-results.json",
+    "find": "\"configs\": 28,",
+    "replace": "\"configs\": 0,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "Step 16 requires the saved Pass 1 configuration population to match the configurations declared by the pinned tables."
+  },
+  {
+    "name": "M16 Pass 1 result set emptied while the header keeps the round counts",
+    "file": "tests/steps/simulation.ts",
+    "find": "  const sim = JSON.parse(fs.readFileSync(simPath, 'utf-8'));",
+    "replace": "  const sim = JSON.parse(fs.readFileSync(simPath, 'utf-8'));\n  sim.pass1_fresh_seeds.configs = 28; sim.pass1_fresh_seeds.results = []; // MUTATION: the 28,000,000-round simulation is absent",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "Step 16 rejects an empty Pass 1 result set even when the header still declares the expected population."
+  },
+  {
+    "name": "M17 Pass 1 rows replaced by 28 identical copies of one board",
+    "file": "tests/steps/simulation.ts",
+    "find": "  const pass1 = sim.pass1_fresh_seeds ?? {};",
+    "replace": "  const pass1 = sim.pass1_fresh_seeds ?? {};\n  pass1.results = Array.from({ length: 28 }, () => JSON.parse(JSON.stringify(pass1.results[0]))); // MUTATION: 28 copies of one config",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "Step 16 requires each expected board exactly once and rejects a result set made of repeated copies of one board."
+  },
+  {
+    "name": "M18 one Pass 1 board relabelled onto another (artifact edit)",
+    "file": "outputs/simulation-results.json",
+    "find": "\"rows\": 9,\n        \"riskLevel\": 1,\n        \"wtf\": false",
+    "replace": "\"rows\": 8,\n        \"riskLevel\": 1,\n        \"wtf\": false",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "Step 16 rejects duplicate or missing configuration identities caused by relabelling a board."
+  },
+  {
+    "name": "M19 calibration per-epoch population relabelled onto another board",
+    "file": "outputs/calibration-results.json",
+    "find": "\"epoch\": 0,\n      \"rows\": 8,",
+    "replace": "\"epoch\": 0,\n      \"rows\": 16,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 derives each epoch\u2019s board from the captured bets and rejects a different assignment in the calibration artifact."
+  },
+  {
+    "name": "M20 calibration cross-check anchor fabricated",
+    "file": "outputs/calibration-results.json",
+    "find": "\"probability\": 0.025598664516507608,",
+    "replace": "\"probability\": 0.999,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 re-derives the closed-form calibration cross-check and rejects fabricated anchor values."
+  },
+  {
+    "name": "M21 calibration per-config payout SD doctored",
+    "file": "outputs/calibration-results.json",
+    "find": "\"sd\": 20.455688757384024,",
+    "replace": "\"sd\": 99.0,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 re-derives each configuration\u2019s payout moments and threshold values, including its standard deviation."
+  },
+  {
+    "name": "M22 calibration method string replaced",
+    "file": "outputs/calibration-results.json",
+    "find": "\"method\": \"exact lattice convolution",
+    "replace": "\"method\": \"I made this up. exact lattice convolution",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 checks the calibration method identifier against the method implemented in src/calibration.ts."
+  },
+  {
+    "name": "M23 Step 6 local re-drop forced to coincide on 5% of samples (injected coincidence rate)",
+    "file": "tests/steps/determinism.ts",
+    "find": "      const wrong = revealPlinko(ss, WRONG_CLIENT, b.nonce, b.numberOfRows);",
+    "replace": "      const wrong = tested % 20 === 0 ? correct : revealPlinko(ss, WRONG_CLIENT, b.nonce, b.numberOfRows); // MUTATION: 5% of drops ignore the client seed",
+    "runner": "verify",
+    "expect": "[FAIL] Step 6",
+    "guard": "Step 6 checks local client-seed sensitivity using a Poisson-binomial coincidence model. Injecting a 5% same-path rate must fail. This is a local recomputation test; Step 5 compares against recorded server results."
+  },
+  {
+    "name": "M24 audited population pin moved off the delivered capture",
+    "file": "src/loader.ts",
+    "find": "export const EXPECTED_BETS = 10100;",
+    "replace": "export const EXPECTED_BETS = 10050;",
+    "runner": "verify",
+    "expect": "[FAIL] Step 11",
+    "guard": "Step 11 requires the capture to match the population declared in source and rejects a population pin that disagrees with the delivered dataset."
+  },
+  {
+    "name": "M25 EXPECTED_EPOCH_SIZE moved off 50",
+    "file": "src/loader.ts",
+    "find": "export const EXPECTED_EPOCH_SIZE = 50;",
+    "replace": "export const EXPECTED_EPOCH_SIZE = 49;",
+    "runner": "verify",
+    "expect": "[FAIL] Step 12",
+    "guard": "Step 12 requires the declared epoch size and mutually consistent population constants. Moving the epoch-size constant away from the captured 50 bets must fail."
+  },
+  {
+    "name": "M26 Pass 1 row's simRTP AND theoreticalRTP moved together to a fabricated 200%",
+    "file": "outputs/simulation-results.json",
+    "find": "        \"theoreticalRTP\": 0.98984375,\n        \"simRTP\": 0.989274899995375,",
+    "replace": "        \"theoreticalRTP\": 2,\n        \"simRTP\": 2,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "Step 16 derives theoretical RTP from the pinned tables and compares simulated RTP with that reference. Moving both stored RTP fields to 200% cannot make them agree with the independent reference."
+  },
+  {
+    "name": "M27 recorded drop paths regenerated from a different client seed",
+    "file": "tests/verify.ts",
+    "find": "const seeds: Seed[] = ds.seeds;",
+    "replace": "const seeds: Seed[] = ds.seeds;\n// MUTATION M27 (QA-08): rewrite the RECORDED `dropDetails` of 200 bets with the path a\n// DIFFERENT client seed produces, leaving every other field \u2014 including each bet's own\n// recorded `clientSeed` \u2014 untouched. Step 5 recomputes from (serverSeed, clientSeed,\n// nonce, rows) and compares with the recorded outcome, so it must reject this.\n// Injected here rather than in the dataset because editing\n// data/plinko-master-10100bets.json changes its SHA-256 and loadDataset() exits first.\n{\n  const __m27reveal = require('../src/rng').revealPlinko;\n  const __m27seeds = new Map<string, string>();\n  for (const s of seeds) if (s.serverSeed) __m27seeds.set(s.hashedServerSeed, s.serverSeed);\n  let __m27n = 0;\n  for (const b of bets) {\n    if (__m27n >= 200) break;\n    const ss = __m27seeds.get(b.hashedServerSeed);\n    if (!ss) continue;\n    b.dropDetails = __m27reveal(ss, 'qa08-a-different-client-seed', b.nonce, b.numberOfRows).path;\n    __m27n++;\n  }\n}",
+    "runner": "verify",
+    "expect": "[FAIL] Step 5",
+    "guard": "Step 5 rejects recorded paths generated with a different client seed. The edit is injected after loading so it exercises outcome recomputation rather than the dataset hash guard."
+  },
+  {
+    "name": "M28 negative count of configurations in the coverage artifact",
+    "file": "outputs/coverage-results.json",
+    "find": "\"totalConfigs\": 28,",
+    "replace": "\"totalConfigs\": -1,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 20",
+    "guard": "Step 20 rejects a negative configuration count using the coverage artifact\u2019s declared value domain."
+  },
+  {
+    "name": "M29 probability above 1 in the calibration artifact",
+    "file": "outputs/calibration-results.json",
+    "find": "\"latticeUnit\": 0.1,\n      \"leftTailProbability\": 0.04806687564221955",
+    "replace": "\"latticeUnit\": 0.1,\n      \"leftTailProbability\": 1.5",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 rejects a probability above one through both value-domain validation and calibration recomputation."
+  },
+  {
+    "name": "M30 simulated RTP outside the attainable paytable range",
+    "file": "outputs/simulation-results.json",
+    "find": "\"simRTP\": 0.989274899995375,",
+    "replace": "\"simRTP\": 1001,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "Step 16 rejects simulated RTP outside the minimum and maximum multipliers attainable from the pinned payout table."
+  },
+  {
+    "name": "M31 Pass 2 edge-hit count inflated past the drops the experiment contains",
+    "file": "outputs/simulation-results.json",
+    "find": "\"edgeHitsEarly\": 1063,",
+    "replace": "\"edgeHitsEarly\": 1000000000,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 re-counts edge hits and bounds them by the number of simulated drops. A larger count must fail."
+  },
+  {
+    "name": "M32 Pass 2 window RTP set to a value its own board cannot pay",
+    "file": "outputs/simulation-results.json",
+    "find": "\"rtpEarly\": 1.0028000000000055,",
+    "replace": "\"rtpEarly\": 0,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 re-derives each window RTP and checks its board-specific payout range. A zero RTP is impossible on the sampled board whose minimum multiplier is 0.5."
+  },
+  {
+    "name": "M33 Pass 2 early-late two-sided p-value replaced by zero",
+    "file": "outputs/simulation-results.json",
+    "find": "\"pTwoSidedZEarlyMinusLate\": 0.5517870362092148,",
+    "replace": "\"pTwoSidedZEarlyMinusLate\": 0,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 re-derives the early-minus-late two-sided p-value from the per-epoch statistics. A legal probability value still fails if it is numerically wrong."
+  }
+]

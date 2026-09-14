@@ -1,0 +1,232 @@
+[
+  {
+    "name": "X00 canonical artifact hand-edited to FLAG while keeping the Full Pass string",
+    "file": "outputs/verification-results.json",
+    "find": "\"step\": 19,\n      \"name\": \"Multiplier Table Symmetry\",\n      \"status\": \"PASS\"",
+    "replace": "\"step\": 19,\n      \"name\": \"Multiplier Table Symmetry\",\n      \"status\": \"FLAG\"",
+    "runner": "check-outputs",
+    "expect": "[check-outputs] FAIL",
+    "guard": "The publication guard requires every scored step to pass and reconciles the summary counters with the actual step statuses."
+  },
+  {
+    "name": "X01 canonical artifact hand-edited to FLAG with the summary counters doctored to match",
+    "edits": [
+      {
+        "file": "outputs/verification-results.json",
+        "find": "\"step\": 19,\n      \"name\": \"Multiplier Table Symmetry\",\n      \"status\": \"PASS\"",
+        "replace": "\"step\": 19,\n      \"name\": \"Multiplier Table Symmetry\",\n      \"status\": \"FLAG\""
+      },
+      {
+        "file": "outputs/verification-results.json",
+        "find": "\"passed\": 21,\n    \"flags\": 0,",
+        "replace": "\"passed\": 20,\n    \"flags\": 1,"
+      }
+    ],
+    "runner": "check-outputs",
+    "expect": "[check-outputs] FAIL",
+    "guard": "The publication guard requires all 21 steps to pass. Editing summary counters to match a FLAG does not make the result publishable as Full Pass."
+  },
+  {
+    "name": "X02 required calibration figure blanked in the artifact of record",
+    "file": "outputs/calibration-results.json",
+    "find": "\"zEarlyBelowCalibratedSurvivalP\": 0.5337301174256663,",
+    "replace": "\"zEarlyBelowCalibratedSurvivalP\": null,",
+    "runner": "check-outputs",
+    "expect": "[check-outputs] FAIL",
+    "guard": "The publication guard requires the calibration artifact\u2019s scored expectation and survival probability to be present and finite, as well as verifying its artifact hash."
+  },
+  {
+    "name": "X03 canonical run produced with the ATTEST_SAMPLE escape",
+    "file": "outputs/verification-results.json",
+    "find": "\"attest\": \"full\",",
+    "replace": "\"attest\": \"sample=2\",",
+    "runner": "check-outputs",
+    "expect": "[check-outputs] FAIL",
+    "guard": "The publication guard requires full epoch attestation and rejects a report produced with reduced attestation."
+  },
+  {
+    "name": "X04 canonical run produced with the EMIT_BASELINE escape",
+    "file": "outputs/verification-results.json",
+    "find": "\"emitBaseline\": false",
+    "replace": "\"emitBaseline\": true",
+    "runner": "check-outputs",
+    "expect": "[check-outputs] FAIL",
+    "guard": "The publication guard rejects a report produced with EMIT_BASELINE because that mode skips derived-artifact validation."
+  },
+  {
+    "name": "X05 producing artifact for the chapter figures forged (verification-stats.json)",
+    "file": "outputs/verification-stats.json",
+    "find": "\"maxDeviationFrom99\": 0.0016015624999999867",
+    "replace": "\"maxDeviationFrom99\": 0.4242424242424242",
+    "runner": "check-outputs",
+    "expect": "[check-outputs] FAIL",
+    "guard": "The publication guard rejects changes to the verification-statistics artifact by checking its recorded hash."
+  },
+  {
+    "name": "X06 coverage artifact forged (coverage-results.json)",
+    "file": "outputs/coverage-results.json",
+    "find": "\"cellsExercised\": 285,",
+    "replace": "\"cellsExercised\": 365,",
+    "runner": "check-outputs",
+    "expect": "[check-outputs] FAIL",
+    "guard": "The publication guard rejects changes to the coverage artifact by checking its recorded hash."
+  },
+  {
+    "name": "X07 committed emission artifact simply absent",
+    "delete": [
+      "outputs/verification-stats.json",
+      "outputs/coverage-results.json"
+    ],
+    "runner": "verify",
+    "expect": "[FAIL] Step 20",
+    "guard": "Step 20 requires the committed statistics and coverage artifacts to be present before validating their value domains."
+  },
+  {
+    "name": "X08 fabricated 200% Pass 1 RTP row with the dependent calibration hash refreshed",
+    "edits": [
+      {
+        "file": "outputs/simulation-results.json",
+        "find": "        \"theoreticalRTP\": 0.98984375,\n        \"simRTP\": 0.989274899995375,",
+        "replace": "        \"theoreticalRTP\": 2,\n        \"simRTP\": 2,"
+      }
+    ],
+    "repin": [
+      {
+        "file": "outputs/calibration-results.json",
+        "pattern": "\"file\": \"outputs/simulation-results.json\",\\s*\"sha256\": \"([0-9a-f]{64})\"",
+        "hashOf": "outputs/simulation-results.json"
+      }
+    ],
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "Step 16 rejects fabricated simulation and theoretical RTP even when the dependent calibration hash is refreshed, so a stale hash cannot be the only reason for rejection."
+  },
+  {
+    "name": "X09 canonical artifact carries a Full Pass verdict on a run that did not complete",
+    "edits": [
+      {
+        "file": "outputs/verification-results.json",
+        "find": "\"completed\": true,",
+        "replace": "\"completed\": false,"
+      }
+    ],
+    "runner": "check-outputs",
+    "expect": "[check-outputs] FAIL",
+    "guard": "The publication guard requires an explicitly completed, valid run and rejects a Full Pass label on an incomplete run."
+  },
+  {
+    "name": "X10 Pass 2 edge-hit count inflated to a billion with the dependent calibration hash refreshed",
+    "edits": [
+      {
+        "file": "outputs/simulation-results.json",
+        "find": "\"edgeHitsEarly\": 1063,",
+        "replace": "\"edgeHitsEarly\": 1000000000,"
+      }
+    ],
+    "repin": [
+      {
+        "file": "outputs/calibration-results.json",
+        "pattern": "\"file\": \"outputs/simulation-results.json\",\\s*\"sha256\": \"([0-9a-f]{64})\"",
+        "hashOf": "outputs/simulation-results.json"
+      }
+    ],
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 rejects impossible edge-hit counts even when the dependent calibration hash is refreshed."
+  },
+  {
+    "name": "X11 Pass 2 window RTP zeroed on a board whose minimum payout is 50%, calibration hash refreshed",
+    "edits": [
+      {
+        "file": "outputs/simulation-results.json",
+        "find": "\"rtpEarly\": 1.0028000000000055,",
+        "replace": "\"rtpEarly\": 0,"
+      }
+    ],
+    "repin": [
+      {
+        "file": "outputs/calibration-results.json",
+        "pattern": "\"file\": \"outputs/simulation-results.json\",\\s*\"sha256\": \"([0-9a-f]{64})\"",
+        "hashOf": "outputs/simulation-results.json"
+      }
+    ],
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 rejects a board-impossible window RTP even when the dependent calibration hash is refreshed."
+  },
+  {
+    "name": "X12 Pass 2 two-sided p-value replaced by zero with the dependent calibration hash refreshed",
+    "edits": [
+      {
+        "file": "outputs/simulation-results.json",
+        "find": "\"pTwoSidedZEarlyMinusLate\": 0.5517870362092148,",
+        "replace": "\"pTwoSidedZEarlyMinusLate\": 0,"
+      }
+    ],
+    "repin": [
+      {
+        "file": "outputs/calibration-results.json",
+        "pattern": "\"file\": \"outputs/simulation-results.json\",\\s*\"sha256\": \"([0-9a-f]{64})\"",
+        "hashOf": "outputs/simulation-results.json"
+      }
+    ],
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 rejects an incorrect two-sided p-value even when the dependent calibration hash is refreshed."
+  },
+  {
+    "name": "X13 Step 5 replaced by a second copy of Step 4 \u2014 21 entries, 20 distinct steps",
+    "file": "outputs/verification-results.json",
+    "find": "\"step\": 5,\n      \"name\": \"Path + Slot Recomputation\",",
+    "replace": "\"step\": 4,\n      \"name\": \"Nonce Audit\",",
+    "runner": "check-outputs",
+    "expect": "[check-outputs] FAIL",
+    "guard": "The publication guard requires 21 distinct step identities and their declared names. Duplicating a step while retaining 21 entries must fail."
+  },
+  {
+    "name": "S00 DECLARED SURVIVOR \u2014 a never-paid payout cell mis-transcribed, with the config pin regenerated",
+    "edits": [
+      {
+        "file": "plinkoConfig.json",
+        "find": "\"odds\": [1000, 235, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 235, 1000]",
+        "replace": "\"odds\": [990, 235, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 235, 990]"
+      }
+    ],
+    "repin": [
+      {
+        "file": "src/config.ts",
+        "pattern": "PLINKO_CONFIG_SHA256 = '([0-9a-f]{64})'",
+        "hashOf": "plinkoConfig.json",
+        "propagateToMarkdown": true
+      }
+    ],
+    "runner": "verify",
+    "expectSurvive": true,
+    "guard": "The capture does not observe either WTF 1000x tail cell. This case changes both to 990 and updates the table pin and published pin mentions. The expected result is 19 passing steps, with only Steps 16 and 17 failing because the retained simulation was produced with the original table. Those failures establish disagreement between the table and saved experiment; they do not independently authenticate an unobserved operator payout. If an unobserved value were mistranscribed consistently before simulation, observed bets would not expose it. The coverage and RTP figures also move with the edited table. See AUDIT_CONTEXT.md#scope-and-coverage for this evidence boundary and AUDIT_CONTEXT.md#production-certification-plan for the required table-source and settlement evidence.",
+    "expectPass": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      18,
+      19,
+      20,
+      21
+    ],
+    "expectFail": [
+      16,
+      17
+    ]
+  }
+]

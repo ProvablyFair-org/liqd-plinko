@@ -1,0 +1,1205 @@
+{
+  "generatedAt": "2026-09-12T11:04:01.370Z",
+  "totalBets": 10100,
+  "totalSeeds": 202,
+  "datasetSha256": "871c485ef0d55ca38af2cece4880abdc32fe8b62584468c5d4cfdfd01506fc95",
+  "runMode": {
+    "attest": "full",
+    "emitBaseline": false
+  },
+  "artifactHashes": {
+    "dataset": {
+      "file": "data/plinko-master-10100bets.json",
+      "sha256": "871c485ef0d55ca38af2cece4880abdc32fe8b62584468c5d4cfdfd01506fc95"
+    },
+    "config": {
+      "file": "plinkoConfig.json",
+      "expected": "f8eaf67e1ffc63ee0dc21123447581c55f443c167dcb451b45ab7cd108fe712f",
+      "actual": "f8eaf67e1ffc63ee0dc21123447581c55f443c167dcb451b45ab7cd108fe712f",
+      "match": true
+    },
+    "simulation": {
+      "file": "outputs/simulation-results.json",
+      "sha256": "2500b9b875fef0d7285207095a502a1079a423592bbde212442a7486e1386074",
+      "generatedAt": "2026-09-02T19:36:59.102Z"
+    },
+    "calibration": {
+      "file": "outputs/calibration-results.json",
+      "sha256": "cd7432288908a90a1c1f15c1e0d9d5bd92620f202f5fe7e57812e3e6e515f1a6",
+      "generatedAt": "2026-09-09T23:08:39.928Z"
+    },
+    "verificationStats": {
+      "file": "outputs/verification-stats.json",
+      "sha256": "99f712d863cecfe006489e338cb95cbc9a5b68bf08048ae064a7ec2337c5b7a3"
+    },
+    "coverage": {
+      "file": "outputs/coverage-results.json",
+      "sha256": "0e7c53371ced6b720561741f5f3e50526f0f244a03a01fa9f6e3027cad7c5bad"
+    }
+  },
+  "steps": [
+    {
+      "step": 1,
+      "name": "Seed Hash Integrity",
+      "status": "PASS",
+      "detail": "202/202 seeds revealed and checked (expected 202, from src/loader.ts EXPECTED_SEEDS — not from the dataset's own seed-record count, which would make \"all of them\" true of any subset); SHA-256(utf8(serverSeed)) == hashedServerSeed; 0 mismatches"
+    },
+    {
+      "step": 2,
+      "name": "Next-Seed Pre-Commitment Chain",
+      "status": "PASS",
+      "detail": "202/202 pre-commitments verified (201 epoch transitions plus the pre-capture link): each nextHashedServerSeed == the next commitment's hashedServerSeed, and the pre-capture serverSeed hashes to its committed hash"
+    },
+    {
+      "step": 3,
+      "name": "Hash Consistency Within Epoch",
+      "status": "PASS",
+      "detail": "202 epochs: all bets within each epoch share the same hashedServerSeed; 0 violations"
+    },
+    {
+      "step": 4,
+      "name": "Nonce Audit",
+      "status": "PASS",
+      "detail": "202 epochs: nonces sequential 0–49 (against src/loader.ts EXPECTED_EPOCH_SIZE, not meta.epochSize), single client seed per epoch"
+    },
+    {
+      "step": 5,
+      "name": "Path + Slot Recomputation",
+      "status": "PASS",
+      "detail": "10100/10100 verified (expected 10100, 0 skipped); 0 mismatches; 0 skipped (unrevealed seeds)"
+    },
+    {
+      "step": 6,
+      "name": "Client Seed Influence",
+      "status": "PASS",
+      "detail": "1008/1010 bets: wrong clientSeed → different path (tested 1010, expected 1010); 2 same-path coincidence(s) against an exact null of 0.5425 (Σ 2^−rows over the sample), Poisson-binomial P(X ≥ 2) = 1.0318e-1 vs α = 1e-3",
+      "data": {
+        "tested": 1010,
+        "expectedTested": 1010,
+        "changed": 1008,
+        "samePath": 2,
+        "expectedSamePath": 0.5425262451171875,
+        "samePathSurvivalP": 0.10318193106557218,
+        "alpha": 0.001
+      }
+    },
+    {
+      "step": 7,
+      "name": "Multiplier Lookup",
+      "status": "PASS",
+      "detail": "10100 bets checked (incl. WTF) at 1e-9 tolerance; multiplier == payoutTable[winningSlot] (both required finite); 0 mismatches. SCOPE: this checks recorded multipliers for observed payout cells — 285/365 payout-table cells were exercised by the capture; the remaining 80 (incl. both WTF 1000× tails) rest on the hash-pinned transcription in plinkoConfig.json, not on live data. See outputs/coverage-results.json, AUDIT_CONTEXT.md#scope-and-coverage and residual case S00 in tests/mutations-extra.json",
+      "data": {
+        "betsChecked": 10100,
+        "mismatches": 0,
+        "cellsExercised": 285,
+        "cellsTotal": 365,
+        "cellsUnexercised": 80
+      }
+    },
+    {
+      "step": 8,
+      "name": "Payout Math (betAmount × multiplier == winningAmount)",
+      "status": "PASS",
+      "detail": "10100 bets checked at 1e-6 tolerance (betAmount, winningAmount, multiplier all required finite); 0 errors"
+    },
+    {
+      "step": 9,
+      "name": "Config Completeness (27 standard + WTF)",
+      "status": "PASS",
+      "detail": "27/27 standard configs + WTF present"
+    },
+    {
+      "step": 10,
+      "name": "House Edge / RTP Audit (analytical, per-config)",
+      "status": "PASS",
+      "detail": "Analytical RTP = Σ C(rows,k)·0.5^rows·payout[k] over 28 configs, each cross-checked by exhaustive 2^rows path enumeration (max |binomial − enumerated| = 8.76e-13, tol 1e-12). min 98.90625% [rows 8 risk 2, rows 10 risk 2]; max 99.16016% [rows 11 risk 3]; per-config edge span 0.83984%–1.09375%; max deviation from 99% = 0.1602% (rows 11 risk 3); all within 1% tolerance",
+      "data": {
+        "configs": 28,
+        "minRTP": 0.9890625,
+        "maxRTP": 0.9916015625,
+        "argminConfigs": [
+          "rows 8 risk 2",
+          "rows 10 risk 2"
+        ],
+        "argmaxConfigs": [
+          "rows 11 risk 3"
+        ],
+        "minEdge": 0.008398437500000022,
+        "maxEdge": 0.010937500000000044,
+        "maxDeviationFrom99": 0.0016015624999999867,
+        "worstDeviationConfigs": [
+          "rows 11 risk 3"
+        ],
+        "enumerationWorstDelta": 8.761880110341735e-13,
+        "enumerationTolerance": 1e-12
+      }
+    },
+    {
+      "step": 11,
+      "name": "Phase Labels",
+      "status": "PASS",
+      "detail": "Phases present: A, B, C, D, E (A=5400/5400 B=2000/2000 C=200/200 D=500/500 E=2000/2000 against src/loader.ts EXPECTED_PHASE_BETS, Σ=10100); total 10100/10100 bets and 202/202 seed records, both compared against CODE constants in src/loader.ts — never against meta.plannedTotal or meta.phases, which are inside the file being scored (G-BIND: a row count is not an identity). The dataset header is reconciled against those constants rather than believed (meta.plannedTotal=10100: agrees; meta.phases: agrees), so shrinking the capture and doctoring its header to match is a hard fail rather than an unread field",
+      "data": {
+        "betsLoaded": 10100,
+        "expectedBets": 10100,
+        "seedRecords": 202,
+        "expectedSeeds": 202,
+        "phaseCounts": {
+          "A": 5400,
+          "B": 2000,
+          "C": 200,
+          "D": 500,
+          "E": 2000
+        },
+        "expectedPhaseBets": {
+          "A": 5400,
+          "B": 2000,
+          "C": 200,
+          "D": 500,
+          "E": 2000
+        },
+        "planSum": 10100,
+        "metaPlannedTotal": 10100,
+        "metaHeaderAgrees": true
+      }
+    },
+    {
+      "step": 12,
+      "name": "Epoch Size",
+      "status": "PASS",
+      "detail": "202/202 epochs (by hashedServerSeed; 202 distinct epoch indexes) and 202/202 seed records against src/loader.ts EXPECTED_SEEDS; min=50, max=50 bets per seed pair against EXPECTED_EPOCH_SIZE 50; 202 × 50 = 10100 must equal EXPECTED_BETS 10100. meta.epochSize=50 is reconciled against the constant (agrees), not used as the expectation — dropping an epoch with its seed row and re-declaring the header used to leave every count in this step self-consistent",
+      "data": {
+        "epochsByHash": 202,
+        "epochIndexes": 202,
+        "expectedSeeds": 202,
+        "seedRecords": 202,
+        "minEpochSize": 50,
+        "maxEpochSize": 50,
+        "expectedEpochSize": 50,
+        "metaEpochSize": 50,
+        "metaHeaderAgrees": true
+      }
+    },
+    {
+      "step": 13,
+      "name": "Anti-Circularity (Binomial Slot Probabilities)",
+      "status": "PASS",
+      "detail": "rows 8–16: binomP(n,k)·2^n == exact integer C(n,k) from an independent Pascal recurrence, and Σ_k binomP(n,k) = 1.0. Max |binomP·2^n − C(n,k)| = 0 (rows=8); max |Σ−1| = 0.000e+0. Audits the same binomP used by theoreticalRTP; no operator data used."
+    },
+    {
+      "step": 14,
+      "name": "Phase D — Client Seed Variation",
+      "status": "PASS",
+      "detail": "500 bets, 10 distinct client seeds; recomputation: 500/500 match (tested 500, expected 500); predictable-client-seed epochs 10 (152–161): epoch 152 is UNRESOLVED (its run-id was guessable in distribution; a prior hash blocks substitution, not grinding against a predictable future client seed, and the negligible-power assumption for ~10^4 candidates is not demonstrated in-repo); 9 epochs (153–161) used client seeds the operator already held at commitment: 450 bets, $45.00 wagered, $49.74 paid — no adverse signal, but containment there is statistical, not structural",
+      "data": {
+        "phaseDBets": 500,
+        "distinctClientSeeds": 10,
+        "recomputed": 500,
+        "phaseDWagered": 50.00000000000044,
+        "phaseDPaid": 54.690000000000076,
+        "predictableEpochs": [
+          152,
+          153,
+          154,
+          155,
+          156,
+          157,
+          158,
+          159,
+          160,
+          161
+        ],
+        "unresolvedPredictabilityEpoch": 152,
+        "exposedEpochs": [
+          153,
+          154,
+          155,
+          156,
+          157,
+          158,
+          159,
+          160,
+          161
+        ],
+        "exposedBets": 450,
+        "exposedWagered": 45.00000000000037,
+        "exposedPaid": 49.74000000000003
+      }
+    },
+    {
+      "step": 15,
+      "name": "Phase E — WTF Mode Verification",
+      "status": "PASS",
+      "detail": "2000 WTF bets: all riskLevel 4 / 13 rows; 2000/2000 dropDetails recomputed (expected 2000); 2000/2000 multipliers == odds[slot] (odds=[1000,235,0,0,0,0,0,0,0,0,0,0,235,1000]); WTF theoretical RTP = 98.9990%; only 4/14 slots pay — P(zero payout) = 99.6582%, P(paying slot) = 0.3418%",
+      "data": {
+        "wtfBets": 2000,
+        "recomputed": 2000,
+        "multipliersChecked": 2000,
+        "wtfTheoreticalRTP": 0.989990234375,
+        "payingSlots": 4,
+        "totalSlots": 14,
+        "pZeroPayout": 0.99658203125,
+        "pPayingSlot": 0.00341796875
+      }
+    },
+    {
+      "step": 16,
+      "name": "Simulation — Pass 1 Slot Uniformity (FWER)",
+      "status": "PASS",
+      "detail": "28 configs (27 std + WTF) × 1,000,000 rounds = 28,000,000, 28/28 result rows; chi²: 0/28 uncorrected, 0/28 at Bonferroni α/28=3.571e-4; serial: 1/28 uncorrected, 0/28 at Bonferroni; mean sim RTP 98.9249%; theory recomputed from the pinned config (not read from the artifact): 28/28 rows agree at 1e-12; simRTP within 6·SE of the RECOMPUTED theory: 28/28; header scalars and convergence traces reconcile with the rows: yes; value domains (bounds from the pinned config, not from the artifact): 2716 numeric leaf/leaves checked, 0 impossible, 0 undeclared; population bound to allConfigs(plinkoConfig.json): 28/28 expected boards present exactly once; serial statistics are one test, not two: corr(r1Z, runsZ)=-0.999999964, max|r1Z+runsZ|=1.6527e-3 over 28 rows",
+      "data": {
+        "expectedConfigs": 28,
+        "resultRows": 28,
+        "boardsPresentExactlyOnce": 28,
+        "missingConfigs": 0,
+        "strangerConfigs": 0,
+        "duplicateConfigs": 0,
+        "roundsPerConfig": 1000000,
+        "totalRounds": 28000000,
+        "bonferroniAlpha": 0.00035714285714285714,
+        "chi2BonferroniFails": 0,
+        "serialUncorrectedFails": 1,
+        "serialBonferroniFails": 0,
+        "rtpWithin6SE": 28,
+        "theoryRowsAgreeingWithPinnedConfig": 28,
+        "theoryRecomputeTolerance": 1e-12,
+        "aggregatesReconcile": true,
+        "aggregateDisagreements": 0,
+        "domainLeavesChecked": 2716,
+        "domainViolations": 0,
+        "domainUndeclaredFields": 0,
+        "serialR1ZRunsZCorrelation": -0.9999999643182262,
+        "serialR1ZRunsZCorrelationAbs": 0.9999999643182262,
+        "serialMaxAbsR1ZPlusRunsZ": 0.0016527469019820828,
+        "serialPairsMeasured": 28
+      }
+    },
+    {
+      "step": 17,
+      "name": "Simulation — Pass 2 Cherry-Pick Test",
+      "status": "PASS",
+      "detail": "202 casino seeds × 10,000 nonces, 202/202 result rows; cherry-pick flags: 11 (expected ~9.6 by chance on the NOMINAL size-0.05 null — that size is assumed, not measured in-repo; see AUDIT_CONTEXT.md#simulation-interpretation; survival P=0.3652, nominal on the same basis); payout-weighted: zEarly mean 0.002, 6 seeds below z=-1.645 (calibrated expectation 5.8556 ± 2.3708, Poisson-binomial P(X>=6)=0.5337, recomputed here over 202 revealed epochs; uncalibrated 0.05·n reference (not used for the verdict): 10.1), early−late t=0.60 (p=0.5518), edge hits early/late 1063/1020; execution-attested (full): recomputed early/late chi² P, payout-weighted z, window RTP and cherry-pick flag for 202/202 epochs (202 window-RTP row(s), each also bounded by its own board's paytable), max |Δ|=0.00e+0 vs stored (tol 1e-9); edge hits re-counted 1063/1020 early/late; 14 summary + header scalar(s) re-derived from those rows",
+      "data": {
+        "attestMode": "full",
+        "attestChecked": 202,
+        "attestPopulation": 202,
+        "revealedEpochs": 202,
+        "missingRows": 0,
+        "attestMaxAbsDiff": 0,
+        "seedsTested": 202,
+        "revealedSeedCount": 202,
+        "resultRows": 202,
+        "noncesPerSeed": 10000,
+        "windowNonces": 5000,
+        "cherryPickFlags": 11,
+        "calibratedExpectation": 5.8555669877159655,
+        "calibratedSurvivalP": 0.5337301174256663,
+        "countZEarlyBelow1645": 6,
+        "rtpRowsRecomputed": 202,
+        "recomputedEdgeHitsEarly": 1063,
+        "recomputedEdgeHitsLate": 1020,
+        "summaryFieldsRecomputed": 14,
+        "domainViolations": 0,
+        "domainUndeclaredFields": 0
+      }
+    },
+    {
+      "step": 18,
+      "name": "Bet-Size Invariance",
+      "status": "PASS",
+      "detail": "200/200 Phase C drops at $10 (16r/risk3) recompute path-and-slot from the revealed seed — 0 mismatch. revealPlinko takes no wager argument (serverSeed, clientSeed, nonce, rows only); drops at $10.00 are produced by the identical engine as the $0.10 drops (stakes present: $0.1, $10), so the path cannot depend on bet size"
+    },
+    {
+      "step": 19,
+      "name": "Multiplier Table Symmetry",
+      "status": "PASS",
+      "detail": "28 multiplier tables (standard rows × risk 1–3, plus WTF) all left/right symmetric (multiplier[k] == multiplier[rows−k]) — 0 asymmetric"
+    },
+    {
+      "step": 20,
+      "name": "Artifact Hash + Value-Domain Integrity",
+      "status": "PASS",
+      "detail": "dataset SHA-256 871c485ef0d55ca3… matches pin; multiplier-config SHA-256 f8eaf67e1ffc63ee… matches pin; loader pins match; 4 published pin mentions across 2 chapters all equal the pins; committed emission artifacts: 701 numeric leaf/leaves checked against value domains derived from the pinned config",
+      "data": {
+        "domainLeavesChecked": 701,
+        "domainFailures": 0
+      }
+    },
+    {
+      "step": 21,
+      "name": "Epoch-Window Slot Fit (live drops vs binomial)",
+      "status": "PASS",
+      "detail": "10100 captured drops = first 50 nonces of 202 seeds; rows 8: n=657 chi2=6.05 df=6 p=0.4177 | rows 9: n=657 chi2=3.61 df=7 p=0.8239 | rows 10: n=657 chi2=7.49 df=8 p=0.4852 | rows 11: n=657 chi2=7.82 df=7 p=0.3489 | rows 12: n=656 chi2=11.97 df=8 p=0.1525 | rows 13: n=2654 chi2=11.93 df=9 p=0.2173 | rows 14: n=654 chi2=3.03 df=8 p=0.9325 | rows 15: n=654 chi2=15.37 df=9 p=0.0814 | rows 16: n=2854 chi2=12.61 df=12 p=0.3977; Fisher X2=19.50 df=18 combined p=0.3615; Bonferroni per-group alpha=1.11e-3; p-values are NOMINAL — the tail-merged chi²'s true size is assumed 0.05, not measured in-repo (declared limitation A4b)",
+      "data": {
+        "drops": 10100,
+        "seeds": 202,
+        "groups": 9,
+        "fisherX2": 19.502175463680178,
+        "fisherDf": 18,
+        "fisherCombinedP": 0.36153199360264976,
+        "minGroupP": 0.08135645474355213,
+        "bonferroniPerGroupAlpha": 0.0011111111111111111,
+        "perGroupP": {
+          "rows8": 0.4177201991493229,
+          "rows9": 0.8239087887706853,
+          "rows10": 0.48518789141441976,
+          "rows11": 0.3489098004998257,
+          "rows12": 0.15246535284416463,
+          "rows13": 0.21727189648337053,
+          "rows14": 0.9324598097871313,
+          "rows15": 0.08135645474355213,
+          "rows16": 0.3977148576647702
+        },
+        "perGroupChi2": {
+          "rows8": 6.049029982363315,
+          "rows9": 3.6056775627551882,
+          "rows10": 7.4862646908309,
+          "rows11": 7.818066736038522,
+          "rows12": 11.971826410356819,
+          "rows13": 11.930218706077953,
+          "rows14": 3.0300153703628228,
+          "rows15": 15.366175245074327,
+          "rows16": 12.613928320318635
+        },
+        "perGroupN": {
+          "rows8": 657,
+          "rows9": 657,
+          "rows10": 657,
+          "rows11": 657,
+          "rows12": 656,
+          "rows13": 2654,
+          "rows14": 654,
+          "rows15": 654,
+          "rows16": 2854
+        }
+      }
+    }
+  ],
+  "info": [
+    {
+      "label": "Live RTP",
+      "detail": "80.6843% (10100 bets — informational, not authoritative)",
+      "data": {
+        "liveRTP": 0.806842809364582,
+        "totalWagered": 2989.999999999872,
+        "totalPayout": 2412.459999999997,
+        "bets": 10100
+      }
+    },
+    {
+      "label": "Lag-1 autocorr",
+      "detail": "r₁=0.0899 (informational; authoritative = Pass 1 simulation)",
+      "data": {
+        "lag1Autocorrelation": 0.08991386286721892,
+        "sequenceLength": 10100
+      }
+    },
+    {
+      "label": "Win rate by config",
+      "detail": "strictly profitable (multiplier > 1): 0.3000% (13r/4) to 45.8716% (16r/1) | dataset result=='won' (multiplier >= 1): 0.3000% (13r/4) to 81.1927% (16r/1) | 28 configs",
+      "data": {
+        "configs": 28,
+        "strictlyProfitableMinPct": 0.3,
+        "strictlyProfitableMaxPct": 45.87155963302752,
+        "strictlyProfitableMinConfig": "13r/4",
+        "strictlyProfitableMaxConfig": "16r/1",
+        "resultWonMinPct": 0.3,
+        "resultWonMaxPct": 81.19266055045871,
+        "resultWonMinConfig": "13r/4",
+        "resultWonMaxConfig": "16r/1"
+      }
+    },
+    {
+      "label": "Slot distribution",
+      "detail": "rows=8: n=657, max slot dev=55.9% | rows=9: n=657, max slot dev=133.8% | rows=10: n=657, max slot dev=100.0% | rows=11: n=657, max slot dev=211.7% | rows=12: n=656, max slot dev=108.1% | rows=13: n=2654, max slot dev=100.0% | rows=14: n=654, max slot dev=100.0% | rows=15: n=654, max slot dev=100.0% | rows=16: n=2854, max slot dev=187.0%",
+      "data": {
+        "maxSlotDeviation": {
+          "rows8": 0.558599695585997,
+          "rows9": 1.3378995433789955,
+          "rows10": 1,
+          "rows11": 2.1171993911719937,
+          "rows12": 1.08130081300813,
+          "rows13": 1,
+          "rows14": 1,
+          "rows15": 1,
+          "rows16": 1.8703573931324458
+        },
+        "groupN": {
+          "rows8": 657,
+          "rows9": 657,
+          "rows10": 657,
+          "rows11": 657,
+          "rows12": 656,
+          "rows13": 2654,
+          "rows14": 654,
+          "rows15": 654,
+          "rows16": 2854
+        }
+      }
+    }
+  ],
+  "coverage": {
+    "note": "INFO only — payout-table cell coverage is a property of capture design, not a scored integrity check. Step 7 verifies that every OBSERVED payout matches the pinned table; the unexercised cells rest on the hash-pinned plinkoConfig.json (see AUDIT_CONTEXT.md#scope-and-coverage), not on live data.",
+    "totalConfigs": 28,
+    "totalCells": 365,
+    "cellsExercised": 285,
+    "cellsUnexercised": 80,
+    "coveragePct": 78.1,
+    "rtpShareUnexercisedSummed": 0.07408553821551163,
+    "configsWithUnhitCells": 25,
+    "fullyExercisedConfigs": [
+      "rows 8 risk 1",
+      "rows 8 risk 3",
+      "rows 9 risk 2"
+    ],
+    "wtfTails": {
+      "slot0Observed": false,
+      "slot13Observed": false,
+      "note": "WTF 1000x tails slots 0 and 13 were never observed in the capture — they rest on the hash-pinned config."
+    },
+    "perConfig": [
+      {
+        "config": "rows 8 risk 1",
+        "rows": 8,
+        "riskLevel": 1,
+        "wtf": false,
+        "slots": 9,
+        "observed": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "unhit": [],
+        "exercised": 9,
+        "rtpShareUnexercised": 0
+      },
+      {
+        "config": "rows 8 risk 2",
+        "rows": 8,
+        "riskLevel": 2,
+        "wtf": false,
+        "slots": 9,
+        "observed": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "unhit": [
+          0
+        ],
+        "exercised": 8,
+        "rtpShareUnexercised": 0.05134281200631912
+      },
+      {
+        "config": "rows 8 risk 3",
+        "rows": 8,
+        "riskLevel": 3,
+        "wtf": false,
+        "slots": 9,
+        "observed": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "unhit": [],
+        "exercised": 9,
+        "rtpShareUnexercised": 0
+      },
+      {
+        "config": "rows 9 risk 1",
+        "rows": 9,
+        "riskLevel": 1,
+        "wtf": false,
+        "slots": 10,
+        "observed": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "unhit": [
+          0,
+          9
+        ],
+        "exercised": 8,
+        "rtpShareUnexercised": 0.022099447513812154
+      },
+      {
+        "config": "rows 9 risk 2",
+        "rows": 9,
+        "riskLevel": 2,
+        "wtf": false,
+        "slots": 10,
+        "observed": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "unhit": [],
+        "exercised": 10,
+        "rtpShareUnexercised": 0
+      },
+      {
+        "config": "rows 9 risk 3",
+        "rows": 9,
+        "riskLevel": 3,
+        "wtf": false,
+        "slots": 10,
+        "observed": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "unhit": [
+          9
+        ],
+        "exercised": 9,
+        "rtpShareUnexercised": 0.08477917981072555
+      },
+      {
+        "config": "rows 10 risk 1",
+        "rows": 10,
+        "riskLevel": 1,
+        "wtf": false,
+        "slots": 11,
+        "observed": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "unhit": [
+          0,
+          10
+        ],
+        "exercised": 9,
+        "rtpShareUnexercised": 0.017557703689090553
+      },
+      {
+        "config": "rows 10 risk 2",
+        "rows": 10,
+        "riskLevel": 2,
+        "wtf": false,
+        "slots": 11,
+        "observed": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "unhit": [
+          0,
+          10
+        ],
+        "exercised": 9,
+        "rtpShareUnexercised": 0.04344391785150079
+      },
+      {
+        "config": "rows 10 risk 3",
+        "rows": 10,
+        "riskLevel": 3,
+        "wtf": false,
+        "slots": 11,
+        "observed": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "unhit": [
+          0,
+          10
+        ],
+        "exercised": 9,
+        "rtpShareUnexercised": 0.1498422712933754
+      },
+      {
+        "config": "rows 11 risk 1",
+        "rows": 11,
+        "riskLevel": 1,
+        "wtf": false,
+        "slots": 12,
+        "observed": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "unhit": [
+          0,
+          10,
+          11
+        ],
+        "exercised": 9,
+        "rtpShareUnexercised": 0.024561057407772736
+      },
+      {
+        "config": "rows 11 risk 2",
+        "rows": 11,
+        "riskLevel": 2,
+        "wtf": false,
+        "slots": 12,
+        "observed": [
+          1,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "unhit": [
+          0,
+          2,
+          11
+        ],
+        "exercised": 9,
+        "rtpShareUnexercised": 0.10502958579881656
+      },
+      {
+        "config": "rows 11 risk 3",
+        "rows": 11,
+        "riskLevel": 3,
+        "wtf": false,
+        "slots": 12,
+        "observed": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ],
+        "unhit": [
+          0
+        ],
+        "exercised": 11,
+        "rtpShareUnexercised": 0.059090013787669884
+      },
+      {
+        "config": "rows 12 risk 1",
+        "rows": 12,
+        "riskLevel": 1,
+        "wtf": false,
+        "slots": 13,
+        "observed": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "unhit": [
+          0,
+          11,
+          12
+        ],
+        "exercised": 10,
+        "rtpShareUnexercised": 0.01381283607123477
+      },
+      {
+        "config": "rows 12 risk 2",
+        "rows": 12,
+        "riskLevel": 2,
+        "wtf": false,
+        "slots": 13,
+        "observed": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "unhit": [
+          0,
+          1,
+          11,
+          12
+        ],
+        "exercised": 9,
+        "rtpShareUnexercised": 0.08138903960933261
+      },
+      {
+        "config": "rows 12 risk 3",
+        "rows": 12,
+        "riskLevel": 3,
+        "wtf": false,
+        "slots": 13,
+        "observed": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "unhit": [
+          0,
+          11,
+          12
+        ],
+        "exercised": 10,
+        "rtpShareUnexercised": 0.1546874230257648
+      },
+      {
+        "config": "rows 13 risk 1",
+        "rows": 13,
+        "riskLevel": 1,
+        "wtf": false,
+        "slots": 14,
+        "observed": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          12
+        ],
+        "unhit": [
+          0,
+          11,
+          13
+        ],
+        "exercised": 11,
+        "rtpShareUnexercised": 0.030850801479654747
+      },
+      {
+        "config": "rows 13 risk 2",
+        "rows": 13,
+        "riskLevel": 2,
+        "wtf": false,
+        "slots": 14,
+        "observed": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ],
+        "unhit": [
+          0,
+          1,
+          12,
+          13
+        ],
+        "exercised": 10,
+        "rtpShareUnexercised": 0.05228371313011739
+      },
+      {
+        "config": "rows 13 risk 3",
+        "rows": 13,
+        "riskLevel": 3,
+        "wtf": false,
+        "slots": 14,
+        "observed": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ],
+        "unhit": [
+          0,
+          1,
+          12,
+          13
+        ],
+        "exercised": 10,
+        "rtpShareUnexercised": 0.1825752722613709
+      },
+      {
+        "config": "rows 14 risk 1",
+        "rows": 14,
+        "riskLevel": 1,
+        "wtf": false,
+        "slots": 15,
+        "observed": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "unhit": [
+          0,
+          1,
+          13,
+          14
+        ],
+        "exercised": 11,
+        "rtpShareUnexercised": 0.007780421943009333
+      },
+      {
+        "config": "rows 14 risk 2",
+        "rows": 14,
+        "riskLevel": 2,
+        "wtf": false,
+        "slots": 15,
+        "observed": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "unhit": [
+          0,
+          13,
+          14
+        ],
+        "exercised": 12,
+        "rtpShareUnexercised": 0.020099635000493245
+      },
+      {
+        "config": "rows 14 risk 3",
+        "rows": 14,
+        "riskLevel": 3,
+        "wtf": false,
+        "slots": 15,
+        "observed": [
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "unhit": [
+          0,
+          1,
+          2,
+          13,
+          14
+        ],
+        "exercised": 10,
+        "rtpShareUnexercised": 0.24949742856085738
+      },
+      {
+        "config": "rows 15 risk 1",
+        "rows": 15,
+        "riskLevel": 1,
+        "wtf": false,
+        "slots": 16,
+        "observed": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ],
+        "unhit": [
+          0,
+          1,
+          14,
+          15
+        ],
+        "exercised": 12,
+        "rtpShareUnexercised": 0.008322904015338804
+      },
+      {
+        "config": "rows 15 risk 2",
+        "rows": 15,
+        "riskLevel": 2,
+        "wtf": false,
+        "slots": 16,
+        "observed": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ],
+        "unhit": [
+          0,
+          1,
+          14,
+          15
+        ],
+        "exercised": 12,
+        "rtpShareUnexercised": 0.02207165272288978
+      },
+      {
+        "config": "rows 15 risk 3",
+        "rows": 15,
+        "riskLevel": 3,
+        "wtf": false,
+        "slots": 16,
+        "observed": [
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "unhit": [
+          0,
+          1,
+          2,
+          13,
+          14,
+          15
+        ],
+        "exercised": 10,
+        "rtpShareUnexercised": 0.28968535239914944
+      },
+      {
+        "config": "rows 16 risk 1",
+        "rows": 16,
+        "riskLevel": 1,
+        "wtf": false,
+        "slots": 17,
+        "observed": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ],
+        "unhit": [
+          0,
+          1,
+          14,
+          15,
+          16
+        ],
+        "exercised": 12,
+        "rtpShareUnexercised": 0.008631345965924679
+      },
+      {
+        "config": "rows 16 risk 2",
+        "rows": 16,
+        "riskLevel": 2,
+        "wtf": false,
+        "slots": 17,
+        "observed": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "unhit": [
+          0,
+          1,
+          13,
+          14,
+          15,
+          16
+        ],
+        "exercised": 11,
+        "rtpShareUnexercised": 0.0852743051808919
+      },
+      {
+        "config": "rows 16 risk 3",
+        "rows": 16,
+        "riskLevel": 3,
+        "wtf": false,
+        "slots": 17,
+        "observed": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "unhit": [
+          0,
+          1,
+          16
+        ],
+        "exercised": 14,
+        "rtpShareUnexercised": 0.06289967501834574
+      },
+      {
+        "config": "WTF (rows 13 risk 4)",
+        "rows": 13,
+        "riskLevel": 4,
+        "wtf": true,
+        "slots": 14,
+        "observed": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "unhit": [
+          0,
+          13
+        ],
+        "exercised": 12,
+        "rtpShareUnexercised": 0.2466091245376079
+      }
+    ]
+  },
+  "summary": {
+    "passed": 21,
+    "flags": 0,
+    "hardFail": 0,
+    "scoredVerdict": "PROVABLY FAIR — Full Pass",
+    "scored": {
+      "passed": 21,
+      "flags": 0,
+      "hardFail": 0,
+      "of": 21
+    },
+    "verdict": "PROVABLY FAIR — Full Pass",
+    "overallStatus": "PASS",
+    "completed": true,
+    "validationErrors": []
+  }
+}

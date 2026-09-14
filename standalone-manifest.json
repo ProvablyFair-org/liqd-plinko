@@ -1,0 +1,55 @@
+{
+  "format": 1,
+  "compiler": {
+    "name": "typescript",
+    "version": "5.9.3"
+  },
+  "unitEntries": [
+    "tests/plinko/calibrationTests.ts",
+    "tests/plinko/domainTests.ts",
+    "tests/plinko/rngTests.ts",
+    "tests/plinko/rtpPinTests.ts"
+  ],
+  "inputs": {
+    ".mocharc.yml": "740a5513cfdeb6b12e9da4a02c1dca865f5204541da4458b9aa9552ab81fe2fe",
+    "package-lock.json": "47a49e0a585a7659bed1de0ba02e932c24de82fbffea47e9c85c18c4bf3e57ba",
+    "scripts/build-standalone.mjs": "926c14473a62711d6bb8f32530806c7eebd5575089d12e3254e8ad8ee9135c2b",
+    "scripts/check-standalone.mjs": "a3572be1c74536f6db82b2d050be60de8e55b0e51ae5c94fa585fab5362b0647",
+    "scripts/standalone-runtime.cjs": "dd9823689f3c2d4320e8e65b385708f01c06213b4b176853fba8b804cb2d0f9b",
+    "src/calibrate.ts": "3f4fb0cb919ec406ced7c9f5d7f9879579a7edcaa646149e1269803ef67e8199",
+    "src/calibration.ts": "2f46c3caba29d66b48179f845c726403399f89ea165fd86ae3c19f1c104164d4",
+    "src/config.ts": "eb4af5b6153ecaf386da3957acdbe096409b7edecf806c9c6d3bcc4577c34cff",
+    "src/diff.ts": "dc76f0fcd60c933a5009f9152f60fdefb074509b5ff1fbe32c5938c791c25a26",
+    "src/domains.ts": "ccb48b0ea9b14e07997ef0d37a2e608ade75a058ea64df63cd62d652bcce0d30",
+    "src/loader.ts": "f68a3965d5eb48dd85b544303f1600d52f2aa033c40166d00a6ee04f252d5ee1",
+    "src/replay.ts": "01ddbc2543d45342b0e68a7495b3f3e4fffb3b54617f76139d29903f2e9c7488",
+    "src/rng.ts": "ea216949181fd548eee37240fce9f3aff1beece3a4cb4df8c272af2ba32d74c2",
+    "src/simulate.ts": "e77e8de2af0711ab4adbbdb85b5bf860c65057b43b80bb4fbee9c811d549da5f",
+    "src/stats.ts": "be7d095b6ad341aaa4fd393c7cda5a237c7405c6d30846a1735c0732ee36d957",
+    "src/types.ts": "34b937ec1640346e973c5cfc4323d552be06e6da999d0466dbc06bfb3e9d091a",
+    "tests/plinko/calibrationTests.ts": "2a6e083f46576b7df8aa9f4d928818d1d6b494cbd1a6d77aa6e06be38cc13659",
+    "tests/plinko/domainTests.ts": "220106dd8d36e65a5faa52ccf60ac01b538d12812f598614dd085707b8f82d4a",
+    "tests/plinko/rngTests.ts": "dcaf37408180b20c341dd8406f793432fc867775fcc24a8ac0312261507b47a6",
+    "tests/plinko/rtpPinTests.ts": "c87359bd6788544674de3a0881276964dfbe7040329007edc3adff50157ceed6",
+    "tests/steps/anti-circularity.ts": "641f02b45c1a7c222acc89a5bf12d8bfedca3a9a85977639177ef894207fd8e9",
+    "tests/steps/commitment.ts": "b016da671bbea410db5bc75027fd69c8941e99f4b18c2716d50d0971d7c9dceb",
+    "tests/steps/context.ts": "50b44edef12422d13991292080831c0aefb59b3e228d8deef0acfc67775ff0e3",
+    "tests/steps/coverage.ts": "8494e15d0e6d7a8cf4b48854e423ed17c64beba88af281d8a94d7624864f8958",
+    "tests/steps/dataset.ts": "f75720077291304935f09f071cbbf4322993762d5beb3ba96fe0dab1e6ba7571",
+    "tests/steps/determinism.ts": "13adc2a30281790c2b06c76ca9db9b5783f114cbdce501593c4c9c8ce5a6ccb1",
+    "tests/steps/live-fit.ts": "fd7385f7dea645dcbcd5cc7b733c878062ad4d4bad68128dd93bd7e95e0e65d7",
+    "tests/steps/payouts.ts": "f6c59ef5dd713b7a4944691a8c84cf7b8e36843f1a99d5bb41eb10e3e48bb181",
+    "tests/steps/phase-d.ts": "24e68021ba31812beb2a93d59d9de51882cc1bb5faa753c96e035b78a0b66ef9",
+    "tests/steps/simulation.ts": "b17d73ca19739b203aee055f4f54f88c5faec3dc23f5b6595b4dae5e636ace40",
+    "tests/steps/standardization.ts": "296356e2a446099e52eca834fab8655cd3b4caf5d80e1b9f68c913d3455698df",
+    "tests/steps/statistical.ts": "05ff489dfcf32a64e4950dbd9fd8b5be8cdb58eca48fca6875e8b3a32f50a91e",
+    "tests/steps/wtf.ts": "428feb92e31c2c2e02bf01cbdd8c49ca10fde758b4d47c70992ef2ee16087013",
+    "tests/verify.ts": "12878a6ddb178501a081e901f36646d710f16aefb2dd41e8a43e6a8c88a0f706",
+    "tsconfig.json": "e53fdf4fb0499b3ab2836692e34ef32a3cbceb49524f7b5db770b2ff19d597e8"
+  },
+  "outputs": {
+    "test.js": "8814acd2c8c19f41dfe2c0cfdba3e4a3b1ad15f20f17b595ab8bcf63a79a29fc",
+    "verify.js": "2ed19edd93b089dbafb3c2b467dc019d3e60ea0cac346a9781656b0ef206228c",
+    "replay.js": "aaf9cef56a08691005c5aeb5f7e86201a2c7a11a8ddae5a8968e1e5e148df30e"
+  }
+}

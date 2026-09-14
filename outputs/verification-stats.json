@@ -1,0 +1,276 @@
+{
+  "audit": "LIQD Plinko",
+  "artifact": "machine-readable numerics emitted by the scored steps and informational items",
+  "generatedAt": "2026-09-12T11:04:01.368Z",
+  "datasetSha256": "871c485ef0d55ca38af2cece4880abdc32fe8b62584468c5d4cfdfd01506fc95",
+  "steps": {
+    "step6": {
+      "name": "Client Seed Influence",
+      "tested": 1010,
+      "expectedTested": 1010,
+      "changed": 1008,
+      "samePath": 2,
+      "expectedSamePath": 0.5425262451171875,
+      "samePathSurvivalP": 0.10318193106557218,
+      "alpha": 0.001
+    },
+    "step7": {
+      "name": "Multiplier Lookup",
+      "betsChecked": 10100,
+      "mismatches": 0,
+      "cellsExercised": 285,
+      "cellsTotal": 365,
+      "cellsUnexercised": 80
+    },
+    "step10": {
+      "name": "House Edge / RTP Audit (analytical, per-config)",
+      "configs": 28,
+      "minRTP": 0.9890625,
+      "maxRTP": 0.9916015625,
+      "argminConfigs": [
+        "rows 8 risk 2",
+        "rows 10 risk 2"
+      ],
+      "argmaxConfigs": [
+        "rows 11 risk 3"
+      ],
+      "minEdge": 0.008398437500000022,
+      "maxEdge": 0.010937500000000044,
+      "maxDeviationFrom99": 0.0016015624999999867,
+      "worstDeviationConfigs": [
+        "rows 11 risk 3"
+      ],
+      "enumerationWorstDelta": 8.761880110341735e-13,
+      "enumerationTolerance": 1e-12
+    },
+    "step11": {
+      "name": "Phase Labels",
+      "betsLoaded": 10100,
+      "expectedBets": 10100,
+      "seedRecords": 202,
+      "expectedSeeds": 202,
+      "phaseCounts": {
+        "A": 5400,
+        "B": 2000,
+        "C": 200,
+        "D": 500,
+        "E": 2000
+      },
+      "expectedPhaseBets": {
+        "A": 5400,
+        "B": 2000,
+        "C": 200,
+        "D": 500,
+        "E": 2000
+      },
+      "planSum": 10100,
+      "metaPlannedTotal": 10100,
+      "metaHeaderAgrees": true
+    },
+    "step12": {
+      "name": "Epoch Size",
+      "epochsByHash": 202,
+      "epochIndexes": 202,
+      "expectedSeeds": 202,
+      "seedRecords": 202,
+      "minEpochSize": 50,
+      "maxEpochSize": 50,
+      "expectedEpochSize": 50,
+      "metaEpochSize": 50,
+      "metaHeaderAgrees": true
+    },
+    "step14": {
+      "name": "Phase D — Client Seed Variation",
+      "phaseDBets": 500,
+      "distinctClientSeeds": 10,
+      "recomputed": 500,
+      "phaseDWagered": 50.00000000000044,
+      "phaseDPaid": 54.690000000000076,
+      "predictableEpochs": [
+        152,
+        153,
+        154,
+        155,
+        156,
+        157,
+        158,
+        159,
+        160,
+        161
+      ],
+      "unresolvedPredictabilityEpoch": 152,
+      "exposedEpochs": [
+        153,
+        154,
+        155,
+        156,
+        157,
+        158,
+        159,
+        160,
+        161
+      ],
+      "exposedBets": 450,
+      "exposedWagered": 45.00000000000037,
+      "exposedPaid": 49.74000000000003
+    },
+    "step15": {
+      "name": "Phase E — WTF Mode Verification",
+      "wtfBets": 2000,
+      "recomputed": 2000,
+      "multipliersChecked": 2000,
+      "wtfTheoreticalRTP": 0.989990234375,
+      "payingSlots": 4,
+      "totalSlots": 14,
+      "pZeroPayout": 0.99658203125,
+      "pPayingSlot": 0.00341796875
+    },
+    "step16": {
+      "name": "Simulation — Pass 1 Slot Uniformity (FWER)",
+      "expectedConfigs": 28,
+      "resultRows": 28,
+      "boardsPresentExactlyOnce": 28,
+      "missingConfigs": 0,
+      "strangerConfigs": 0,
+      "duplicateConfigs": 0,
+      "roundsPerConfig": 1000000,
+      "totalRounds": 28000000,
+      "bonferroniAlpha": 0.00035714285714285714,
+      "chi2BonferroniFails": 0,
+      "serialUncorrectedFails": 1,
+      "serialBonferroniFails": 0,
+      "rtpWithin6SE": 28,
+      "theoryRowsAgreeingWithPinnedConfig": 28,
+      "theoryRecomputeTolerance": 1e-12,
+      "aggregatesReconcile": true,
+      "aggregateDisagreements": 0,
+      "domainLeavesChecked": 2716,
+      "domainViolations": 0,
+      "domainUndeclaredFields": 0,
+      "serialR1ZRunsZCorrelation": -0.9999999643182262,
+      "serialR1ZRunsZCorrelationAbs": 0.9999999643182262,
+      "serialMaxAbsR1ZPlusRunsZ": 0.0016527469019820828,
+      "serialPairsMeasured": 28
+    },
+    "step17": {
+      "name": "Simulation — Pass 2 Cherry-Pick Test",
+      "attestMode": "full",
+      "attestChecked": 202,
+      "attestPopulation": 202,
+      "revealedEpochs": 202,
+      "missingRows": 0,
+      "attestMaxAbsDiff": 0,
+      "seedsTested": 202,
+      "revealedSeedCount": 202,
+      "resultRows": 202,
+      "noncesPerSeed": 10000,
+      "windowNonces": 5000,
+      "cherryPickFlags": 11,
+      "calibratedExpectation": 5.8555669877159655,
+      "calibratedSurvivalP": 0.5337301174256663,
+      "countZEarlyBelow1645": 6,
+      "rtpRowsRecomputed": 202,
+      "recomputedEdgeHitsEarly": 1063,
+      "recomputedEdgeHitsLate": 1020,
+      "summaryFieldsRecomputed": 14,
+      "domainViolations": 0,
+      "domainUndeclaredFields": 0
+    },
+    "step20": {
+      "name": "Artifact Hash + Value-Domain Integrity",
+      "domainLeavesChecked": 701,
+      "domainFailures": 0
+    },
+    "step21": {
+      "name": "Epoch-Window Slot Fit (live drops vs binomial)",
+      "drops": 10100,
+      "seeds": 202,
+      "groups": 9,
+      "fisherX2": 19.502175463680178,
+      "fisherDf": 18,
+      "fisherCombinedP": 0.36153199360264976,
+      "minGroupP": 0.08135645474355213,
+      "bonferroniPerGroupAlpha": 0.0011111111111111111,
+      "perGroupP": {
+        "rows8": 0.4177201991493229,
+        "rows9": 0.8239087887706853,
+        "rows10": 0.48518789141441976,
+        "rows11": 0.3489098004998257,
+        "rows12": 0.15246535284416463,
+        "rows13": 0.21727189648337053,
+        "rows14": 0.9324598097871313,
+        "rows15": 0.08135645474355213,
+        "rows16": 0.3977148576647702
+      },
+      "perGroupChi2": {
+        "rows8": 6.049029982363315,
+        "rows9": 3.6056775627551882,
+        "rows10": 7.4862646908309,
+        "rows11": 7.818066736038522,
+        "rows12": 11.971826410356819,
+        "rows13": 11.930218706077953,
+        "rows14": 3.0300153703628228,
+        "rows15": 15.366175245074327,
+        "rows16": 12.613928320318635
+      },
+      "perGroupN": {
+        "rows8": 657,
+        "rows9": 657,
+        "rows10": 657,
+        "rows11": 657,
+        "rows12": 656,
+        "rows13": 2654,
+        "rows14": 654,
+        "rows15": 654,
+        "rows16": 2854
+      }
+    }
+  },
+  "info": {
+    "Live RTP": {
+      "liveRTP": 0.806842809364582,
+      "totalWagered": 2989.999999999872,
+      "totalPayout": 2412.459999999997,
+      "bets": 10100
+    },
+    "Lag-1 autocorr": {
+      "lag1Autocorrelation": 0.08991386286721892,
+      "sequenceLength": 10100
+    },
+    "Win rate by config": {
+      "configs": 28,
+      "strictlyProfitableMinPct": 0.3,
+      "strictlyProfitableMaxPct": 45.87155963302752,
+      "strictlyProfitableMinConfig": "13r/4",
+      "strictlyProfitableMaxConfig": "16r/1",
+      "resultWonMinPct": 0.3,
+      "resultWonMaxPct": 81.19266055045871,
+      "resultWonMinConfig": "13r/4",
+      "resultWonMaxConfig": "16r/1"
+    },
+    "Slot distribution": {
+      "maxSlotDeviation": {
+        "rows8": 0.558599695585997,
+        "rows9": 1.3378995433789955,
+        "rows10": 1,
+        "rows11": 2.1171993911719937,
+        "rows12": 1.08130081300813,
+        "rows13": 1,
+        "rows14": 1,
+        "rows15": 1,
+        "rows16": 1.8703573931324458
+      },
+      "groupN": {
+        "rows8": 657,
+        "rows9": 657,
+        "rows10": 657,
+        "rows11": 657,
+        "rows12": 656,
+        "rows13": 2654,
+        "rows14": 654,
+        "rows15": 654,
+        "rows16": 2854
+      }
+    }
+  }
+}

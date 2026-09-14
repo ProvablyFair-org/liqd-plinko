@@ -1,0 +1,1646 @@
+{
+  "audit": "LIQD Plinko",
+  "artifact": "calibrated null for the Pass 2 payout-weighted window-RTP count",
+  "generatedAt": "2026-09-09T23:08:39.928Z",
+  "method": "exact lattice convolution of the per-drop payout distribution (independent binomial x pinned payout table) over the window, truncated at the threshold; aggregated across epochs as an exact Poisson-binomial DP",
+  "deterministic": true,
+  "note": "The calibration uses exact lattice convolution and Poisson-binomial aggregation. Step 17 re-derives the method, source hashes, per-configuration values, per-epoch assignments and numerical summaries, including closed-form cross-checks where applicable. Capture and execution timestamps, measured runtime and descriptive metadata are not numerical calibration checks.",
+  "source": {
+    "dataset": {
+      "file": "data/plinko-master-10100bets.json",
+      "sha256": "871c485ef0d55ca38af2cece4880abdc32fe8b62584468c5d4cfdfd01506fc95"
+    },
+    "config": {
+      "file": "plinkoConfig.json",
+      "sha256": "f8eaf67e1ffc63ee0dc21123447581c55f443c167dcb451b45ab7cd108fe712f"
+    },
+    "simulation": {
+      "file": "outputs/simulation-results.json",
+      "sha256": "2500b9b875fef0d7285207095a502a1079a423592bbde212442a7486e1386074",
+      "generatedAt": "2026-09-02T19:36:59.102Z"
+    }
+  },
+  "zThreshold": 1.645,
+  "noncesPerSeed": 10000,
+  "windowNonces": 5000,
+  "epochs": 202,
+  "expectedZEarlyBelow1645Calibrated": 5.8555669877159655,
+  "sdZEarlyBelow1645Calibrated": 2.3707775467591765,
+  "varianceZEarlyBelow1645Calibrated": 5.620586176217459,
+  "expectedZEarlyBelow1645Naive": 10.100000000000001,
+  "observedZEarlyBelow1645": 6,
+  "zEarlyBelowCalibratedSurvivalP": 0.5337301174256663,
+  "executionTimeMs": 31537,
+  "byConfig": [
+    {
+      "config": "8/1",
+      "rows": 8,
+      "riskLevel": 1,
+      "epochs": 5,
+      "mu": 0.98984375,
+      "sd": 0.5580154348993742,
+      "windowNonces": 5000,
+      "sumThreshold": 4884.310916075035,
+      "windowRtpThreshold": 0.976862183215007,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.04806687564221955,
+      "crossCheck": null
+    },
+    {
+      "config": "8/2",
+      "rows": 8,
+      "riskLevel": 2,
+      "epochs": 4,
+      "mu": 0.9890625,
+      "sd": 1.237893521710874,
+      "windowNonces": 5000,
+      "sumThreshold": 4801.321882359666,
+      "windowRtpThreshold": 0.9602643764719333,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.04680320718692491,
+      "crossCheck": null
+    },
+    {
+      "config": "8/3",
+      "rows": 8,
+      "riskLevel": 3,
+      "epochs": 4,
+      "mu": 0.9906250000000001,
+      "sd": 2.6704820930639097,
+      "windowNonces": 5000,
+      "sumThreshold": 4642.49701848647,
+      "windowRtpThreshold": 0.9284994036972939,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.04594950576624415,
+      "crossCheck": null
+    },
+    {
+      "config": "9/1",
+      "rows": 9,
+      "riskLevel": 1,
+      "epochs": 5,
+      "mu": 0.98984375,
+      "sd": 0.4611195350296248,
+      "windowNonces": 5000,
+      "sumThreshold": 4895.581756599167,
+      "windowRtpThreshold": 0.9791163513198334,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.04796696131829352,
+      "crossCheck": null
+    },
+    {
+      "config": "9/2",
+      "rows": 9,
+      "riskLevel": 2,
+      "epochs": 4,
+      "mu": 0.99140625,
+      "sd": 1.280809518414404,
+      "windowNonces": 5000,
+      "sumThreshold": 4808.048683727888,
+      "windowRtpThreshold": 0.9616097367455776,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.04573119704797964,
+      "crossCheck": null
+    },
+    {
+      "config": "9/3",
+      "rows": 9,
+      "riskLevel": 3,
+      "epochs": 4,
+      "mu": 0.990625,
+      "sd": 2.9435161133200882,
+      "windowNonces": 5000,
+      "sumThreshold": 4610.737956399147,
+      "windowRtpThreshold": 0.9221475912798295,
+      "latticeUnit": 0.2,
+      "leftTailProbability": 0.04472872801077499,
+      "crossCheck": null
+    },
+    {
+      "config": "10/1",
+      "rows": 10,
+      "riskLevel": 1,
+      "epochs": 4,
+      "mu": 0.9900390625,
+      "sd": 0.5271147868103504,
+      "windowNonces": 5000,
+      "sumThreshold": 4888.881813084254,
+      "windowRtpThreshold": 0.9777763626168507,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.046601318380532844,
+      "crossCheck": null
+    },
+    {
+      "config": "10/2",
+      "rows": 10,
+      "riskLevel": 2,
+      "epochs": 5,
+      "mu": 0.9890625,
+      "sd": 1.2055363416727636,
+      "windowNonces": 5000,
+      "sumThreshold": 4805.085639304082,
+      "windowRtpThreshold": 0.9610171278608164,
+      "latticeUnit": 0.2,
+      "leftTailProbability": 0.045033259703035546,
+      "crossCheck": null
+    },
+    {
+      "config": "10/3",
+      "rows": 10,
+      "riskLevel": 3,
+      "epochs": 4,
+      "mu": 0.990625,
+      "sd": 3.6442632035673546,
+      "windowNonces": 5000,
+      "sumThreshold": 4529.227709706106,
+      "windowRtpThreshold": 0.9058455419412212,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.04185823876661995,
+      "crossCheck": null
+    },
+    {
+      "config": "11/1",
+      "rows": 11,
+      "riskLevel": 1,
+      "epochs": 4,
+      "mu": 0.9900390625,
+      "sd": 0.44154204043796447,
+      "windowNonces": 5000,
+      "sumThreshold": 4898.835554975002,
+      "windowRtpThreshold": 0.9797671109950005,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.04742179272858956,
+      "crossCheck": null
+    },
+    {
+      "config": "11/2",
+      "rows": 11,
+      "riskLevel": 2,
+      "epochs": 4,
+      "mu": 0.990234375,
+      "sd": 1.115717933694874,
+      "windowNonces": 5000,
+      "sumThreshold": 4821.392607585234,
+      "windowRtpThreshold": 0.9642785215170468,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.04553700403611388,
+      "crossCheck": null
+    },
+    {
+      "config": "11/3",
+      "rows": 11,
+      "riskLevel": 3,
+      "epochs": 5,
+      "mu": 0.9916015625,
+      "sd": 4.125829435246634,
+      "windowNonces": 5000,
+      "sumThreshold": 4478.095188158318,
+      "windowRtpThreshold": 0.8956190376316635,
+      "latticeUnit": 0.2,
+      "leftTailProbability": 0.038186639494982105,
+      "crossCheck": null
+    },
+    {
+      "config": "12/1",
+      "rows": 12,
+      "riskLevel": 1,
+      "epochs": 4,
+      "mu": 0.989794921875,
+      "sd": 0.3879261227256587,
+      "windowNonces": 5000,
+      "sumThreshold": 4903.851405294501,
+      "windowRtpThreshold": 0.9807702810589002,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.04704232451729566,
+      "crossCheck": null
+    },
+    {
+      "config": "12/2",
+      "rows": 12,
+      "riskLevel": 2,
+      "epochs": 4,
+      "mu": 0.989892578125,
+      "sd": 1.2876821731644577,
+      "windowNonces": 5000,
+      "sumThreshold": 4799.680903574822,
+      "windowRtpThreshold": 0.9599361807149644,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.0451797281172952,
+      "crossCheck": null
+    },
+    {
+      "config": "12/3",
+      "rows": 12,
+      "riskLevel": 3,
+      "epochs": 4,
+      "mu": 0.991162109375,
+      "sd": 4.380744556379863,
+      "windowNonces": 5000,
+      "sumThreshold": 4446.246433859959,
+      "windowRtpThreshold": 0.8892492867719919,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.03492768892776727,
+      "crossCheck": null
+    },
+    {
+      "config": "13/1",
+      "rows": 13,
+      "riskLevel": 1,
+      "epochs": 5,
+      "mu": 0.989990234375,
+      "sd": 0.4704577224944155,
+      "windowNonces": 5000,
+      "sumThreshold": 4895.227969234751,
+      "windowRtpThreshold": 0.9790455938469502,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.04853168329954132,
+      "crossCheck": null
+    },
+    {
+      "config": "13/2",
+      "rows": 13,
+      "riskLevel": 2,
+      "epochs": 4,
+      "mu": 0.98994140625,
+      "sd": 1.3556455293528145,
+      "windowNonces": 5000,
+      "sumThreshold": 4792.019610119396,
+      "windowRtpThreshold": 0.9584039220238793,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.045278232525550285,
+      "crossCheck": null
+    },
+    {
+      "config": "13/3",
+      "rows": 13,
+      "riskLevel": 3,
+      "epochs": 4,
+      "mu": 0.990869140625,
+      "sd": 4.846888562447261,
+      "windowNonces": 5000,
+      "sumThreshold": 4390.560154933355,
+      "windowRtpThreshold": 0.878112030986671,
+      "latticeUnit": 0.2,
+      "leftTailProbability": 0.027891252458534747,
+      "crossCheck": null
+    },
+    {
+      "config": "13/4",
+      "rows": 13,
+      "riskLevel": 4,
+      "epochs": 40,
+      "mu": 0.989990234375,
+      "sd": 20.455688757384024,
+      "windowNonces": 5000,
+      "sumThreshold": 2570.5645713511285,
+      "windowRtpThreshold": 0.5141129142702257,
+      "latticeUnit": 5,
+      "leftTailProbability": 0.02559866451660917,
+      "crossCheck": {
+        "method": "closed-form multinomial enumeration over the non-minimum payout counts",
+        "probability": 0.025598664516507608,
+        "relativeDifference": 3.967438245032089e-12
+      }
+    },
+    {
+      "config": "14/1",
+      "rows": 14,
+      "riskLevel": 1,
+      "epochs": 5,
+      "mu": 0.99000244140625,
+      "sd": 0.31896653183608364,
+      "windowNonces": 5000,
+      "sumThreshold": 4912.9103181206465,
+      "windowRtpThreshold": 0.9825820636241293,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.04931664055114394,
+      "crossCheck": null
+    },
+    {
+      "config": "14/2",
+      "rows": 14,
+      "riskLevel": 2,
+      "epochs": 5,
+      "mu": 0.9899414062499999,
+      "sd": 1.3623338475541789,
+      "windowNonces": 5000,
+      "sumThreshold": 4791.241631196412,
+      "windowRtpThreshold": 0.9582483262392824,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.044522349951835835,
+      "crossCheck": null
+    },
+    {
+      "config": "14/3",
+      "rows": 14,
+      "riskLevel": 3,
+      "epochs": 4,
+      "mu": 0.98978271484375,
+      "sd": 5.577546087926429,
+      "windowNonces": 5000,
+      "sumThreshold": 4300.138625459036,
+      "windowRtpThreshold": 0.8600277250918072,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.017330526310317073,
+      "crossCheck": null
+    },
+    {
+      "config": "15/1",
+      "rows": 15,
+      "riskLevel": 1,
+      "epochs": 4,
+      "mu": 0.990008544921875,
+      "sd": 0.4100479320367429,
+      "windowNonces": 5000,
+      "sumThreshold": 4902.346332342527,
+      "windowRtpThreshold": 0.9804692664685053,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.046395507165408946,
+      "crossCheck": null
+    },
+    {
+      "config": "15/2",
+      "rows": 15,
+      "riskLevel": 2,
+      "epochs": 5,
+      "mu": 0.9899841308593751,
+      "sd": 1.5589222005868495,
+      "windowNonces": 5000,
+      "sumThreshold": 4768.588280729323,
+      "windowRtpThreshold": 0.9537176561458646,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.04365909236230967,
+      "crossCheck": null
+    },
+    {
+      "config": "15/3",
+      "rows": 15,
+      "riskLevel": 3,
+      "epochs": 5,
+      "mu": 0.990264892578125,
+      "sd": 6.005098324495876,
+      "windowNonces": 5000,
+      "sumThreshold": 4252.8170375185,
+      "windowRtpThreshold": 0.8505634075037,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.0117899823182207,
+      "crossCheck": null
+    },
+    {
+      "config": "16/1",
+      "rows": 16,
+      "riskLevel": 1,
+      "epochs": 4,
+      "mu": 0.9899871826171875,
+      "sd": 0.33191931912142014,
+      "windowNonces": 5000,
+      "sumThreshold": 4911.327368062616,
+      "windowRtpThreshold": 0.9822654736125233,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.04595990172630371,
+      "crossCheck": null
+    },
+    {
+      "config": "16/2",
+      "rows": 16,
+      "riskLevel": 2,
+      "epochs": 4,
+      "mu": 0.9898834228515625,
+      "sd": 1.4672407092599933,
+      "windowNonces": 5000,
+      "sumThreshold": 4778.749046085522,
+      "windowRtpThreshold": 0.9557498092171045,
+      "latticeUnit": 0.1,
+      "leftTailProbability": 0.03873650932395257,
+      "crossCheck": null
+    },
+    {
+      "config": "16/3",
+      "rows": 16,
+      "riskLevel": 3,
+      "epochs": 49,
+      "mu": 0.989764404296875,
+      "sd": 6.565305127274835,
+      "windowNonces": 5000,
+      "sumThreshold": 4185.151864323353,
+      "windowRtpThreshold": 0.8370303728646706,
+      "latticeUnit": 0.2,
+      "leftTailProbability": 0.001893108813446302,
+      "crossCheck": null
+    }
+  ],
+  "perEpoch": [
+    {
+      "epoch": 0,
+      "rows": 8,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04806687564221955
+    },
+    {
+      "epoch": 1,
+      "rows": 8,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04806687564221955
+    },
+    {
+      "epoch": 2,
+      "rows": 8,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04806687564221955
+    },
+    {
+      "epoch": 3,
+      "rows": 8,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04806687564221955
+    },
+    {
+      "epoch": 4,
+      "rows": 8,
+      "riskLevel": 2,
+      "leftTailProbability": 0.04680320718692491
+    },
+    {
+      "epoch": 5,
+      "rows": 8,
+      "riskLevel": 2,
+      "leftTailProbability": 0.04680320718692491
+    },
+    {
+      "epoch": 6,
+      "rows": 8,
+      "riskLevel": 2,
+      "leftTailProbability": 0.04680320718692491
+    },
+    {
+      "epoch": 7,
+      "rows": 8,
+      "riskLevel": 2,
+      "leftTailProbability": 0.04680320718692491
+    },
+    {
+      "epoch": 8,
+      "rows": 8,
+      "riskLevel": 3,
+      "leftTailProbability": 0.04594950576624415
+    },
+    {
+      "epoch": 9,
+      "rows": 8,
+      "riskLevel": 3,
+      "leftTailProbability": 0.04594950576624415
+    },
+    {
+      "epoch": 10,
+      "rows": 8,
+      "riskLevel": 3,
+      "leftTailProbability": 0.04594950576624415
+    },
+    {
+      "epoch": 11,
+      "rows": 8,
+      "riskLevel": 3,
+      "leftTailProbability": 0.04594950576624415
+    },
+    {
+      "epoch": 12,
+      "rows": 9,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04796696131829352
+    },
+    {
+      "epoch": 13,
+      "rows": 9,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04796696131829352
+    },
+    {
+      "epoch": 14,
+      "rows": 9,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04796696131829352
+    },
+    {
+      "epoch": 15,
+      "rows": 9,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04796696131829352
+    },
+    {
+      "epoch": 16,
+      "rows": 9,
+      "riskLevel": 2,
+      "leftTailProbability": 0.04573119704797964
+    },
+    {
+      "epoch": 17,
+      "rows": 9,
+      "riskLevel": 2,
+      "leftTailProbability": 0.04573119704797964
+    },
+    {
+      "epoch": 18,
+      "rows": 9,
+      "riskLevel": 2,
+      "leftTailProbability": 0.04573119704797964
+    },
+    {
+      "epoch": 19,
+      "rows": 9,
+      "riskLevel": 2,
+      "leftTailProbability": 0.04573119704797964
+    },
+    {
+      "epoch": 20,
+      "rows": 9,
+      "riskLevel": 3,
+      "leftTailProbability": 0.04472872801077499
+    },
+    {
+      "epoch": 21,
+      "rows": 9,
+      "riskLevel": 3,
+      "leftTailProbability": 0.04472872801077499
+    },
+    {
+      "epoch": 22,
+      "rows": 9,
+      "riskLevel": 3,
+      "leftTailProbability": 0.04472872801077499
+    },
+    {
+      "epoch": 23,
+      "rows": 9,
+      "riskLevel": 3,
+      "leftTailProbability": 0.04472872801077499
+    },
+    {
+      "epoch": 24,
+      "rows": 10,
+      "riskLevel": 1,
+      "leftTailProbability": 0.046601318380532844
+    },
+    {
+      "epoch": 25,
+      "rows": 10,
+      "riskLevel": 1,
+      "leftTailProbability": 0.046601318380532844
+    },
+    {
+      "epoch": 26,
+      "rows": 10,
+      "riskLevel": 1,
+      "leftTailProbability": 0.046601318380532844
+    },
+    {
+      "epoch": 27,
+      "rows": 10,
+      "riskLevel": 1,
+      "leftTailProbability": 0.046601318380532844
+    },
+    {
+      "epoch": 28,
+      "rows": 10,
+      "riskLevel": 2,
+      "leftTailProbability": 0.045033259703035546
+    },
+    {
+      "epoch": 29,
+      "rows": 10,
+      "riskLevel": 2,
+      "leftTailProbability": 0.045033259703035546
+    },
+    {
+      "epoch": 30,
+      "rows": 10,
+      "riskLevel": 2,
+      "leftTailProbability": 0.045033259703035546
+    },
+    {
+      "epoch": 31,
+      "rows": 10,
+      "riskLevel": 2,
+      "leftTailProbability": 0.045033259703035546
+    },
+    {
+      "epoch": 32,
+      "rows": 10,
+      "riskLevel": 3,
+      "leftTailProbability": 0.04185823876661995
+    },
+    {
+      "epoch": 33,
+      "rows": 10,
+      "riskLevel": 3,
+      "leftTailProbability": 0.04185823876661995
+    },
+    {
+      "epoch": 34,
+      "rows": 10,
+      "riskLevel": 3,
+      "leftTailProbability": 0.04185823876661995
+    },
+    {
+      "epoch": 35,
+      "rows": 10,
+      "riskLevel": 3,
+      "leftTailProbability": 0.04185823876661995
+    },
+    {
+      "epoch": 36,
+      "rows": 11,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04742179272858956
+    },
+    {
+      "epoch": 37,
+      "rows": 11,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04742179272858956
+    },
+    {
+      "epoch": 38,
+      "rows": 11,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04742179272858956
+    },
+    {
+      "epoch": 39,
+      "rows": 11,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04742179272858956
+    },
+    {
+      "epoch": 40,
+      "rows": 11,
+      "riskLevel": 2,
+      "leftTailProbability": 0.04553700403611388
+    },
+    {
+      "epoch": 41,
+      "rows": 11,
+      "riskLevel": 2,
+      "leftTailProbability": 0.04553700403611388
+    },
+    {
+      "epoch": 42,
+      "rows": 11,
+      "riskLevel": 2,
+      "leftTailProbability": 0.04553700403611388
+    },
+    {
+      "epoch": 43,
+      "rows": 11,
+      "riskLevel": 2,
+      "leftTailProbability": 0.04553700403611388
+    },
+    {
+      "epoch": 44,
+      "rows": 11,
+      "riskLevel": 3,
+      "leftTailProbability": 0.038186639494982105
+    },
+    {
+      "epoch": 45,
+      "rows": 11,
+      "riskLevel": 3,
+      "leftTailProbability": 0.038186639494982105
+    },
+    {
+      "epoch": 46,
+      "rows": 11,
+      "riskLevel": 3,
+      "leftTailProbability": 0.038186639494982105
+    },
+    {
+      "epoch": 47,
+      "rows": 11,
+      "riskLevel": 3,
+      "leftTailProbability": 0.038186639494982105
+    },
+    {
+      "epoch": 48,
+      "rows": 12,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04704232451729566
+    },
+    {
+      "epoch": 49,
+      "rows": 12,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04704232451729566
+    },
+    {
+      "epoch": 50,
+      "rows": 12,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04704232451729566
+    },
+    {
+      "epoch": 51,
+      "rows": 12,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04704232451729566
+    },
+    {
+      "epoch": 52,
+      "rows": 12,
+      "riskLevel": 2,
+      "leftTailProbability": 0.0451797281172952
+    },
+    {
+      "epoch": 53,
+      "rows": 12,
+      "riskLevel": 2,
+      "leftTailProbability": 0.0451797281172952
+    },
+    {
+      "epoch": 54,
+      "rows": 12,
+      "riskLevel": 2,
+      "leftTailProbability": 0.0451797281172952
+    },
+    {
+      "epoch": 55,
+      "rows": 12,
+      "riskLevel": 2,
+      "leftTailProbability": 0.0451797281172952
+    },
+    {
+      "epoch": 56,
+      "rows": 12,
+      "riskLevel": 3,
+      "leftTailProbability": 0.03492768892776727
+    },
+    {
+      "epoch": 57,
+      "rows": 12,
+      "riskLevel": 3,
+      "leftTailProbability": 0.03492768892776727
+    },
+    {
+      "epoch": 58,
+      "rows": 12,
+      "riskLevel": 3,
+      "leftTailProbability": 0.03492768892776727
+    },
+    {
+      "epoch": 59,
+      "rows": 12,
+      "riskLevel": 3,
+      "leftTailProbability": 0.03492768892776727
+    },
+    {
+      "epoch": 60,
+      "rows": 13,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04853168329954132
+    },
+    {
+      "epoch": 61,
+      "rows": 13,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04853168329954132
+    },
+    {
+      "epoch": 62,
+      "rows": 13,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04853168329954132
+    },
+    {
+      "epoch": 63,
+      "rows": 13,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04853168329954132
+    },
+    {
+      "epoch": 64,
+      "rows": 13,
+      "riskLevel": 2,
+      "leftTailProbability": 0.045278232525550285
+    },
+    {
+      "epoch": 65,
+      "rows": 13,
+      "riskLevel": 2,
+      "leftTailProbability": 0.045278232525550285
+    },
+    {
+      "epoch": 66,
+      "rows": 13,
+      "riskLevel": 2,
+      "leftTailProbability": 0.045278232525550285
+    },
+    {
+      "epoch": 67,
+      "rows": 13,
+      "riskLevel": 2,
+      "leftTailProbability": 0.045278232525550285
+    },
+    {
+      "epoch": 68,
+      "rows": 13,
+      "riskLevel": 3,
+      "leftTailProbability": 0.027891252458534747
+    },
+    {
+      "epoch": 69,
+      "rows": 13,
+      "riskLevel": 3,
+      "leftTailProbability": 0.027891252458534747
+    },
+    {
+      "epoch": 70,
+      "rows": 13,
+      "riskLevel": 3,
+      "leftTailProbability": 0.027891252458534747
+    },
+    {
+      "epoch": 71,
+      "rows": 13,
+      "riskLevel": 3,
+      "leftTailProbability": 0.027891252458534747
+    },
+    {
+      "epoch": 72,
+      "rows": 14,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04931664055114394
+    },
+    {
+      "epoch": 73,
+      "rows": 14,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04931664055114394
+    },
+    {
+      "epoch": 74,
+      "rows": 14,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04931664055114394
+    },
+    {
+      "epoch": 75,
+      "rows": 14,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04931664055114394
+    },
+    {
+      "epoch": 76,
+      "rows": 14,
+      "riskLevel": 2,
+      "leftTailProbability": 0.044522349951835835
+    },
+    {
+      "epoch": 77,
+      "rows": 14,
+      "riskLevel": 2,
+      "leftTailProbability": 0.044522349951835835
+    },
+    {
+      "epoch": 78,
+      "rows": 14,
+      "riskLevel": 2,
+      "leftTailProbability": 0.044522349951835835
+    },
+    {
+      "epoch": 79,
+      "rows": 14,
+      "riskLevel": 2,
+      "leftTailProbability": 0.044522349951835835
+    },
+    {
+      "epoch": 80,
+      "rows": 14,
+      "riskLevel": 3,
+      "leftTailProbability": 0.017330526310317073
+    },
+    {
+      "epoch": 81,
+      "rows": 14,
+      "riskLevel": 3,
+      "leftTailProbability": 0.017330526310317073
+    },
+    {
+      "epoch": 82,
+      "rows": 14,
+      "riskLevel": 3,
+      "leftTailProbability": 0.017330526310317073
+    },
+    {
+      "epoch": 83,
+      "rows": 14,
+      "riskLevel": 3,
+      "leftTailProbability": 0.017330526310317073
+    },
+    {
+      "epoch": 84,
+      "rows": 15,
+      "riskLevel": 1,
+      "leftTailProbability": 0.046395507165408946
+    },
+    {
+      "epoch": 85,
+      "rows": 15,
+      "riskLevel": 1,
+      "leftTailProbability": 0.046395507165408946
+    },
+    {
+      "epoch": 86,
+      "rows": 15,
+      "riskLevel": 1,
+      "leftTailProbability": 0.046395507165408946
+    },
+    {
+      "epoch": 87,
+      "rows": 15,
+      "riskLevel": 1,
+      "leftTailProbability": 0.046395507165408946
+    },
+    {
+      "epoch": 88,
+      "rows": 15,
+      "riskLevel": 2,
+      "leftTailProbability": 0.04365909236230967
+    },
+    {
+      "epoch": 89,
+      "rows": 15,
+      "riskLevel": 2,
+      "leftTailProbability": 0.04365909236230967
+    },
+    {
+      "epoch": 90,
+      "rows": 15,
+      "riskLevel": 2,
+      "leftTailProbability": 0.04365909236230967
+    },
+    {
+      "epoch": 91,
+      "rows": 15,
+      "riskLevel": 2,
+      "leftTailProbability": 0.04365909236230967
+    },
+    {
+      "epoch": 92,
+      "rows": 15,
+      "riskLevel": 3,
+      "leftTailProbability": 0.0117899823182207
+    },
+    {
+      "epoch": 93,
+      "rows": 15,
+      "riskLevel": 3,
+      "leftTailProbability": 0.0117899823182207
+    },
+    {
+      "epoch": 94,
+      "rows": 15,
+      "riskLevel": 3,
+      "leftTailProbability": 0.0117899823182207
+    },
+    {
+      "epoch": 95,
+      "rows": 15,
+      "riskLevel": 3,
+      "leftTailProbability": 0.0117899823182207
+    },
+    {
+      "epoch": 96,
+      "rows": 16,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04595990172630371
+    },
+    {
+      "epoch": 97,
+      "rows": 16,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04595990172630371
+    },
+    {
+      "epoch": 98,
+      "rows": 16,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04595990172630371
+    },
+    {
+      "epoch": 99,
+      "rows": 16,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04595990172630371
+    },
+    {
+      "epoch": 100,
+      "rows": 16,
+      "riskLevel": 2,
+      "leftTailProbability": 0.03873650932395257
+    },
+    {
+      "epoch": 101,
+      "rows": 16,
+      "riskLevel": 2,
+      "leftTailProbability": 0.03873650932395257
+    },
+    {
+      "epoch": 102,
+      "rows": 16,
+      "riskLevel": 2,
+      "leftTailProbability": 0.03873650932395257
+    },
+    {
+      "epoch": 103,
+      "rows": 16,
+      "riskLevel": 2,
+      "leftTailProbability": 0.03873650932395257
+    },
+    {
+      "epoch": 104,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 105,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 106,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 107,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 108,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 109,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 110,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 111,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 112,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 113,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 114,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 115,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 116,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 117,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 118,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 119,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 120,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 121,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 122,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 123,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 124,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 125,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 126,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 127,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 128,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 129,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 130,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 131,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 132,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 133,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 134,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 135,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 136,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 137,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 138,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 139,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 140,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 141,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 142,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 143,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 144,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 145,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 146,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 147,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 148,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 149,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 150,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 151,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 152,
+      "rows": 8,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04806687564221955
+    },
+    {
+      "epoch": 153,
+      "rows": 15,
+      "riskLevel": 3,
+      "leftTailProbability": 0.0117899823182207
+    },
+    {
+      "epoch": 154,
+      "rows": 14,
+      "riskLevel": 2,
+      "leftTailProbability": 0.044522349951835835
+    },
+    {
+      "epoch": 155,
+      "rows": 13,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04853168329954132
+    },
+    {
+      "epoch": 156,
+      "rows": 11,
+      "riskLevel": 3,
+      "leftTailProbability": 0.038186639494982105
+    },
+    {
+      "epoch": 157,
+      "rows": 10,
+      "riskLevel": 2,
+      "leftTailProbability": 0.045033259703035546
+    },
+    {
+      "epoch": 158,
+      "rows": 9,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04796696131829352
+    },
+    {
+      "epoch": 159,
+      "rows": 16,
+      "riskLevel": 3,
+      "leftTailProbability": 0.001893108813446302
+    },
+    {
+      "epoch": 160,
+      "rows": 15,
+      "riskLevel": 2,
+      "leftTailProbability": 0.04365909236230967
+    },
+    {
+      "epoch": 161,
+      "rows": 14,
+      "riskLevel": 1,
+      "leftTailProbability": 0.04931664055114394
+    },
+    {
+      "epoch": 162,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 163,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 164,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 165,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 166,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 167,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 168,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 169,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 170,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 171,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 172,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 173,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 174,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 175,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 176,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 177,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 178,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 179,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 180,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 181,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 182,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 183,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 184,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 185,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 186,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 187,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 188,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 189,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 190,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 191,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 192,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 193,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 194,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 195,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 196,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 197,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 198,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 199,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 200,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    },
+    {
+      "epoch": 201,
+      "rows": 13,
+      "riskLevel": 4,
+      "leftTailProbability": 0.02559866451660917
+    }
+  ]
+}
