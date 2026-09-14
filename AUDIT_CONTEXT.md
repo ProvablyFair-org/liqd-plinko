@@ -256,16 +256,32 @@ The audit establishes reproducibility and internal game-logic conformance for th
 
 ## Load-Bearing Premises
 
-| Premise | Basis and effect on the conclusion |
-|---|---|
-| P1 Capture authenticity | The records are assumed to reflect the stated QA session. Independent origin attestation is outside the supplied evidence. |
-| P2 Observed payout agreement | Directly checked against all recorded bets; 285 table cells are exercised. |
-| P3 Unobserved table values | The remaining cells depend on the operator-bundle reconstruction. Complete source-table evidence is a production deliverable. |
-| P4 Commitment timing and client-seed unpredictability | The recorded chain is verified. The structural seed-selection interpretation remains conditional on authentic ordering, with the 192/9/1 coverage distinction above. |
-| P5 Production equivalence | Production parity is not verified or assumed for the current verdict. Certification remains provisional until the production assessment passes. |
-| P6 Capture grouping | Epoch and phase labels are capture inputs constrained by the seed joins, nonce structure and fixed population checks; they are not independently reconstructed provenance. |
+Every premise the verdict rests on, the artifact that witnesses it, and the question that decides how much scrutiny it needs: whether the captured data could have contradicted it. A premise the data cannot contradict carries a witness from outside this repository's own pipeline, or is marked ASSUMED. Agreement between the audit's own checks is not evidence for a premise the data cannot see.
+
+| Premise | Witness artifact | Could the captured data contradict it? |
+|---|---|---|
+| P1 Capture authenticity. The records are assumed to reflect the stated QA session | ASSUMED — independent origin attestation is outside the supplied evidence. The screenshots illustrate the interface and the fairness panel; they do not authenticate the recorded session, and the identifiers in `E02-provably-fair-panel.png` do not identify an epoch in this dataset | **No** — nothing computable from the dataset separates an authentic capture from a composed one |
+| P2 Observed payout agreement | `data/plinko-master-10100bets.json` | Yes — directly checked against every recorded bet, exercising 285 of the 365 table cells (Steps 7, 8) |
+| P3 Unobserved table values | `evidence/E04-multiplier-tables.jpg` — the operator's own published multiplier tables, with WTF mode in `E05-wtf-mode.jpg` | Partial — the remaining 80 cells are exercised by no captured bet and rest on the reconstructed tables, including both WTF 1000× edge cells. They carry 7.4086% of the sum of theoretical returns across configurations. Complete source-table evidence is a production deliverable |
+| P4 Commitment timing and client-seed unpredictability | `data/plinko-master-10100bets.json` | Partial — the recorded chain verifies (Steps 2, 3). The structural seed-selection reading stays conditional on authentic ordering: 192 epochs used auditor-random client seeds, nine epochs 153–161 used predictable ones, and epoch 152's predictability at commitment is unresolved. A digest carries no time, so ordering is attested by the capture procedure rather than computed |
+| P5 Production equivalence | ASSUMED — production parity is neither verified nor assumed for the current verdict. Certification remains provisional until the production assessment passes | **No** — a capture taken against one environment cannot witness another |
+| P6 Capture grouping | `data/plinko-master-10100bets.json` | Partial — epoch and phase labels are capture inputs, constrained by the seed joins, nonce structure and fixed population checks (Steps 4, 11, 12) rather than independently reconstructed provenance |
 
 The screenshots illustrate the game interface and fairness panel. In particular, the identifiers in `E02-provably-fair-panel.png` do not identify an epoch in this dataset. Neither screenshots nor illustrative capture scripts independently authenticate the recorded session. `outputs/rtp-convergence.html` is a presentation aid; the numerical simulation claims above use the JSON artifact and replay implementation.
+
+### Model anchors
+
+Every modelled headline number and the independent anchor that guards it. The reference value comes from outside the engine's own method, which is what makes it an anchor rather than the suite agreeing with itself.
+
+| Modelled figure | Anchor method | Tolerance | Enforcing step |
+|---|---|---|---|
+| The per-configuration RTP range and its mean | Exhaustive enumeration of all `2^rows` equally likely paths, mapping popcount to slot by pure counting, cross-checking the binomial result. A counting enumeration cannot share an arithmetic error with the closed form | 1e-12 | `tests/steps/payouts.ts` (Step 10 — House Edge / RTP Audit) |
+| The published minimum, maximum, mean and WTF return figures | Full-precision pins on exact rationals. The sums are not all dyadic, which is why the tolerance is 1e-12 rather than exact float equality; the mean pin equals the simulation artifact's recorded mean | 1e-12 | `tests/plinko/rtpPinTests.ts` |
+| The WTF zero-payout probability | An independent binomial over the WTF odds vector, computed outside the payout path | 1e-12 | `tests/plinko/rtpPinTests.ts`, `tests/steps/wtf.ts` (Step 15) |
+| The calibrated null for the Pass 2 payout-weighted count | Exact lattice convolution of the per-drop payout distribution, itself anchored by a closed-form multinomial sum at the full window and by brute-force enumeration of every payout sequence at small windows | 1e-12 | `tests/plinko/calibrationTests.ts`, `tests/steps/simulation.ts` (Step 17) |
+| Slot probabilities against the binomial model | A literal path count over the board rather than the modelled distribution, so a binomial-coefficient error is inexpressible in it | Exact integers | `tests/steps/anti-circularity.ts` (Step 13 — Anti-Circularity) |
+
+**Residual, declared.** The oracle and the engine share one reading of the rules — a fixed row count, independent left/right steps, popcount to slot, table lookup by slot — so a misreading of the rules themselves would move both together and the anchors above cannot see it. What narrows it is that the path enumeration is a literal count that shares no arithmetic with the binomial closed form, so an error in the closed form is inexpressible in it. A second residual, and the larger one here: 80 of the 365 payout cells are exercised by no captured bet, so for those the table is anchored by the operator's published figures rather than by observation. There is no published third-party RTP for this operator, so the anchor class is enumeration plus settled-bet reproduction rather than comparison against an external reference table. Certification remains provisional pending the production capture.
 
 ## Production certification plan
 
