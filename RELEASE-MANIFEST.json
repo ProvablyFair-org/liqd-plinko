@@ -1,0 +1,50 @@
+{
+  "auditId": "PF-2026-LQ03",
+  "auditIdStatus": "confirmed by ProvablyFair.org",
+  "game": "plinko",
+  "casino": "liqd",
+  "release": "v1.0.0",
+  "framework": "1.1",
+  "simulation": {
+    "seeding": "fresh",
+    "seedsStored": true,
+    "attestation": "replay",
+    "replayCommand": "npm run replay",
+    "note": "Pass 1 draws fresh crypto.randomBytes seeds per configuration, so npm run simulate with no saved seeds runs a new experiment with different numbers. Each row of outputs/simulation-results.json stores the seed pair it was produced with: Step 16 (inside npm test) and npm run replay re-execute the committed experiment from those seeds and require every derived quantity to reproduce, writing nothing, and npm run regen regenerates the file with src/simulate.ts from the same saved seeds so that npm run diff-simulation can compare it with the committed file field by field. The file carries no generatedAt and no executionTimeMs, so a regeneration on the machine that produced it is byte-identical; on another machine one p-value can differ in its last digit, which the field comparison tolerates."
+  },
+  "datasetSha256": "871c485ef0d55ca38af2cece4880abdc32fe8b62584468c5d4cfdfd01506fc95",
+  "artifacts": {
+    "outputs/calibration-results.json": "53dabd4778e1d2562cb2ad136f6121253502eaac9fcf0cb70a064551bdaf3ca6",
+    "outputs/coverage-results.json": "7ec2cebb165d7952164be58f8cc5aff1536b12262ec03d8a7d252abb99b70611",
+    "outputs/simulation-results.json": "3d94a510b760abfe2356d96d821f09dfe2bff40866da4bd47669fe8e3df6e0c6",
+    "outputs/verification-results.json": "e09d67a1f83f35306032c94db256f11c3800ff1bc5fd622cde30e4dc3c01d265",
+    "outputs/rtp-claim-table.json": "84f48588314bef5c38c35f0c97d94c58f01c4bd39ea089e0c9e8c2308461e239",
+    "outputs/verification-stats.json": "d4d62ef3e7083e6b87cc17316c17167b8a9b6b9ac92aad200ca64e545e5e3c19",
+    "data/plinko-master-10100bets.json": "871c485ef0d55ca38af2cece4880abdc32fe8b62584468c5d4cfdfd01506fc95",
+    "plinkoConfig.json": "f8eaf67e1ffc63ee0dc21123447581c55f443c167dcb451b45ab7cd108fe712f"
+  },
+  "verdict": "PROVABLY FAIR — Full Pass",
+  "scored": {
+    "passed": 21,
+    "flags": 0,
+    "hardFail": 0,
+    "of": 21
+  },
+  "capturedAt": {
+    "from": "2026-07-07T02:12:05.652Z",
+    "to": "2026-07-07T04:16:32.589Z"
+  },
+  "environment": {
+    "host": "qa.liqd.com",
+    "stage": "pre-production",
+    "qualifier": "provisional"
+  },
+  "reproduction": {
+    "workflow": ".github/workflows/reproduce.yml",
+    "runner": "ubuntu-latest",
+    "node": "22",
+    "command": "npm ci && npm test"
+  },
+  "supersedes": null,
+  "signature": "SHA256:gEujiJm2pRyq7lQsfYQfQ1r97H/J7GdaKHbOW8GtikY"
+}

@@ -1,0 +1,471 @@
+[
+  {
+    "name": "M00 binomP coefficient corrupted",
+    "file": "src/config.ts",
+    "find": "for (let i = 0; i < k; i++) c = (c * (rows - i)) / (i + 1);",
+    "replace": "for (let i = 0; i < k; i++) c = (c * rows) / (i + 1);",
+    "runner": "verify",
+    "expect": "[FAIL] Step 13",
+    "guard": "Step 13 (binomP vs an independent integer Pascal recurrence) rejects a wrong binomial coefficient; Step 10's exhaustive path enumeration and the RTP-pin unit tests catch it too"
+  },
+  {
+    "name": "M01 RNG digest bytes read little-endian (BE -> LE)",
+    "file": "src/rng.ts",
+    "find": "  const u = digest.readUInt32BE(0); // §2 Step 2: bytes 0..3, big-endian",
+    "replace": "  const u = digest.readUInt32LE(0); // §2 Step 2: bytes 0..3, big-endian",
+    "runner": "mocha",
+    "expect": "failing",
+    "guard": "the spec self-test (tests/plinko/rngSpecTests.ts: the docs/ALGORITHM.md §5 u32 vectors, bits and paths) and the real captured-bet reproduction test reject the wrong byte order. Retargeted 20 Oct 2026 to the rebuilt src/rng.ts (it used to edit the earlier port's chunk-scan line)"
+  },
+  {
+    "name": "M02 payout table cell corrupted (config edited, pin left alone)",
+    "file": "plinkoConfig.json",
+    "find": "0.5,1,1.1,2.1,5.6]",
+    "replace": "0.6,1,1.1,2.1,5.6]",
+    "runner": "mocha",
+    "expect": "SHA-256 mismatch",
+    "guard": "loadPlinkoConfig()'s SHA-256 pin aborts the suite when the multiplier table differs from the audited artifact"
+  },
+  {
+    "name": "M03 duplicate nonce inside an epoch",
+    "file": "tests/verify.ts",
+    "find": "const cfg = loadPlinkoConfig();",
+    "replace": "const cfg = loadPlinkoConfig();\nds.bets[1].nonce = ds.bets[0].nonce; // MUTATION: duplicate nonce",
+    "runner": "verify",
+    "expect": "[FAIL] Step 4",
+    "guard": "Step 4 requires an epoch's distinct-nonce count to equal its bet count and its max nonce to be epochSize-1, so a duplicate cannot hide behind a 0..max membership scan. Round-1 counterexample from the external review; injected after the dataset hash check so it reaches the step rather than being stopped by the pin (the pin itself is covered by M02)."
+  },
+  {
+    "name": "M04 non-numeric winningAmount",
+    "file": "tests/verify.ts",
+    "find": "const cfg = loadPlinkoConfig();",
+    "replace": "const cfg = loadPlinkoConfig();\nds.bets[0].winningAmount = 'not-a-number'; // MUTATION: NaN amount",
+    "runner": "verify",
+    "expect": "[FAIL] Step 8",
+    "guard": "Step 8 rejects a non-finite betAmount/winningAmount/multiplier before the tolerance comparison — without the Number.isFinite guard a NaN makes every comparison silently false and the bet passes. Round-1 counterexample from the external review."
+  },
+  {
+    "name": "M05 bet relabelled to an undeclared phase",
+    "file": "tests/verify.ts",
+    "find": "const cfg = loadPlinkoConfig();",
+    "replace": "const cfg = loadPlinkoConfig();\nds.bets[0].phase = 'Z'; // MUTATION: undeclared phase label",
+    "runner": "verify",
+    "expect": "[FAIL] Step 11",
+    "guard": "Step 11 compares the observed per-phase bet counts against EXPECTED_PHASE_BETS in src/loader.ts — a CODE constant, not the dataset's own meta.phases — and rejects any label the plan never declared, so 'the capture plan ran in full' is enforced rather than asserted. Round-1 counterexample from the external review; the comparison moved off meta in revision 4 (round-3 ledger D.6), which is why relabelling a bet now also has to survive a header reconciliation that it cannot."
+  },
+  {
+    "name": "M06 meta.preCapture removed",
+    "file": "tests/verify.ts",
+    "find": "const cfg = loadPlinkoConfig();",
+    "replace": "const cfg = loadPlinkoConfig();\ndelete ds.meta.preCapture; // MUTATION: drop the pre-capture anchor",
+    "runner": "verify",
+    "expect": "[FAIL] Step 2 —",
+    "guard": "Step 2 treats meta.preCapture as MANDATORY — it is the link that anchors the commitment chain before epoch 0, so a dataset without it cannot pass rather than silently scoring 201/201. Round-1 counterexample from the external review."
+  },
+  {
+    "name": "M07 Pass 1 statistics blanked on one config",
+    "file": "outputs/simulation-results.json",
+    "find": "\"slotPValue\": 0.9153319029813883,",
+    "replace": "\"slotPValue\": null,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "Step 16 requires every Pass 1 row to carry FINITE slotPValue/r1Z/simRTP/theoreticalRTP — a blanked row is not a chi-squared fail (undefined < alpha is false) and would otherwise be counted as clean. Round-1 counterexample from the external review."
+  },
+  {
+    "name": "M08 Pass 1 simulated RTP drifted off theory",
+    "file": "outputs/simulation-results.json",
+    "find": "\"simRTP\": 0.989274899995375,",
+    "replace": "\"simRTP\": 0.95,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "Step 16 requires each config's simulated RTP to sit within 6 standard errors of its theoretical RTP, so an artifact whose rows are structurally complete but statistically impossible is rejected. Without it nothing in the suite ever compared Pass 1's RTP to theory."
+  },
+  {
+    "name": "M09 Pass 2 population shrunk (one epoch's row relabelled away)",
+    "file": "outputs/simulation-results.json",
+    "find": "\"epoch\": 5,",
+    "replace": "\"epoch\": 9005,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 takes its attestation population from the DATASET's revealed seeds, not from the artifact, so an artifact that drops or renames a row leaves a revealed epoch with no Pass-2 row and fails on missingRows. The artifact cannot define its own coverage. Round-1 counterexample from the external review."
+  },
+  {
+    "name": "M10 Pass 2 payout-weighted summary fabricated",
+    "file": "outputs/simulation-results.json",
+    "find": "\"countZEarlyBelow1645\": 6,",
+    "replace": "\"countZEarlyBelow1645\": 3,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 re-derives zEarlyMean, meanZEarlyMinusLate, tZEarlyMinusLate and countZEarlyBelow1645 from the per-epoch z values it recomputed itself, so the summary block cannot be edited independently of the rows it summarises. Round-1 counterexample from the external review."
+  },
+  {
+    "name": "M11 calibrated expectation inflated in the calibration artifact",
+    "file": "outputs/calibration-results.json",
+    "find": "\"expectedZEarlyBelow1645Calibrated\": 5.8555669877159655",
+    "replace": "\"expectedZEarlyBelow1645Calibrated\": 10.1",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 recomputes the calibrated null itself from src/calibration.ts over the dataset's epoch population and FAILS when the committed calibration artifact disagrees at 1e-9. This is the regression test for round-2 finding N1: before the fix the calibrated expectation existed only as a hard-coded literal in this step's detail string and nothing could have contradicted it."
+  },
+  {
+    "name": "M12 calibrated per-config left tail replaced by the naive 0.05 (PRIMARY window)",
+    "file": "outputs/calibration-results.json",
+    "find": "\"windowRtpThreshold\": -0.5375759100251694,\n      \"latticeUnit\": 0.2,\n      \"leftTailProbability\": 0,",
+    "replace": "\"windowRtpThreshold\": -0.5375759100251694,\n      \"latticeUnit\": 0.2,\n      \"leftTailProbability\": 0.05,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 checks every per-configuration left-tail probability in the calibration artifact against its own exact recomputation, not just the top-line expectation, so substituting the naive symmetric 5% for the configuration that carries 49 of the 202 epochs is rejected. This targets the PRIMARY (50-nonce, as played per seed in this capture) block — the scored one — where 16r/3 has a left tail of exactly 0 because no 50-drop window on that board can reach the threshold; M34 is the same edit against the secondary extended-window block."
+  },
+  {
+    "name": "M13 calibration paired with a different simulation artifact",
+    "file": "outputs/calibration-results.json",
+    "find": "\"sha256\": \"3d94a510b760abfe2356d96d821f09dfe2bff40866da4bd47669fe8e3df6e0c6\"",
+    "replace": "\"sha256\": \"0000000000000000000000000000000000000000000000000000000000000000\"",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 requires the calibration artifact to record the SHA-256 of the simulation artifact actually on disk, so a null computed for a different Pass 2 run (a different window length or a different epoch set) cannot be scored against this one."
+  },
+  {
+    "name": "M14 published dataset hash drifted in a chapter",
+    "file": "README.md",
+    "find": "871c485ef0d55ca38af2cece4880abdc32fe8b62584468c5d4cfdfd01506fc95",
+    "replace": "871c485ef0d55ca38af2cece4880abdc32fe8b62584468c5d4cfdfd01506fc96",
+    "runner": "verify",
+    "expect": "[FAIL] Step 20",
+    "guard": "Step 20 scans every 64-hex token in every chapter — keyword-free — and requires each to equal a loader pin or sit on an allow-listed worked-example line, so a re-pin that is not propagated into the prose fails the build. Round-1 counterexample from the external review.",
+    "note": "Retargeted 2026-09-10 from scope-and-methodology.md to README.md: the chapter set is consolidated away in the published package, so a chapter-targeted entry could only run in the working repository. README.md carries the same published hash in BOTH trees, so the registry is now identical either side and needs no package-only delta. FIXED 2026-09-11 (client QA): the find string carried the backticks the hash wore in scope-and-methodology.md, the chapter this entry targeted before consolidation. The PACKAGE README prints the hash bare inside a fenced block, so the entry could not apply there and the battery exited 2 before verification — the mutation was NOT RUN, which a registry must never report as anything but a failure. The bare hash is a substring of the backticked form, so the entry now applies in the working repository AND in the published package."
+  },
+  {
+    "name": "M15 Pass 1 declares a population the pinned config does not have",
+    "file": "outputs/simulation-results.json",
+    "find": "\"configs\": 28,",
+    "replace": "\"configs\": 0,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "Step 16 takes its expected population from allConfigs(plinkoConfig.json), not from the artifact, and additionally rejects an artifact whose own declared `configs` disagrees with the pinned config. Round-3 counterexample K1: with `configs` read from the artifact, setting it to 0 made every ratio guard degenerate to 0/0 — which is not a failure — and printed 'Bonferroni α/0=Infinity' with nothing noticing."
+  },
+  {
+    "name": "M16 Pass 1 result set emptied while the header keeps the round counts",
+    "file": "tests/steps/simulation.ts",
+    "find": "  const sim = JSON.parse(fs.readFileSync(simPath, 'utf-8'));",
+    "replace": "  const sim = JSON.parse(fs.readFileSync(simPath, 'utf-8'));\n  sim.pass1_fresh_seeds.configs = 28; sim.pass1_fresh_seeds.results = []; // MUTATION: the 28,000,000-round simulation is absent",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "Step 16 requires the Pass-1 row SET to equal allConfigs(cfg) as a set of (rows, riskLevel), so an empty result set FAILs on 28 absent boards instead of passing 0/0. Round-3 counterexample K1, injected after the artifact is read so it exercises the population guard rather than the calibration/simulation hash pairing (which the on-disk edit in M15 already covers). Before the fix this produced [PASS] Step 16, 21/21, PROVABLY FAIR — Full Pass, exit 0, and check-outputs OK: the audit's authoritative RTP and uniformity evidence could be entirely missing from a shipped Full Pass."
+  },
+  {
+    "name": "M17 Pass 1 rows replaced by 28 identical copies of one board",
+    "file": "tests/steps/simulation.ts",
+    "find": "  const pass1 = sim.pass1_fresh_seeds ?? {};",
+    "replace": "  const pass1 = sim.pass1_fresh_seeds ?? {};\n  pass1.results = Array.from({ length: 28 }, () => JSON.parse(JSON.stringify(pass1.results[0]))); // MUTATION: 28 copies of one config",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "Step 16 asserts set equality against allConfigs(cfg), so 28 copies of a single board FAIL on 27 missing boards and 27 duplicates. Round-3 counterexample K2 — the G-BIND predicate round 2 adopted for Step 17 and never applied to Step 16. Before the fix: [PASS] Step 16, detail '28 configs … 28/28 result rows; chi²: 0/28 … RTP within 6·SE of theory: 28/28', 21/21 Full Pass — 27 of the 28 audited boards never simulated. The repo's own battery missed it too: M07 blanks ONE config and M08 drifts ONE config, both of which a copied row set satisfies."
+  },
+  {
+    "name": "M18 one Pass 1 board relabelled onto another (artifact edit)",
+    "file": "outputs/simulation-results.json",
+    "find": "\"rows\": 9,\n        \"riskLevel\": 1,\n        \"wtf\": false",
+    "replace": "\"rows\": 8,\n        \"riskLevel\": 1,\n        \"wtf\": false",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "The on-disk form of the same G-BIND defect as M17: the row count is still 28 and every statistic is still genuine, but 8r/1 now appears twice and 9r/1 not at all, so a board the audit claims to have simulated was not. Step 16 names both the duplicate and the absentee. A count is not an identity."
+  },
+  {
+    "name": "M19 calibration per-epoch population relabelled onto another board",
+    "file": "outputs/calibration-results.json",
+    "find": "\"epoch\": 0,\n      \"rows\": 8,",
+    "replace": "\"epoch\": 0,\n      \"rows\": 16,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 re-derives the whole perEpoch[] array against revealedEpochConfigs(bets, seeds) — the DATASET's own record of which board each epoch ran on — so a relabelled epoch is rejected. Round-3 counterexample K3: perEpoch[] was read by nothing at all, and a reviewer relabelled all 202 rows to 16r/3 without moving the verdict off 21/21 Full Pass."
+  },
+  {
+    "name": "M20 calibration cross-check anchor fabricated",
+    "file": "outputs/calibration-results.json",
+    "find": "\"probability\": 0.025598664516507608,",
+    "replace": "\"probability\": 0.999,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 recomputes byConfig[].crossCheck — method, probability and relative difference — and compares it like any other figure. This block is the most exposed thing in the calibration artifact: MANIFEST.md#payouts-and-rtp cites it as one of the two independent algorithms anchoring the DP, and before round 3 nothing in the repository read it; tests/plinko/calibrationTests.ts recomputes the cross-check but never opens the artifact. Round-3 counterexample K3."
+  },
+  {
+    "name": "M21 calibration per-config payout SD doctored (PRIMARY window)",
+    "file": "outputs/calibration-results.json",
+    "find": "\"sd\": 20.455688757384024,\n      \"windowNonces\": 50,",
+    "replace": "\"sd\": 99.0,\n      \"windowNonces\": 50,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 recomputes mu, sd, sumThreshold, windowRtpThreshold, latticeUnit, epochs and windowNonces for every byConfig row, not just leftTailProbability. Before round 3 only leftTailProbability was compared, so the entire threshold derivation (mu -> sumThreshold -> windowRtpThreshold) could be replaced with fiction while the artifact still passed. Round-3 counterexample K3."
+  },
+  {
+    "name": "M22 calibration method string replaced",
+    "file": "outputs/calibration-results.json",
+    "find": "\"method\": \"exact lattice convolution",
+    "replace": "\"method\": \"I made this up. exact lattice convolution",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Step 17 compares the artifact's declared `method` against CALIBRATION_METHOD in src/calibration.ts. The method string is what the chapters cite when they say the null is exact rather than approximate, so it is a published claim, not decoration. A reviewer set it to 'I made this up' and got 21/21 Full Pass. Round-3 counterexample K3."
+  },
+  {
+    "name": "M23 Step 6 local re-drop forced to coincide on 5% of samples (injected coincidence rate)",
+    "file": "tests/steps/determinism.ts",
+    "find": "      const wrong = revealPlinko(ss, WRONG_CLIENT, b.nonce, b.numberOfRows);",
+    "replace": "      const wrong = tested % 20 === 0 ? correct : revealPlinko(ss, WRONG_CLIENT, b.nonce, b.numberOfRows); // MUTATION: 5% of drops ignore the client seed",
+    "runner": "verify",
+    "expect": "[FAIL] Step 6",
+    "guard": "SCOPE: this mutation injects a COINCIDENCE RATE into Step 6's own local comparison — it does NOT and cannot make a remote server ignore the client seed. Step 6 computes both the correct-seed and the wrong-seed path LOCALLY from src/rng.ts, so it is a client-seed SENSITIVITY property of our re-implementation plus a test of the coincidence predicate; the comparison against what the casino actually served is Step 5. The mutation forces equality on 1 sample in 20 and Step 6 must reject that: the same-path count is Poisson-binomial with p_i = 2^-rows_i, expectation 0.5425 over this 1,010-bet sample, and the step fails when P(X >= observed) < 1e-3. Round-3 counterexample K7: the old rule `changed / tested >= 0.95` tolerated 51 coincidences, roughly 94x the exact null, so an injected 5% coincidence rate PASSED. It now produces ~51 coincidences against P(X >= 51) = 2.9e-83. The name previously read \"server ignores the client seed on 5% of drops\", which overstated what a local mutation can demonstrate."
+  },
+  {
+    "name": "M24 audited population pin moved off the delivered capture",
+    "file": "src/loader.ts",
+    "find": "export const EXPECTED_BETS = 10100;",
+    "replace": "export const EXPECTED_BETS = 10050;",
+    "runner": "verify",
+    "expect": "[FAIL] Step 11",
+    "guard": "Step 11 must hard-FAIL when the pinned population no longer equals the delivered capture. This is what proves EXPECTED_BETS is the thing Steps 11/12 actually assert against: if moving the pin off the capture did not break the audit, the constant would be decoration and the population would once again be whatever the dataset's own meta said it was. Origin: round-3 ledger D.6 and framework gate-population D1/D2 — a coherent shrink of bets[] with meta.plannedTotal/meta.epochSize/meta.phases doctored to agree and the dataset SHA re-pinned. On the sibling dice repo that attack returned 21/21 Full Pass on a 4,020-bet dataset; on mines it returned Conditional Pass, exit 0."
+  },
+  {
+    "name": "M25 EXPECTED_EPOCH_SIZE moved off 50",
+    "file": "src/loader.ts",
+    "find": "export const EXPECTED_EPOCH_SIZE = 50;",
+    "replace": "export const EXPECTED_EPOCH_SIZE = 49;",
+    "runner": "verify",
+    "expect": "[FAIL] Step 12",
+    "guard": "Step 12 asserts the epoch size against the CODE constant and requires the three pins to stay mutually consistent (EXPECTED_SEEDS x EXPECTED_EPOCH_SIZE == EXPECTED_BETS); Step 4's nonce-range check takes the same constant. Before revision 4 the epoch size came off ctx.epochSize, i.e. meta.epochSize — the file being scored — so a capture truncated to a shorter epoch could re-declare its way past both steps. The destructured binding is why a grep for `=== meta.` missed it for three review rounds."
+  },
+  {
+    "name": "M26 Pass 1 row's simRTP AND theoreticalRTP moved together to a fabricated 200%",
+    "file": "outputs/simulation-results.json",
+    "find": "        \"theoreticalRTP\": 0.98984375,\n        \"simRTP\": 0.989274899995375,",
+    "replace": "        \"theoreticalRTP\": 2,\n        \"simRTP\": 2,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "Step 16's RTP-convergence guard compared simRTP with theoreticalRTP — TWO EDITABLE VALUES IN THE SAME ARTIFACT — so moving both to the same fabricated number gave |2 - 2| = 0 and the guard saw a perfect run. The real 8r/1 mean is 0.98984375 and six standard errors at one million rounds are 0.0033480926093962453, so 2 is about 1,810 SE above the truth. Step 16 now derives the reference from the SHA-256-pinned plinkoConfig.json via payoutMuSd().mu — the same theoreticalRTP() the producer calls — requires the artifact's DECLARED theory to equal it at 1e-12, and compares simRTP with the RECOMPUTED mean. Both halves of the forgery are rejected independently. See X08 for the same edit with the dependent calibration hash refreshed, which is the exact configuration the reviewer executed."
+  },
+  {
+    "name": "M27 recorded drop paths regenerated from a different client seed",
+    "file": "tests/verify.ts",
+    "find": "const seeds: Seed[] = ds.seeds;",
+    "replace": "const seeds: Seed[] = ds.seeds;\n// MUTATION M27: rewrite the RECORDED `dropDetails` of 200 bets with the path a\n// DIFFERENT client seed produces, leaving every other field — including each bet's own\n// recorded `clientSeed` — untouched. Step 5 recomputes from (serverSeed, clientSeed,\n// nonce, rows) and compares with the recorded outcome, so it must reject this.\n// Injected here rather than in the dataset because editing\n// data/plinko-master-10100bets.json changes its SHA-256 and loadDataset() exits first.\n{\n const __m27reveal = require('../src/rng').revealPlinko;\n const __m27seeds = new Map<string, string>();\n for (const s of seeds) if (s.serverSeed) __m27seeds.set(s.hashedServerSeed, s.serverSeed);\n let __m27n = 0;\n for (const b of bets) {\n if (__m27n >= 200) break;\n const ss = __m27seeds.get(b.hashedServerSeed);\n if (!ss) continue;\n b.dropDetails = __m27reveal(ss, 'qa08-a-different-client-seed', b.nonce, b.numberOfRows).path;\n __m27n++;\n }\n}",
+    "runner": "verify",
+    "expect": "[FAIL] Step 5",
+    "guard": "The claim \"the client seed genuinely drives every drop\" was routed to Step 6, which computes BOTH the correct-seed and the wrong-seed path locally from src/rng.ts — a sensitivity property of our own re-implementation plus a test of the coincidence predicate, not an observation of server behaviour. The comparison with what was actually RECORDED is Step 5. This mutation supplies the missing data-level counterexample: 200 recorded paths are replaced with those a different client seed produces, and Step 5 must reject them for path disagreement. It is injected after the dataset hash guard because a dataset edit aborts loadDataset() before any step runs."
+  },
+  {
+    "name": "M28 negative count of configurations in the coverage artifact",
+    "file": "outputs/coverage-results.json",
+    "find": "\"totalConfigs\": 28,",
+    "replace": "\"totalConfigs\": -1,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 20",
+    "guard": "A negative count of configurations is physically impossible and NOTHING rejected it as impossible: the run printed 21/21 and 'PROVABLY FAIR — Full Pass'. Only the derived-emission guard noticed, after the verdict was printed, and it proves the bytes moved rather than that the value cannot exist — re-baseline the artifact and it walks straight through, which is why gate-values.sh grades a pin-only rejection as a failure. coverage-results.json is EMITTED, not consumed, so no scored step owned its values; Step 20 owns them now and domain-checks every numeric leaf of both committed emission artifacts against bounds derived from the pinned plinkoConfig.json and src/loader.ts. Same class as a prior finding: the artifact was trusted to describe itself."
+  },
+  {
+    "name": "M29 probability above 1 in the calibration artifact (PRIMARY window)",
+    "file": "outputs/calibration-results.json",
+    "find": "\"windowRtpThreshold\": 0.9157986635850425,\n      \"latticeUnit\": 0.1,\n      \"leftTailProbability\": 0.04130688037985672",
+    "replace": "\"windowRtpThreshold\": 0.9157986635850425,\n      \"latticeUnit\": 0.1,\n      \"leftTailProbability\": 1.5",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "A left-tail probability of 1.5 is impossible. Step 17 already RECOMPUTES every numeric field of the calibration artifact, so this also fails the recompute — but the two rejections say different things and both are worth having: the recompute proves the value disagrees with our maths, the domain check proves it could not exist at any parameters. The domain is PROBABILITY = [0,1], declared in src/domains.ts, not inferred from the file."
+  },
+  {
+    "name": "M30 simulated RTP outside the attainable paytable range",
+    "file": "outputs/simulation-results.json",
+    "find": "\"simRTP\": 0.989274899995375,",
+    "replace": "\"simRTP\": 1001,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "A mean of drawn multipliers cannot fall outside the smallest and largest multiplier the paytable contains; the pinned plinkoConfig.json spans [0, 1000], so 1001 is impossible at any sample size. Note the bound is the PAYTABLE's attainable range and deliberately NOT [0,1] — G-VALID: the committed artifact contains honest window RTPs above 1 (rtpEarly = 1.0028), and rejecting those would be the mines defect. This mutation is the domain-layer sibling of M26/X08: hardened the 6-SE comparison, adds the outer bound that holds even when a forger moves every related field together."
+  },
+  {
+    "name": "M31 Pass 2 edge-hit count inflated past the drops the experiment contains",
+    "file": "outputs/simulation-results.json",
+    "find": "\"edgeHitsEarly\": 1063,",
+    "replace": "\"edgeHitsEarly\": 1000000000,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "An edge hit is one drop landing in slot 0 or slot rows, so a window cannot hold more of them than it holds drops: 202 revealed epochs x 5,000 nonces = 1,010,000, both factors declared in source (EXPECTED_SEEDS in src/loader.ts, PASS2_NONCES_PUBLISHED in src/config.ts) and neither read from the artifact. Step 17 now re-counts the edge hits itself over the epochs it attests AND src/domains.ts bounds the field, so this fails twice over. X10 is the same edit with the dependent calibration hash refreshed — that is the real test of the new guard, since without the refresh Step 17 also fails on the artifact pairing."
+  },
+  {
+    "name": "M32 Pass 2 window RTP set to a value its own board cannot pay",
+    "file": "outputs/simulation-results.json",
+    "find": "\"rtpEarly\": 1.0028000000000055,",
+    "replace": "\"rtpEarly\": 0,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "Epoch 0 ran on the 8-row low-risk board, whose smallest multiplier is 0.5, so a 0% window RTP is impossible there — but the artifact-wide range is the UNION over all boards, [0, 1000], because the high-risk boards contain a 0x slot, and 0 sat inside it. Step 17 now recomputes rtpEarly/rtpLate from the revealed seeds (exact, tol 1e-9) and additionally bounds each against boardMultiplierRange for the board the DATASET says the epoch ran on. X11 is the same edit with the dependent calibration hash refreshed."
+  },
+  {
+    "name": "M33 Pass 2 early-late two-sided p-value replaced by zero",
+    "file": "outputs/simulation-results.json",
+    "find": "\"pTwoSidedZEarlyMinusLate\": 0.5517870362092148,",
+    "replace": "\"pTwoSidedZEarlyMinusLate\": 0,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "p = 0 is a legal probability, so no value domain can reject it; only a recompute can. Step 17 now re-derives it as 2*(1-normalCDF(|t|)) from the per-epoch z values it recomputed itself, with normalCDF imported from src/stats.ts — the same module the producer uses, so the two sides cannot drift over the approximation. X12 is the same edit with the dependent calibration hash refreshed."
+  },
+  {
+    "name": "M34 calibrated per-config left tail replaced by the naive 0.05 (EXTENDED window)",
+    "file": "outputs/calibration-results.json",
+    "find": "\"windowRtpThreshold\": 0.8370303728646706,\n        \"latticeUnit\": 0.2,\n        \"leftTailProbability\": 0.001893108813446302,",
+    "replace": "\"windowRtpThreshold\": 0.8370303728646706,\n        \"latticeUnit\": 0.2,\n        \"leftTailProbability\": 0.05,",
+    "runner": "verify",
+    "expect": "[FAIL] Step 17",
+    "guard": "The secondary extendedWindow block is published beside the primary result, so Step 17 re-derives every numeric field of it too — the same per-configuration comparison M12 covers for the scored window. Without this the extended figures could be edited freely while the primary block still reconciled, and the chapters quote both."
+  },
+  {
+    "name": "M35 biased bit draw in src/rng.ts (u mod 3, then mod range)",
+    "file": "src/rng.ts",
+    "find": "  return u % range;",
+    "replace": "  return (u % 3) % range; // MUTATION: biased draw, P(bit = 1) = 1/3 at range 2",
+    "runner": "mocha",
+    "expect": "failing",
+    "guard": "PLINKO-08. Puts a bias into the RNG itself: the range-2 bit becomes (u mod 3) mod 2, so P(1) = 1/3. The spec self-test (tests/plinko/rngSpecTests.ts) fails on the §5 u32 vectors, the bits-equal-u32-mod-2 checks and the paths, and the captured-bet reproduction test in tests/plinko/rngTests.ts fails too. Retargeted 20 Oct 2026: until then M35 removed the rejection step from the earlier port of src/rng.ts and the two range-3,000,000,000 rejection vectors had to fail; the rebuilt module has no rejection step (docs/ALGORITHM.md §2 defines none) and those vectors were removed with it. Step 5 also rejects this edit on the capture (path mismatches), but the runner here is mocha."
+  },
+  {
+    "name": "M36 dispersion floor raised above the committed min chi2/df",
+    "file": "tests/steps/simulation.ts",
+    "find": "  const CHI2_FLOOR_RATIO = 0.02;     // fail if chi²/df falls below this",
+    "replace": "  const CHI2_FLOOR_RATIO = 0.5; // MUTATION: floor above the real min chi2/df",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "PLINKO-31. The dispersion guard rejects a per-config histogram whose re-derived chi2/df is implausibly low (a synthesized round(binomial*N) fit). Raising the floor to 0.5 puts it above this run's real min chi2/df (0.4104), so every real config now reads as too-good and Step 16 fails — proving the floor is evaluated against the committed statistics rather than being dead code."
+  },
+  {
+    "name": "M37 revealed server seed corrupted (commitment broken)",
+    "file": "tests/verify.ts",
+    "find": "const cfg = loadPlinkoConfig();",
+    "replace": "const cfg = loadPlinkoConfig();\nds.seeds[0].serverSeed = 'ffffffffffffffffffffffffffffffff'; // MUTATION",
+    "runner": "verify",
+    "expect": "[FAIL] Step 1 —",
+    "guard": "PLINKO-29 (previously no killing mutation for Step 1). A revealed server seed is replaced with a well-formed but wrong value, so SHA-256(utf8(serverSeed)) no longer equals its published hashedServerSeed. Step 1 (Seed Hash Integrity) rejects it. A broken commitment is inherently caught by more than one guard — the same tampered seed also fails Step 5 (its epoch's bets no longer recompute) and Step 17 (its epoch's Pass-2 attestation) — which is defence in depth; this entry names Step 1, whose hash check is the primary guard. Injected after the dataset hash check so it reaches the step rather than aborting at the pin."
+  },
+  {
+    "name": "M38 bet moved into a foreign epoch (mixed hash within epoch)",
+    "file": "tests/verify.ts",
+    "find": "const cfg = loadPlinkoConfig();",
+    "replace": "const cfg = loadPlinkoConfig();\nds.bets[1].epoch = 1; // MUTATION",
+    "runner": "verify",
+    "expect": "[FAIL] Step 3",
+    "guard": "PLINKO-29 (previously no killing mutation for Step 3). One bet is relabelled into an adjacent epoch while keeping its own hashedServerSeed, so that epoch now contains two distinct server-seed hashes. Step 3 (Hash Consistency Within Epoch) groups by epoch (not by hash) and rejects the mixed epoch. Isolated: the per-hash nonce audit (Step 4) and the seed-keyed recomputation (Step 5) read hashedServerSeed, which is unchanged, so they still pass. Injected after the dataset hash check."
+  },
+  {
+    "name": "M39 served multiplier off its paytable cell",
+    "file": "tests/verify.ts",
+    "find": "const cfg = loadPlinkoConfig();",
+    "replace": "const cfg = loadPlinkoConfig();\nds.bets[0].multiplier = 123.45; ds.bets[0].winningAmount = (parseFloat(ds.bets[0].betAmount) * 123.45).toFixed(8); // MUTATION",
+    "runner": "verify",
+    "expect": "[FAIL] Step 7",
+    "guard": "PLINKO-29 (previously no killing mutation for Step 7). A bet's served multiplier is moved off the value its (rows, risk, slot) cell holds in the pinned table, and its winningAmount is moved with it so the payout arithmetic still reconciles. Step 7 (Multiplier Lookup) rejects the multiplier that no longer equals payoutTable[winningSlot]. Isolated: keeping winningAmount = betAmount x multiplier leaves Step 8 green, and the slot itself is unchanged so Step 5 still recomputes. Injected after the dataset hash check."
+  },
+  {
+    "name": "M40 a standard config starved below the Phase-A floor",
+    "file": "tests/verify.ts",
+    "find": "const cfg = loadPlinkoConfig();",
+    "replace": "const cfg = loadPlinkoConfig();\nds.bets.filter(b=>b.phase==='A'&&b.numberOfRows===8&&b.riskLevel===1).slice(0,160).forEach(b=>{b.riskLevel=2;}); // MUTATION",
+    "runner": "verify",
+    "expect": "[FLAG] Step 9",
+    "guard": "PLINKO-29 (previously no killing mutation for Step 9) and PLINKO-15. 160 of the 200 Phase-A drops on the 8r/risk-1 board are relabelled to risk 2, dropping that config to 40 Phase-A bets — below MIN_PHASE_A_BETS_PER_CONFIG (50) in src/loader.ts. Step 9 (Config Completeness) flags the config below floor, which proves the floor assertion is live rather than dead. The relabelled bets also carry the wrong multiplier for their new board (Step 7) and change an epoch's board for Pass-2 attestation (Step 17); this entry names Step 9. Injected after the dataset hash check."
+  },
+  {
+    "name": "M41 WTF tail multipliers scaled (RTP off its band)",
+    "file": "tests/verify.ts",
+    "find": "const cfg = loadPlinkoConfig();",
+    "replace": "const cfg = loadPlinkoConfig();\ncfg.wtf_mode.odds[0] *= 3; cfg.wtf_mode.odds[13] *= 3; // MUTATION",
+    "runner": "verify",
+    "expect": "[FLAG] Step 10",
+    "guard": "PLINKO-29 (previously no killing mutation for Step 10). Both symmetric WTF tail multipliers are tripled in the in-memory config (symmetry preserved, so this is not a Step 19 artefact), pushing the WTF configuration's analytical RTP far off 99%. Step 10 (House Edge / RTP Audit) flags the per-config RTP deviation beyond the 1% band. A config the verifier reads for theory is read by more than one guard: Step 16 (theory recomputed from the pinned config) and Step 17 (per-board payout mean/SD) also reject it; this entry names Step 10. Injected after the dataset hash check."
+  },
+  {
+    "name": "M42 a Phase-D drop path corrupted",
+    "file": "tests/verify.ts",
+    "find": "const cfg = loadPlinkoConfig();",
+    "replace": "const cfg = loadPlinkoConfig();\nds.bets.filter(b=>b.phase==='D').slice(0,1).forEach(b=>{b.dropDetails = b.dropDetails.split('').reverse().join('');}); // MUTATION",
+    "runner": "verify",
+    "expect": "[FLAG] Step 14",
+    "guard": "PLINKO-29 (previously no killing mutation for Step 14). One Phase-D bet's recorded dropDetails path is reversed, so it no longer matches the path recomputed from its revealed seed. Step 14 (Phase D — Client Seed Variation) flags matched < tested. The same recompute mismatch is independently caught by Step 5 over the whole population; this entry names Step 14, the Phase-D-specific guard. Injected after the dataset hash check."
+  },
+  {
+    "name": "M43 a WTF (Phase-E) drop path corrupted",
+    "file": "tests/verify.ts",
+    "find": "const cfg = loadPlinkoConfig();",
+    "replace": "const cfg = loadPlinkoConfig();\nds.bets.filter(b=>b.phase==='E').slice(0,1).forEach(b=>{b.dropDetails = 'LLLLLLLLLLLLL';}); // MUTATION",
+    "runner": "verify",
+    "expect": "[FAIL] Step 15",
+    "guard": "PLINKO-29 (previously no killing mutation for Step 15). One Phase-E (WTF) bet's recorded dropDetails path is overwritten with a constant, so it no longer matches the path recomputed from its revealed seed. Step 15 (Phase E — WTF Mode Verification) rejects the recompute mismatch. Step 5 catches the same mismatch over the whole population; this entry names Step 15, the WTF-specific guard. Injected after the dataset hash check."
+  },
+  {
+    "name": "M44 Phase-C board changed (bet-size invariance not isolated)",
+    "file": "tests/verify.ts",
+    "find": "const cfg = loadPlinkoConfig();",
+    "replace": "const cfg = loadPlinkoConfig();\nds.bets.filter(b=>b.phase==='C').slice(0,1).forEach(b=>{b.riskLevel = 1;}); // MUTATION",
+    "runner": "verify",
+    "expect": "[FAIL] Step 18",
+    "guard": "PLINKO-29 (previously no killing mutation for Step 18). One Phase-C drop is moved to a second risk level, so Phase C is no longer a single board equal to the Phase-B board. Step 18 (Bet-Size Invariance) rejects it because the stake comparison is no longer isolated. The relabelled bet also carries the wrong multiplier for its new board (Step 7) and changes an epoch's Pass-2 board (Step 17); this entry names Step 18. Injected after the dataset hash check."
+  },
+  {
+    "name": "M45 WTF tail multiplier made asymmetric",
+    "file": "tests/verify.ts",
+    "find": "const cfg = loadPlinkoConfig();",
+    "replace": "const cfg = loadPlinkoConfig();\ncfg.wtf_mode.odds[0] += 1; // MUTATION",
+    "runner": "verify",
+    "expect": "[FAIL] Step 19",
+    "guard": "PLINKO-29 (previously no killing mutation for Step 19). One WTF tail multiplier is bumped by 1 in the in-memory config, so odds[0] != odds[13] and the WTF table is no longer left/right symmetric. Step 19 (Multiplier Table Symmetry) rejects it. The change is a negligible RTP shift (0.5^13) so it does not trip Step 10; because the verifier recomputes theory from the config, Step 16 and Step 17 also see the changed table; this entry names Step 19. Injected after the dataset hash check."
+  },
+  {
+    "name": "M46 live slot distribution skewed on one board",
+    "file": "tests/verify.ts",
+    "find": "const cfg = loadPlinkoConfig();",
+    "replace": "const cfg = loadPlinkoConfig();\nds.bets.forEach(b=>{if(b.numberOfRows===8)b.winningSlot=0;}); // MUTATION",
+    "runner": "verify",
+    "expect": "[INFO] Step 21",
+    "guard": "PLINKO-29 and PLINKO-22. Every 8-row drop is forced into slot 0. The run is rejected by the population recompute (Step 5) and by the multiplier lookup (Step 7), and Step 14 flags the Phase D drops among them (measured 2026-10-02 with PF_P1_REPLAY=off: FAIL 5, 7; FLAG 14, 16; INFO 21). What this entry exists to show is the epoch-window slot fit REACTING: the rows-8 group p-value falls below the Bonferroni per-group alpha and Step 21 reports INFO — the expect marker [INFO] Step 21. Step 21 is informational (PLINKO-22 policy INFORMATIONAL, decided 2026-09-29): it can only report PASS or INFO, never FLAG or FAIL, and an INFO changes neither the verdict nor the exit code, so this entry is not a kill by Step 21. Injected after the dataset hash check."
+  },
+  {
+    "name": "M47 site verifier derive.js edited without re-pinning (vendored copy)",
+    "file": "verifier-parity/games/plinko/derive.js",
+    "find": "const cursor = i + 1; // 1-based",
+    "replace": "const cursor = i; // MUTATION: 0-based",
+    "runner": "verify",
+    "expect": "[FAIL] Step 5",
+    "guard": "PLINKO-24. The ProvablyFair.org site's LIQD Plinko verifier is vendored byte for byte and its SHA-256 recorded in src/site-verifier.ts; Step 5 hashes the vendored copy before running it, so a byte changed without a re-pin FAILs on the pin before any bet is derived."
+  },
+  {
+    "name": "M48 Pass-1 saved seed of the first row altered",
+    "file": "outputs/simulation-results.json",
+    "find": "\"serverSeed\": \"17731e147e2b60e698de269a0a9a1c9a\",",
+    "replace": "\"serverSeed\": \"17731e147e2b60e698de269a0a9a1c9b\",",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "PLINKO-20. Step 16 REPLAYS the committed experiment from the seed pairs saved in its rows (in full under npm test; the first 50,000 rounds per row under the battery's PF_P1_REPLAY=off). A row whose saved seed is not the seed that produced its statistics fails the exact comparison of its first running-RTP point."
+  },
+  {
+    "name": "M49 one running-RTP trace point moved by one unit in the last place",
+    "file": "outputs/simulation-results.json",
+    "find": "0.9879059999997383",
+    "replace": "0.9879059999997384",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "PLINKO-20/32. Running-RTP points are sums and quotients of doubles taken in nonce order, so the replay reproduces them bit for bit and Step 16 compares them with NO tolerance; a point moved by 1.11e-16 (one ulp) is a different trace."
+  },
+  {
+    "name": "M50 published convergence chart no longer the rendering of the committed traces",
+    "file": "outputs/rtp-convergence.html",
+    "find": "Cumulative rounds</text>",
+    "replace": "Cumulative round5</text>",
+    "runner": "verify",
+    "expect": "[FAIL] Step 16",
+    "guard": "PLINKO-32. Step 16 re-renders outputs/rtp-convergence.html from the committed traces with src/convergence-chart.ts (the function src/simulate.ts drew it with) and requires byte equality, so a chart edited away from the numbers it claims to draw FAILs. Until 2026-09-24 the chart was unpinned (DL-10)."
+  },
+  {
+    "name": "M51 published RTP claim raised to 99.02% (two boards fall below its band)",
+    "file": "src/rtp-settings.ts",
+    "find": "  rtp: '0.99',",
+    "replace": "  rtp: '0.9902', // MUTATION",
+    "runner": "verify",
+    "expect": "[FAIL] Step 10",
+    "guard": "PLINKO-19, the published-RTP rule (RTP-CLAIM 1.2.0 since 2026-10-14; 1.1.0, enforced in this package since 2026-10-01; added 2026-10-02, QA code item 8 — until then no registered mutation exercised it). Against a flat 99.02% claim the band floor is 98.92%, and two boards (rows 8 and 10, medium risk, exact RTP 633/640 = 98.90625%) fall below it on the house side, so the rule's outcome is FAIL (a miss; on its own, under 1.2.0, that would mark Step 10 RTP FIGURE OVERSTATED). The committed outputs/rtp-claim-table.json records the claim, so it also stops matching this run, and a table that does not match is a reproduction failure: Step 10 is re-scored FAIL, printed as [FAIL] Step 10 after the re-score. This entry therefore shows that the rule is wired to the verdict through the committed table, not that it detects without it — declared survivor S00 shows the detection half (a 990x WTF tail takes that board to 98.7549%, which fails the band whether or not the table was regenerated)."
+  }
+]

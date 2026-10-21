@@ -1,0 +1,144 @@
+{
+  "record": "RTP and house-edge figures shown to players on the live liqd.com Originals pages",
+  "readDate": "2026-10-01",
+  "rule": "RTP-CLAIM holds a game to the RTP figure shown to players (decision 2026-09-30)",
+  "method": "Each URL was loaded in a headless Chromium browser, logged out (every page showed the beta invite / LOGIN prompt), read-only: nothing was clicked or typed. headerLabel, statsPanel and pageStatements are copied verbatim from document.body.innerText after load; readAtUtc is the time of that read. metaDescription (meta[name=description]) and structuredDataRtp (the additionalProperty named RTP in the page's application/ld+json) were read from a second load of the same URL within two minutes. Panels opened by a click (Provably Fair, game info, help) were not read. A plain HTTP GET without a browser returned 403 for all six URLs.",
+  "pages": [
+    {
+      "game": "dice",
+      "url": "https://liqd.com/originals/dice",
+      "readAtUtc": "2026-10-01T11:36:46.337Z",
+      "pageTitle": "Dice by LIQD | Play with Cryptos",
+      "headerLabel": "Released: September 2026 | Edge: 1.00%",
+      "statsPanel": [
+        {
+          "label": "RTP",
+          "value": "99%"
+        },
+        {
+          "label": "House Edge",
+          "value": "1%"
+        }
+      ],
+      "pageStatements": [
+        "Set a 2x bet on Under and the line sits at 49.50. Switch to Over at 2x and it sits at 50.50, not 50. The thin strip between those two lines is where neither bet wins, and it's exactly 1% of the slider. Every mode leaves that same 1% uncovered, which is why every setting in Dice returns 99%."
+      ],
+      "metaDescription": "Dice by LIQD: roll 0.00 to 99.99 under, over, between or outside your line. 99% RTP in every mode. Play with Bitcoin on LIQD.",
+      "structuredDataRtp": "99%",
+      "claimHeldInSrcRtpSettings": "0.99",
+      "note": "Header edge 1.00%, panel RTP 99% and the page statement all give 99%. The claim stays 0.99."
+    },
+    {
+      "game": "limbo",
+      "url": "https://liqd.com/originals/limbo",
+      "readAtUtc": "2026-10-01T11:36:50.371Z",
+      "pageTitle": "Limbo by LIQD | Play with Bitcoin",
+      "headerLabel": "Released: September 2026 | Edge: 1.00%",
+      "statsPanel": [
+        {
+          "label": "RTP",
+          "value": "99%"
+        },
+        {
+          "label": "House Edge",
+          "value": "1%"
+        }
+      ],
+      "pageStatements": [
+        "Set a target multiplier & the game draws one result. At or above your target, you're paid the target. Below it, the bet is gone. 2x lands 49.5% of the time, 10,000x lands 0.0099% of the time, and every target in between returns 99%. One of the LIQD Originals."
+      ],
+      "metaDescription": "Limbo by LIQD: set a target multiplier, win if the result lands at or above it. 99% RTP at every target. Play with crypto on LIQD.",
+      "structuredDataRtp": "99%",
+      "claimHeldInSrcRtpSettings": "0.99",
+      "note": "Header edge 1.00%, panel RTP 99%, meta and structured data all give 99%. The claim stays 0.99."
+    },
+    {
+      "game": "mines",
+      "url": "https://liqd.com/originals/mines",
+      "readAtUtc": "2026-10-01T11:36:53.465Z",
+      "pageTitle": "Mines by LIQD | Play with Crypto",
+      "headerLabel": "Released: June 2026 | Edge: 1.00%",
+      "statsPanel": [
+        {
+          "label": "RTP",
+          "value": "99% (99.03% after rounding)"
+        },
+        {
+          "label": "House Edge",
+          "value": "1%"
+        }
+      ],
+      "pageStatements": [
+        "Twenty-five tiles. You decide how many are mines, 1 to 24. Then you open tiles until you cash out, or you don't. 99% RTP at every setting, 1.03x on the safest first pick, 5,148,297x if you ever clear a 12-mine board. One of the LIQD Originals.",
+        "Multipliers are rounded to two decimals rather than cut, so the realised edge moves a little with the exact mines-and-picks combination, between 0.64% and 1.44%, around the nominal 1%."
+      ],
+      "metaDescription": "Mines by LIQD: 5x5 grid, 1 to 24 mines, cashout after any gem, 99% RTP and a 5,148,297x full-clear ceiling. Provably fair. Play with crypto on LIQD.",
+      "structuredDataRtp": "99%",
+      "claimHeldInSrcRtpSettings": "0.99",
+      "note": "Header edge 1.00%, panel RTP \"99% (99.03% after rounding)\", \"99% RTP at every setting\". The same page states that multipliers are rounded to two decimals and the realised edge moves between 0.64% and 1.44%; the Mines package MANIFEST.md records that statement against the audited capture. The claim stays 0.99."
+    },
+    {
+      "game": "plinko",
+      "url": "https://liqd.com/originals/plinko",
+      "readAtUtc": "2026-10-01T11:36:56.742Z",
+      "pageTitle": "Plinko by LIQD | Play with Cryptos",
+      "headerLabel": "Released: June 2026 | Edge: 1.00%",
+      "statsPanel": [
+        {
+          "label": "RTP",
+          "value": "99% on every board"
+        },
+        {
+          "label": "House Edge",
+          "value": "1%"
+        }
+      ],
+      "pageStatements": [
+        "The maths of a 13-row board is fixed, so the odds are exact. Each 1,000x bucket lands one drop in 8,192, so the pair comes up once every 4,096 drops. Each 235x bucket lands 13 drops in 8,192, so that pair hits once every 315 drops. Put together, a WTF drop pays something once every 293 drops and returns nothing the other 99.66% of the time. The board still holds 99% RTP: the rare hits are sized to pay back what the skulls take, which makes it the highest-variance Plinko configuration that exists.",
+        "Does the number of rows change the RTP? No. Every combination of rows and risk returns 99%. Rows change how many buckets there are and how far apart the small and large multipliers sit."
+      ],
+      "metaDescription": "Plinko by LIQD: 8 to 16 rows, four risk levels including WTF mode, 99% RTP on every board and a 1,000x top bucket. Play with Bitcoin on LIQD.",
+      "structuredDataRtp": "99%",
+      "claimHeldInSrcRtpSettings": "0.99",
+      "note": "Header edge 1.00%, panel RTP \"99% on every board\", meta and structured data 99%. The claim stays 0.99."
+    },
+    {
+      "game": "blackjack",
+      "url": "https://liqd.com/originals/blackjack",
+      "readAtUtc": "2026-10-01T11:36:59.953Z",
+      "pageTitle": "Blackjack by LIQD | Play with Bitcoin",
+      "headerLabel": "Released: June 2026 | Edge: 0.48%",
+      "statsPanel": [
+        {
+          "label": "RTP (optimal play)",
+          "value": "99.51%"
+        },
+        {
+          "label": "House Edge",
+          "value": "0.49%"
+        }
+      ],
+      "pageStatements": [
+        "Blackjack is one of the LIQD Originals, a provably fair version of the classic table game, dealt from an eight-deck shoe with the dealer standing on soft 17. You can double on any first two cards, split once, and take two optional side bets on every hand. It is also the only blackjack with Face-Down Double, a setting that deals your double card face down so you turn it over yourself. Blackjack pays 3:2 and the optimal-play RTP is 99.51%."
+      ],
+      "metaDescription": "Blackjack by LIQD: 8-deck shoe, dealer stands on soft 17, Face-Down Double, 99.51% RTP and 3:2 on every blackjack. Play with crypto on LIQD.",
+      "structuredDataRtp": "99.52%",
+      "claimHeldInSrcRtpSettings": "0.9952",
+      "note": "The page shows two figures. 99.52%: the header edge 0.48% (1 - 0.0048) and the structured-data RTP property. 99.51%: the stats panel RTP (optimal play), the body text and the meta description; the panel House Edge reads 0.49%. The claim stays 0.9952 (the header edge, as held since E16)."
+    },
+    {
+      "game": "keno",
+      "url": "https://liqd.com/originals/keno",
+      "readAtUtc": "2026-10-01T11:37:02.786Z",
+      "pageTitle": "Keno | Provably Fair Keno Game | LIQD Originals",
+      "headerLabel": null,
+      "statsPanel": [],
+      "pageStatements": [],
+      "metaDescription": "Pick up to 10 numbers on a 40-number board, choose your risk and watch 10 draws land. Provably fair keno with a 1% house edge, up to 10000x, at LIQD.",
+      "structuredDataRtp": null,
+      "claimHeldInSrcRtpSettings": "0.99",
+      "renderedTextMatchesForRtpEdgeOrPercent": 0,
+      "note": "The page renders the game only: no RTP, edge or % string in its rendered text. A scan of the page HTML for RTP, house edge, Edge:, 99% and 1.00% found only the meta description text (\"1% house edge\") and copies of it in the page head data; the meta description is used for search and link previews and is not part of the rendered page text. The structured data carries \"Max win\" only, no RTP property. The claim stays 0.99 from the pinned game settings."
+    }
+  ]
+}

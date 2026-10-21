@@ -1,0 +1,42 @@
+{
+  "name": "liqd-plinko-audit",
+  "version": "1.0.0",
+  "engines": {
+    "node": "22.x"
+  },
+  "license": "MIT",
+  "description": "Provably fair audit \u2014 LIQD.com Plinko",
+  "private": true,
+  "scripts": {
+    "test": "node scripts/run-stages.mjs test",
+    "test:fresh-experiment": "mocha && SIM_OUT_DIR=outputs/fresh npm run simulate && SIM_OUT_DIR=outputs/fresh npm run calibrate",
+    "verify": "ts-node tests/verify.ts",
+    "replay": "ts-node src/replay.ts",
+    "simulate": "ts-node src/simulate.ts",
+    "calibrate": "ts-node src/calibrate.ts",
+    "mutate": "node scripts/mutate.mjs",
+    "check-outputs": "node scripts/check-outputs.mjs",
+    "release-manifest": "node scripts/release-manifest.mjs",
+    "gate": "npm run check:build && npm test && npm run mutate && npm run release-manifest -- --check",
+    "report": "PF_EMIT=1 ts-node tests/verify.ts",
+    "test:toolchain": "npm run check:build && mocha && npm run replay && npm run verify && npm run check-outputs",
+    "verify:standalone": "node verify.js",
+    "test:quick": "node scripts/run-stages.mjs test",
+    "build": "node scripts/build-standalone.mjs",
+    "check:build": "node scripts/build-standalone.mjs --check",
+    "check:standalone": "node scripts/check-standalone.mjs",
+    "replay:standalone": "node replay.js",
+    "test:full": "node scripts/check-standalone.mjs && node test.js && node verify.js && node replay.js && node scripts/check-outputs.mjs && npm run regen && npm run diff-simulation && node scripts/release-manifest.mjs --check",
+    "regen": "SIM_SEEDS_FROM=outputs/simulation-results.json SIM_OUT_DIR=outputs/run/regen npm run simulate && SIM_OUT_DIR=outputs/run/regen npm run calibrate",
+    "diff-simulation": "ts-node src/diff-simulation.ts",
+    "check-site-verifier": "node scripts/check-site-verifier.mjs",
+    "rtp-claim:write": "ts-node src/rtp-settings.ts"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10",
+    "@types/node": "^22",
+    "mocha": "^11",
+    "ts-node": "^10",
+    "typescript": "^5"
+  }
+}

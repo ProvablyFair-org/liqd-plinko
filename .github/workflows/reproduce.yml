@@ -1,0 +1,33 @@
+# Second-machine reproduction (Framework 1.0 release bar, F12).
+# A clean ubuntu-latest runner installs from the lockfile with the runtime pinned in .nvmrc and runs
+# npm test, which scores the committed artifacts, writes only to outputs/run/, and ends with
+# `release-manifest.mjs --check` (the release bar). The runtime and the result are written to the
+# job summary, and the job fails if npm test changed any tracked file.
+name: reproduce
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci
+      - name: npm test
+        run: |
+          start=$(date +%s)
+          set +e; npm test; rc=$?; set -e
+          secs=$(( $(date +%s) - start ))
+          {
+            echo "| runner | node | npm test exit | seconds | cores |"
+            echo "|---|---|---|---|---|"
+            echo "| ubuntu-latest ($(lsb_release -ds 2>/dev/null || uname -sr)) | $(node --version) | $rc | $secs | $(nproc) |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
+      - name: tracked files untouched by npm test
+        run: git diff --exit-code --stat
