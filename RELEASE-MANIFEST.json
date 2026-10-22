@@ -3,7 +3,7 @@
   "auditIdStatus": "confirmed by ProvablyFair.org",
   "game": "plinko",
   "casino": "liqd",
-  "release": "v1.0.0",
+  "release": "v1.0.1",
   "framework": "1.1",
   "simulation": {
     "seeding": "fresh",
@@ -45,6 +45,6 @@
     "node": "22",
     "command": "npm ci && npm test"
   },
-  "supersedes": null,
+  "supersedes": "v1.0.0",
   "signature": "SHA256:gEujiJm2pRyq7lQsfYQfQ1r97H/J7GdaKHbOW8GtikY"
 }

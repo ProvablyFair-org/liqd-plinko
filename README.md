@@ -1,6 +1,6 @@
 # LIQD Plinko — Provably Fair Audit
 
-**Auditor:** [ProvablyFair.org](https://www.provablyfair.org) · **Audit ID:** `PF-2026-LQ03` · **Release:** `v1.0.0` (the first public release) · **Capture:** 7 July 2026 on `qa.liqd.com` (pre-production)
+**Auditor:** [ProvablyFair.org](https://www.provablyfair.org) · **Audit ID:** `PF-2026-LQ03` · **Release:** `v1.0.1` (errata to `v1.0.0`, the first public release) · **Capture:** 7 July 2026 on `qa.liqd.com` (pre-production)
 
 **Result: PROVABLY FAIR — Full Pass** *(provisional — pre-launch capture)*. Every one of the 10,100 captured drops recomputes bit-for-bit from its `(serverSeed, clientSeed, nonce, rows)` inputs; the commit-reveal chain is intact across all 202 seed epochs; the payout tables (standard risk 1–3 and WTF) match every paid multiplier; and 28,000,000 simulated rounds are consistent with the per-config RTP and show no structural bias. The verifier reports 21 of 21 scored steps passing, 0 flags and 0 hard fails. Step 21 is informational: it can report a deviation but cannot fail.
 

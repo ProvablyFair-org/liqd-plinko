@@ -1,6 +1,6 @@
 # LIQD Plinko — Consolidated Audit Overview
 
-**Audit ID:** `PF-2026-LQ03` · **Auditor:** ProvablyFair.org · **Release:** `v1.0.0` (the first public release) · **Framework:** 1.1
+**Audit ID:** `PF-2026-LQ03` · **Auditor:** ProvablyFair.org · **Release:** `v1.0.1` (errata to `v1.0.0`, the first public release) · **Framework:** 1.1
 
 Plinko (`gameId` `fast-games-5`) on LIQD.com, captured against `qa.liqd.com` in an authenticated browser session, currency USDC. Audited July 2026; dataset captured on **7 July 2026, 02:12–04:16 UTC**, in a single session. Publication date: 21 October 2026 (release `v1.0.0`). Report: `https://audit.provablyfair.org/casino/liqd/games/plinko/overview`. This overview consolidates the package documentation as of 4 October 2026. The machine-readable release identity (audit ID status, release, artifact hashes, verdict and scored counts) is [RELEASE-MANIFEST.json](RELEASE-MANIFEST.json).
 
@@ -649,6 +649,8 @@ Certification can be extended once the production evidence passes the applicable
 ## Release history
 
 **v1.0.0 — the audit of record, released 21 October 2026.** The first public release, published as one commit (release manifest `supersedes: null`, `signature` the fingerprint of the key that signs the release): verdict **PROVABLY FAIR — Full Pass**, 21 of 21 scored steps, over 10,100 bets in 202 seed epochs (`data/plinko-master-10100bets.json`, SHA-256 `871c485e…`), audit ID `PF-2026-LQ03` (confirmed by ProvablyFair.org), Framework 1.1 (1.0 until 14 October 2026). Its last change rebuilt `src/rng.ts` from a written specification, with the ProvablyFair.org site verifier kept as a second check (20 October 2026, under *Later corrections*); the recorded result is unchanged. A release is a signed, squashed commit with a matching tag and a `RELEASE-MANIFEST.json`; nothing reaches the published record any other way, and no tag is ever moved or deleted. Every artifact of record and its SHA-256 is listed in the release manifest. The narrative of how the package was built, including the review ledgers, is an internal record and does not ship.
+
+**v1.0.1** (errata): adds `.gitattributes` (`* -text`) so a Windows git clone keeps every file byte-identical; no audit content changed.
 
 **Review history.** Three external adversarial review rounds ran before publication; round 3 used two independent reviewers who re-executed rather than read. No published figure was refuted in any round.
 
