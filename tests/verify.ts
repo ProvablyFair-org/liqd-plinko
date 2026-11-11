@@ -37,7 +37,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { createHash } from 'crypto';
 
-import { loadDataset, EXPECTED_DATASET_SHA256 } from '../src/loader';
+import { loadDataset, EXPECTED_DATASET_SHA256, DATASET_FILE } from '../src/loader';
 import { loadPlinkoConfig, PLINKO_CONFIG_SHA256, configSha256 } from '../src/config';
 import { SIMULATION_RESULTS_SHA256, CALIBRATION_RESULTS_SHA256 } from '../src/artifact-pins';
 import { fieldDiff, beyondTolerance, maxima, DIFF_ATOL, DIFF_RTOL } from '../src/diff';
@@ -46,13 +46,14 @@ import { runRtpClaimGate, RTP_CLAIM_STEP } from '../src/rtp-settings';
 import { rtpClaimVerdict, RTP_FIGURE_OVERSTATED } from '../src/rtp-claim';
 import type { Bet, Seed } from '../src/types';
 import type { VerifyContext, InfoItem } from './steps/context';
+import { EXPECTED_STEPS } from './steps/context';
 
 import * as commitment    from './steps/commitment';
 import * as determinism   from './steps/determinism';
 import * as payouts       from './steps/payouts';
 import * as dataset       from './steps/dataset';
 import * as antiCirc      from './steps/anti-circularity';
-import * as phaseD        from './steps/phase-d';
+import * as phaseDStep    from './steps/phase-d';
 import * as wtf           from './steps/wtf';
 import * as simulation    from './steps/simulation';
 import * as statistical   from './steps/statistical';
@@ -60,7 +61,7 @@ import * as coverage       from './steps/coverage';
 import * as standardization from './steps/standardization';
 import * as liveFit        from './steps/live-fit';
 
-const DATASET_PATH         = path.join(__dirname, '../data/plinko-master-10100bets.json');
+const DATASET_PATH         = path.join(__dirname, '..', DATASET_FILE);
 // Single-sourced in src/loader.ts — never re-typed here (audit-rules 9.4).
 const EXPECTED_DATASET_HASH = EXPECTED_DATASET_SHA256;
 const OUTPUTS_DIR          = path.join(__dirname, '../outputs');
@@ -78,7 +79,7 @@ console.log(EMIT
 
 // ── Dataset presence guard (graceful) ─────────────────────────────────────────
 if (!fs.existsSync(DATASET_PATH)) {
-  console.log('\n  [ERROR] Dataset not found at data/plinko-master-10100bets.json');
+  console.log(`\n  [ERROR] Dataset not found at ${DATASET_FILE}`);
   console.log('  Cannot run verification without the captured master dataset.');
   console.log('\n══════════════════════════════════════════════════════════\n');
   process.exit(1);
@@ -104,27 +105,28 @@ for (const b of bets) {
   byHash.set(b.hashedServerSeed, arr);
 }
 
+// Phase letters of the production plan (src/loader.ts EXPECTED_PLAN). Step 11 rejects any label outside it.
 const phaseA = bets.filter(b => b.phase === 'A');
 const phaseB = bets.filter(b => b.phase === 'B');
 const phaseC = bets.filter(b => b.phase === 'C');
-const phaseDBets = bets.filter(b => b.phase === 'D');
+const phaseD = bets.filter(b => b.phase === 'D');
 const phaseE = bets.filter(b => b.phase === 'E');
 
 if (!fs.existsSync(OUTPUTS_DIR)) fs.mkdirSync(OUTPUTS_DIR, { recursive: true });
 
 console.log(`  Dataset: ${bets.length} bets | Seeds: ${seeds.length} | SHA-256 verified`);
-console.log(`  Phase A:${phaseA.length} B:${phaseB.length} C:${phaseC.length} D:${phaseDBets.length} E:${phaseE.length}\n`);
+console.log(`  Phase A:${phaseA.length}  B:${phaseB.length}  C:${phaseC.length}  D:${phaseD.length}  E:${phaseE.length}\n`);
 
 const ctx: VerifyContext = {
   bets, seeds, cfg, seedMap, byHash,
-  phaseA, phaseB, phaseC, phaseD: phaseDBets, phaseE,
+  phaseA, phaseB, phaseC, phaseD, phaseE,
   // The header, for RECONCILIATION only (G-BIND) — Steps 11/12 take the audited population from
   // src/loader.ts and hard-fail a header that disagrees. No step may read a count out of here.
   meta: ds.meta,
   outputsDir: OUTPUTS_DIR,
   datasetSha256: ds.sha256,
   expectedDatasetHash: EXPECTED_DATASET_HASH,
-  preCapture: ds.meta.preCapture,
+  captures: ds.meta.captures ?? [],
 };
 
 // ── Run scored steps ──────────────────────────────────────────────────────────
@@ -135,12 +137,19 @@ const results = [
   ...payouts.run(ctx),        // Steps  7–10
   ...dataset.run(ctx),        // Steps 11–12
   ...antiCirc.run(ctx),       // Step  13
-  ...phaseD.run(ctx),         // Step  14
-  ...wtf.run(ctx),            // Step  15
+  ...phaseDStep.run(ctx),     // Step  14: Phase D player-set client seeds; client-seed control on every epoch
+  ...wtf.run(ctx),            // Step  15: Phase E, WTF mode
   ...simulation.run(ctx),     // Steps 16–17: scores outputs/simulation-results.json (pass1 + pass2)
   ...standardization.run(ctx),// Steps 18–20
   ...liveFit.run(ctx),        // Step  21: epoch-window slot fit (live drops vs binomial)
 ];
+
+// ── Step-count guard ──────────────────────────────────────────────────────────
+// No verdict is reachable unless every scored step ran: the count is held to the suite's own constant.
+if (results.length !== EXPECTED_STEPS) {
+  console.log(`\n  [ERROR] ${results.length} scored steps ran; this suite has ${EXPECTED_STEPS}. A partial run is not an audit result.`);
+  process.exit(1);
+}
 
 // ── Profile labels ────────────────────────────────────────────────────────────
 // Each scored step says which ProvablyFair.org Plinko profile check it implements, so the
@@ -160,7 +169,7 @@ const coverageReport = coverage.run(ctx);
 // The per-setting exact RTP table held to the published claim (src/rtp-settings.ts). While the
 // package switch RTP_CLAIM_RULE_ENFORCED (src/rtp-claim-switch.ts) is false this is printed only and no step moves; when it
 // is true a miss (gate status OVERSTATED) marks the step carrying PLINKO-19 OVERSTATED: not a draw FAIL, not counted in
-// hardFail, verdict RTP FIGURE OVERSTATED, exit 5 (decision D3, 2026-10-14). A committed table that no longer equals this
+// hardFail, verdict RTP FIGURE OVERSTATED, exit 5 (RTP-CLAIM 1.2.0). A committed table that no longer equals this
 // run (or its pin) is a reproduction failure either way (gate status FAIL → step FAIL, exit 1).
 const rtpClaim = runRtpClaimGate();
 console.log('');
@@ -178,8 +187,8 @@ if (rtpClaim.status === 'FAIL' || rtpClaim.status === 'OVERSTATED') {
     }
   }
   // The step's marker was printed when the step ran, as PASS or FLAG. Print the status it ends
-  // with, so the console never shows a PASS that the scored record contradicts (2026-10-02 QA,
-  // code item 1). scripts/mutate.mjs reads the scored record, and cross-checks it against the
+  // with, so the console never shows a PASS that the scored record contradicts.
+  // scripts/mutate.mjs reads the scored record, and cross-checks it against the
   // LAST marker printed for each step.
   console.log(`  [${status === 'FAIL' ? 'FAIL' : RTP_FIGURE_OVERSTATED}] Step ${RTP_CLAIM_STEP} — re-scored by the enforced RTP-CLAIM rule `
     + `(outcome ${rtpClaim.result.outcome}; committed table ${rtpClaim.tableMatches ? 'matches this run' : 'does NOT match this run or its pin'})`);
@@ -191,7 +200,7 @@ const passed   = results.filter(r => r.status === 'PASS').length;
 const flags    = results.filter(r => r.status === 'FLAG').length;
 const hardFail = results.filter(r => r.status === 'FAIL').length;
 const overstated = results.filter(r => r.status === 'OVERSTATED').length;
-// INFO (profile policy INFORMATIONAL — the live-sample fit, Mike 2026-09-29): reported, never counted
+// INFO (profile policy INFORMATIONAL — the live-sample fit): reported, never counted
 // as a flag, never enters the verdict or the exit code.
 const informational = results.filter(r => r.status === 'INFO').length;
 // The rule's ranking (src/rtp-claim.ts rtpClaimVerdict): draw fail 1 > INCOMPLETE 3 > RTP FIGURE OVERSTATED 5 >
@@ -268,10 +277,9 @@ for (const [label, actual, expected] of [
 // `verification-results.json`'s `detail` fields are authored SENTENCES and cannot serve as
 // the producing artifact for a number quoted in a chapter.
 //
-// Round-3 external review R3-K5: `check-outputs` pinned the dataset, the config, the
-// simulation and the calibration — and never looked at these two, although MANIFEST.md#evidence
-// declares verification-stats.json to be THE producing artifact for the chapter figures.
-// Forging both and running `npm run check-outputs` returned OK, exit 0. They are hashed
+// MANIFEST.md#evidence declares verification-stats.json to be THE producing artifact for the
+// chapter figures, so a check that pinned only the dataset, the config, the simulation and the
+// calibration would let both be forged. They are hashed
 // here, recorded in `artifactHashes`, and re-asserted by the publication guard.
 const stepStats: Record<string, unknown> = {};
 for (const r of results) if (r.data) stepStats[`step${r.step}`] = { name: r.name, ...r.data };
@@ -311,19 +319,17 @@ const runMode = {
 };
 
 // ── the machine-readable verdict describes the WHOLE COMMAND ────────────
-// Round-4 client QA. The report used to be built ONCE, here, and written unchanged to a
-// `.failed.json` filename when a later validation failed. Its contents therefore read
-// `passed: 21`, `hardFail: 0`, `verdict: "PROVABLY FAIR — Full Pass"` on a run that
-// exited 1 because emission validation failed. A consumer reading the file — and nothing
-// in it says the command failed — infers success from a failed validation run.
+// A report built once, before the later validations, and written unchanged to a
+// `.failed.json` filename would read `passed: 21`, `hardFail: 0`,
+// `verdict: "PROVABLY FAIR — Full Pass"` on a run that exited 1 because emission validation
+// failed, and a consumer reading it would infer success from a failed validation run.
 //
-// The report is now BUILT AT THE END, after every required validation, by
+// The report is therefore BUILT AT THE END, after every required validation, by
 // `buildReport(...)`. The 21 scored checks are kept as a SUBORDINATE result
 // (`outcome.scored`, `outcome.scoredVerdict`); `summary.verdict`, `outcome.overallStatus`
 // and `outcome.completed` describe the command. No document a failing run writes can
 // carry a top-level Full Pass. `summary` is the one shape every package writes
-// (passed, flags, operatorFlags, captureFlags, hardFail, verdict — Framework 1.0 review
-// item 14, F20); everything else about the run lives in `outcome`.
+// (passed, flags, operatorFlags, captureFlags, hardFail, verdict); everything else about the run lives in `outcome`.
 const NOT_COMPLETED_VERDICT = 'RUN NOT VALID — artifact validation failed; this is not an audit result';
 function buildReport(overall: {
   status: 'PASS' | 'FAIL';
@@ -337,7 +343,7 @@ function buildReport(overall: {
     datasetSha256: ds.sha256,
     runMode,
     artifactHashes: {
-      dataset: { file: 'data/plinko-master-10100bets.json', sha256: ds.sha256 },
+      dataset: { file: DATASET_FILE, sha256: ds.sha256 },
       config: { file: 'plinkoConfig.json', expected: PLINKO_CONFIG_SHA256, actual: cfgActualSha, match: cfgActualSha === PLINKO_CONFIG_SHA256 },
       simulation: simArtifact,
       calibration: calArtifact,
@@ -402,7 +408,7 @@ const hardFailErrors = results.filter(r => r.status === 'FAIL').map(r => `Step $
 // like ATTEST_SAMPLE it is now recorded in `runMode` and refused by `check-outputs`.
 
 // ── semantic comparison, not byte-equality ─────────────────────────────
-// Round-4 client QA. The comparison was `JSON.stringify(a) === JSON.stringify(b)`, i.e.
+// A comparison by `JSON.stringify(a) === JSON.stringify(b)` would be
 // EXACT equality on every leaf including floating-point diagnostics. Step 17 already
 // accepts an attestation residual up to 1e-9, so the final guard could REJECT a
 // computation the numerical check correctly ACCEPTS: a saved residual of 0 against a

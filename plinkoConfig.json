@@ -1,6 +1,6 @@
 {
-  "_source": "PLINKO_FIXED_ODDS, extracted from liqd client bundle chunk 0pm_um5zrrwwn.js (qa.liqd.com/originals/plinko), 2026-07-06. Cross-verified: all 10,100 captured bets match this table.",
-  "platform": "qa.liqd.com",
+  "_source": "LIQD Plinko multiplier tables, as audited on liqd.com. Every cell equals the bucket label or the page statement read on liqd.com/originals/plinko on 2026-10-20 (evidence/liqd-plinko-page-reads-2026-10-20.json, Step 20), and every multiplier paid in the production captures of 7, 9 and 10 November 2026 equals its cell (Step 7). The cells no captured drop landed on are listed in outputs/coverage-results.json.",
+  "platform": "liqd.com",
   "gameId": "fast-games-5",
   "houseEdge": 0.01,
   "rows": { "min": 8, "max": 16 },
@@ -9,8 +9,8 @@
     "riskLevel": 4,
     "rows": 13,
     "odds": [1000, 235, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 235, 1000],
-    "note": "WTF is a 4th risk level (PLINKO_GAME_RISK_LEVEL_TABS: {LOW:1,MEDIUM:2,HIGH:3,WTF:4}). Rows forced to 13. Same commit-reveal RNG; winningSlot = sum of path bits; payout = odds[winningSlot]. Confirmed live 2026-07-06 (test bet: slot 7 -> 0x). Captured as Phase E.",
-    "theoreticalRTP_note": "98.9990% (8110/8192) via independent binomial x odds (1% edge; only 4 of 14 slots pay)."
+    "note": "WTF is a 4th risk level (riskLevel 4). Rows fixed at 13. Same commit-reveal RNG; winningSlot = sum of path bits; payout = odds[winningSlot]. Played on production: Phase E (2,000 drops) and Phase A plan id A+W (50 drops).",
+    "theoreticalRTP_note": "98.9990% (8110/8192) via independent binomial x odds (only 4 of 14 slots pay)."
   },
   "payout_tables": {
     "8":  [[5.6,2.1,1.1,1,0.5,1,1.1,2.1,5.6],[13,3,1.3,0.7,0.4,0.7,1.3,3,13],[29,4,1.5,0.3,0.2,0.3,1.5,4,29]],

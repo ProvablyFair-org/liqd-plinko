@@ -16,18 +16,18 @@
  * `n` is a parameter of this module, not a constant, because the audit reports the
  * statistic at two window lengths:
  *
- *   * PRIMARY — n = `EXPECTED_EPOCH_SIZE` = 50, the number of nonces played under each
- *     server seed in this capture (the capture rotated the seed pair every 50 bets; nothing
- *     in the captured records shows LIQD limiting a seed pair to 50). These are the drops
- *     actually observed under each seed, so this is the scored result.
+ *   * PRIMARY — n = `PRIMARY_WINDOW_NONCES` = 50, the first 50 nonces of every server seed in
+ *     this capture: the shortest epoch of the capture plan (epochs ran 200, 100 or 50 drops),
+ *     so the longest window every seed actually played. These are drops actually observed
+ *     under each seed, so this is the scored result.
  *   * EXTENDED — n = floor(noncesPerSeed / 2) = 5,000, the synthetic long window
  *     Pass 2 extends each seed's stream to. It is far more powerful against a seed
  *     that is biased over its whole stream, and it is reported as a secondary figure,
  *     but no seed in this capture was played that long.
  *
- * The suite then counts how many of the 202 seeds have `zEarly < −1.645` and asks
+ * The suite then counts how many of the revealed seeds have `zEarly < −1.645` and asks
  * whether that count is materially above chance. The original null was
- * `Binom(202, 0.05)` — i.e. "z is standard normal, so 5% of seeds fall below the
+ * `Binom(seeds, 0.05)` — i.e. "z is standard normal, so 5% of seeds fall below the
  * 5% one-sided critical value". **That null is wrong for this statistic.** A window
  * payout sum is a sum of n draws from a violently right-skewed distribution (a 16-row
  * high-risk board pays 1000x at probability 2^-16 and 0.2x at probability 0.79), so
@@ -36,7 +36,7 @@
  * P(zEarly < −1.645) is therefore config-specific and window-specific, and well below
  * 0.05 in both — at n = 5,000 on 16 rows / risk 3 it is about one twenty-fifth of 0.05.
  *
- * Round-2 external review (N1) found that the corrected expectation had been written
+ * N1: the corrected expectation had been written
  * into nine chapters and into the Step 17 detail string as a HARD-CODED LITERAL that
  * no code in the repository computed. This module is the fix: it computes the null
  * from first principles, and both the producer (`src/simulate.ts`, `src/calibrate.ts`)
@@ -80,6 +80,13 @@ import { runBatch } from './parallel';
  * against. A copy in either place is the defect this module was written to remove.
  */
 export const Z_LEFT_TAIL = 1.645;
+
+/**
+ * Absolute tolerance Step 17 allows between a Pass 2 summary scalar stored in the simulation artifact and
+ * the same scalar re-derived from the per-epoch values it recomputed. Declared here, beside the statistic it
+ * bounds, so the step file carries no tolerance of its own.
+ */
+export const PASS2_SUMMARY_TOLERANCE = 1e-6;
 
 /** Multiplier values are integer multiples of 0.1 in every shipped payout table. */
 const LATTICE_SCALE = 10;
@@ -387,29 +394,30 @@ export function poissonBinomialSurvival(ps: number[], k: number): number {
  * `src/simulate.ts` selects with `boardOfEpoch` from THIS module, so producer and
  * verifier cannot drift apart (audit-rules 9.4).
  *
- * ── (round-4 client QA, EXECUTED order probe) ───────────────────────────
+ * ── (EXECUTED order probe) ───────────────────────────
  * This used to be "the first bet encountered while iterating `bets[]`", i.e. FILE-ARRAY
- * ORDER. 192 of the 202 epochs carry exactly one board, so for those the rule is
- * irrelevant; the ten Phase D epochs 152–161 each carry **50 bets spread over all 27
+ * ORDER. A single-board epoch (Phases B, C, E and the WTF epoch of Phase A) carries exactly one
+ * board, so for those the rule is irrelevant; the Phase A epochs on the standard settings and the
+ * Phase D epochs each carry **drops spread over all 27
  * standard boards**, and for those the selected board was whatever happened to be first
- * in the file. Reversing the in-memory array moved epoch 152 from 8r/1 to 15r/2, epoch
- * 161 from 14r/1 to 12r/2, and changed the selection in all eight epochs between — so a
- * pure re-serialisation of the same records changed the scored null.
+ * in the file. Reversing the in-memory array makes the LAST bet of each such epoch the one
+ * selected, which is a different board on a mixed-board epoch — so a pure re-serialisation
+ * of the same records changed the scored null.
  *
  * The rule is now EXPLICIT AND ORDER-FREE: **the board of the epoch's LOWEST-NONCE bet**,
  * with `(numberOfRows, riskLevel)` as a deterministic tie-break in the (impossible, by
  * Step 4) event of a duplicate nonce. Nonce is recorded per bet and is the epoch's own
  * ordering, so any permutation of `bets[]` yields the same answer.
  *
- * On the committed capture the two rules agree on all 202 epochs (bets are stored in
+ * On the committed capture the two rules agree on every epoch (bets are stored in
  * nonce order), so this changes no published figure — it removes a dependency on
  * serialisation order that was never intended and could not be relied on.
  *
  * WHAT THIS DOES NOT MAKE THE ANALYSIS. Pass 2 evaluates ONE board for all 10,000
  * synthetic nonces of a mixed-board epoch. That is a **synthetic fixed-board probe** of
  * the seed's payout stream, not a replay of the epoch's actual mixed-board payout
- * schedule, and the early window (5,000 nonces) is two orders of magnitude longer than
- * the 50 bets actually observed under the seed. Conclusions are limited accordingly —
+ * schedule, and the early window (5,000 nonces) is far longer than the 50 to 200 bets
+ * actually observed under the seed. Conclusions are limited accordingly —
  * see MANIFEST.md#limitations-and-trust (DL-5 and DL-12).
  */
 export function boardOfEpoch(epochBets: Bet[]): { rows: number; riskLevel: number } | null {

@@ -7,7 +7,7 @@
  * steps of an earlier published Plinko audit, without padding — each asserts a distinct property with a
  * coverage assertion so a pass over an empty set cannot occur.
  *
- *   18  Bet-Size Invariance          — path/slot independent of wager (Phase C, $10)
+ *   18  Bet-Size Invariance          — path/slot independent of wager (Phase C, 10.00 USDT on the Phase B board)
  *   19  Multiplier Table Symmetry    — every payout table is left/right symmetric
  *   20  Artifact Hash Integrity      — dataset AND multiplier-config SHA-256 pinned,
  *                                    promoted to a scored step
@@ -20,29 +20,41 @@ import { step } from './context';
 import type { StepResult, VerifyContext } from './context';
 import { revealPlinko } from '../../src/rng';
 import { domainRules, validateDomains, describeDomainFailures } from '../../src/domains';
-import { payoutTable, configSha256, PLINKO_CONFIG_SHA256, WTF_RISK } from '../../src/config';
+import { payoutTable, configSha256, PLINKO_CONFIG_SHA256, allConfigs, isWtf } from '../../src/config';
+import { EXPECTED_PLAN, MIN_PHASE_C_BETS } from '../../src/loader';
+import { checkTableAgainstPageRead } from '../../src/page-labels';
 
 export function run(ctx: VerifyContext): StepResult[] {
   const { bets, seedMap, cfg } = ctx;
   const out: StepResult[] = [];
 
   // ── Step 18: Bet-Size Invariance ────────────────────────────────────────────
-  // revealPlinko(serverSeed, clientSeed, nonce, rows) takes no wager argument, so the
-  // drop path and slot cannot depend on stake. Proven at the isolated $10 stake: Phase C
-  // is 200 drops at $10 (16 rows, risk 3), recomputed here path-and-slot alongside the
-  // $0.10 drops scored in Step 5 — same engine, both stakes, identical determinism.
-  // Deterministic; no distributional test at n=200.
+  // revealPlinko(serverSeed, clientSeed, nonce, rows) takes no wager argument, so the drop path and
+  // slot cannot depend on stake. Observed at an isolated elevated stake: Phase C is 200 drops at
+  // 10.00 USDT on 16 rows / high risk — the board Phase B samples at 0.10 USDT — recomputed here
+  // path-and-slot, and paid stake × the table cell exactly (integer 1e-8 units, converted here with its own
+  // Math.round; Step 8 uses src/money.ts unitsOf, which also rejects an off-grid amount).
+  // Deterministic; no distributional test at n = 200.
   {
     const c = ctx.phaseC;
-    let chk = 0, bad = 0;
+    const planC = EXPECTED_PLAN.filter((e) => e.phase === 'C');
+    const planCBets = planC.reduce((a, e) => a + e.bets, 0);
+    const planCStake = planC[0]?.stake ?? '';
+    const lowStakes = [...new Set(EXPECTED_PLAN.filter((e) => e.phase !== 'C').map((e) => e.stake))];
+    let chk = 0, bad = 0, offStake = 0, payBad = 0;
     for (const b of c) {
+      if (b.betAmount !== planCStake) offStake++;
+      const cell = payoutTable(cfg, b.numberOfRows, b.riskLevel)[b.winningSlot];
+      // stake × multiplier in integer 1e-8 units: both are on the grid (8-dp string, ≤ 1-dp multiplier).
+      const stakeUnits = Math.round(Number(b.betAmount) * 1e8), winUnits = Math.round(Number(b.winningAmount) * 1e8);
+      if (!Number.isFinite(cell) || Math.round(stakeUnits * cell) !== winUnits) payBad++;
       const ss = seedMap.get(b.hashedServerSeed);
       if (!ss) continue;
       chk++;
       const { path, winningSlot } = revealPlinko(ss, b.clientSeed, b.nonce, b.numberOfRows);
       if (path !== b.dropDetails || winningSlot !== b.winningSlot) bad++;
     }
-    const stakes = [...new Set(bets.map((b) => Number(b.betAmount)))].sort((a, z) => a - z);
+    const stakes = [...new Set(bets.map((b) => b.betAmount))].sort((a, z) => Number(a) - Number(z));
     // Config set is derived from the phase, not hard-coded: Phase C must be a single
     // (rows, risk) config for this bet-size-invariance argument to hold.
     const boardOf = (rows: typeof c) =>
@@ -52,26 +64,28 @@ export function run(ctx: VerifyContext): StepResult[] {
     const configLabel = phaseCConfigs.join(', ') || 'none';
     // A SINGLE Phase C board is not enough; it has to be the PHASE B board. Phase C exists
     // to isolate STAKE, and on a board Phase B never ran, stake and board move together and
-    // the comparison isolates neither — the deep-sampled board is one thing and the
-    // high-stake drops are another. The two boards are read from the bets and required
+    // the comparison isolates neither. The two boards are read from the bets and required
     // equal; naming either one here would let a capture that drifted keep passing.
     const phaseBConfigs = boardOf(ctx.phaseB ?? []);
     const phaseBLabel = phaseBConfigs.join(', ') || 'none';
     const sameBoard = phaseBConfigs.length > 0 && phaseCConfigs.join(',') === phaseBConfigs.join(',');
-    const phaseCStake = [...new Set(c.map((b) => Number(b.betAmount)))].sort((a, z) => a - z).map((s) => `$${s}`).join(', ');
-    const ok = chk === c.length && chk > 0 && bad === 0 && singleConfig && sameBoard;
+    const elevated = planCStake !== '' && lowStakes.every((s) => Number(planCStake) > Number(s));
+    const arity = revealPlinko.length;
+    const ok = c.length === planCBets && c.length >= MIN_PHASE_C_BETS && chk === c.length && chk > 0 && bad === 0
+      && offStake === 0 && payBad === 0 && singleConfig && sameBoard && elevated && arity === 4;
     out.push(step(18, 'Bet-Size Invariance', ok ? 'PASS' : 'FAIL',
-      `${chk}/${c.length} Phase C drops at ${phaseCStake || '$10.00'} (${configLabel}${singleConfig ? '' : ' — EXPECTED a single config'}) recompute path-and-slot from the revealed seed — ${bad} mismatch. ` +
+      `${chk}/${c.length} Phase C drops (plan ${planCBets}, floor ${MIN_PHASE_C_BETS}) at ${planCStake} USDT (${configLabel}${singleConfig ? '' : ' — EXPECTED a single config'}) recompute path-and-slot from the revealed seed — ${bad} mismatch; ${c.length - offStake}/${c.length} at the planned elevated stake; ${c.length - payBad}/${c.length} paid stake × the table cell exactly. ` +
       (sameBoard
         ? `Phase C runs the Phase B board (${phaseBLabel}), so bet size is the only variable that moved. `
         : `COMPARISON NOT ISOLATED: Phase C runs ${configLabel} but Phase B runs ${phaseBLabel} — stake and board both changed. `) +
-      `revealPlinko takes no wager argument (serverSeed, clientSeed, nonce, rows only); drops at $10.00 are produced by the identical engine as the $0.10 drops (stakes present: ${stakes.map((s) => `$${s}`).join(', ')}), so the path cannot depend on bet size` +
-      (chk === 0 ? '; COVERAGE FAIL: 0 Phase C drops recomputed' : '')));
+      `revealPlinko declares ${arity} parameters (serverSeed, clientSeed, nonce, rows — no wager); the drops at ${planCStake} are produced by the identical engine as the drops at ${lowStakes.join(', ')} (stakes present: ${stakes.join(', ')}), so the path cannot depend on bet size` +
+      (chk === 0 ? '; COVERAGE FAIL: 0 Phase C drops recomputed' : ''),
+      { phaseCBets: c.length, phaseCFloor: MIN_PHASE_C_BETS, recomputed: chk - bad, recomputeMismatches: bad, betsOffStake: offStake, payoutMismatches: payBad, drawArity: arity }));
   }
 
   // ── Step 19: Multiplier Table Symmetry ──────────────────────────────────────
   // A fair Plinko board is left/right symmetric: multiplier[k] == multiplier[rows−k] for
-  // every slot. Verified across all standard tables (each rows × risk 1–3) plus WTF.
+  // every slot. Verified across every table (allConfigs: the 27 standard plus WTF).
   {
     let tables = 0, asymmetric = 0;
     const fails: string[] = [];
@@ -85,13 +99,9 @@ export function run(ctx: VerifyContext): StepResult[] {
         }
       }
     };
-    for (const rowsKey of Object.keys(cfg.payout_tables)) {
-      const rows = Number(rowsKey);
-      for (const risk of [1, 2, 3]) {
-        check(payoutTable(cfg, rows, risk), `${rows}r/risk${risk}`);
-      }
+    for (const c of allConfigs(cfg)) {
+      check(payoutTable(cfg, c.rows, c.riskLevel), isWtf(c.riskLevel) ? `WTF(${c.rows}r)` : `${c.rows}r/risk${c.riskLevel}`);
     }
-    check(payoutTable(cfg, cfg.wtf_mode.rows, WTF_RISK), `WTF(${cfg.wtf_mode.rows}r)`);
     const ok = tables > 0 && asymmetric === 0;
     out.push(step(19, 'Multiplier Table Symmetry', ok ? 'PASS' : 'FAIL',
       `${tables} multiplier tables (standard rows × risk 1–3, plus WTF) all left/right symmetric (multiplier[k] == multiplier[rows−k]) — ${asymmetric} asymmetric` +
@@ -125,6 +135,9 @@ export function run(ctx: VerifyContext): StepResult[] {
         if (statSync(p).isFile()) exhibitHashes.add(createHash('sha256').update(readFileSync(p)).digest('hex'));
       }
     }
+    // The SHA-256 of each capture file the dataset names (meta.captures): a chapter may cite them, and each
+    // is read from the pinned dataset here, never typed.
+    const allowedSourceHashes = new Set<string>(ctx.captures.map(c => c.sha256));
     const bad: string[] = [];
     // Keyword-FREE drift scan: examine EVERY 64-hex token in every chapter, not only the
     // ones on lines that happen to carry a "Dataset SHA-256"/"plinkoConfig.json" keyword.
@@ -140,6 +153,7 @@ export function run(ctx: VerifyContext): StepResult[] {
         const isCommitmentReveal = /SHA-256\(utf8/.test(line) && /hashedServerSeed/.test(line);
         for (const h of hashes) {
           if (h === ctx.expectedDatasetHash || h === PLINKO_CONFIG_SHA256) continue;
+          if (allowedSourceHashes.has(h)) continue; // the SHA-256 of a capture file the dataset names (meta.captures)
           if (isCommitmentReveal) continue; // legitimate per-seed commitment shown in a worked example
           if (exhibitHashes.has(h)) continue; // the recomputed SHA-256 of an evidence exhibit file
           bad.push(`${f}: unrecognised 64-hex ${h.slice(0, 12)}… (neither pin)`);
@@ -158,9 +172,9 @@ export function run(ctx: VerifyContext): StepResult[] {
     const manifest = guidePath ? readFileSync(guidePath, 'utf8') : '';
     const manifestHasBoth = manifest.includes(ctx.expectedDatasetHash) && manifest.includes(PLINKO_CONFIG_SHA256);
 
-    // ── (round-4 client QA): VALUE DOMAINS of the COMMITTED emission artifacts ──
-    // Round 4 set `outputs/coverage-results.json` -> `totalConfigs` to -1 and `npm run
-    // verify` printed 21/21 and "PROVABLY FAIR — Full Pass". A negative count of
+    // ── VALUE DOMAINS of the COMMITTED emission artifacts ──
+    // Setting `outputs/coverage-results.json` -> `totalConfigs` to -1 would otherwise let `npm run
+    // verify` print 21/21 and "PROVABLY FAIR — Full Pass". A negative count of
     // configurations is physically impossible, and the only thing that noticed was the
     // derived-emission guard, which fires AFTER the verdict is printed and only proves the
     // BYTES MOVED — re-baseline the artifact and it walks straight through. `gate-values.sh`
@@ -192,20 +206,29 @@ export function run(ctx: VerifyContext): StepResult[] {
     }
     const domainOk = domainBad.length === 0;
 
+    // PLINKO-13, table provenance on production: every cell of the pinned table against the bucket labels and
+    // page statements read on liqd.com (src/page-labels.ts, evidence/liqd-plinko-page-reads-2026-10-20.json).
+    const page = checkTableAgainstPageRead(cfg, root);
+    if (!page.ok) bad.push(`page-label table check: ${page.problems.slice(0, 3).join('; ')}`);
+
     const ok = dsOk && cfgOk && bad.length === 0 && readmeHasDs && manifestHasBoth && domainOk;
     out.push(step(20, 'Artifact Hash + Value-Domain Integrity', ok ? 'PASS' : 'FAIL',
       `dataset SHA-256 ${ctx.datasetSha256.slice(0, 16)}… ${dsOk ? 'matches' : '≠'} pin; ` +
       `multiplier-config SHA-256 ${cfgActual.slice(0, 16)}… ${cfgOk ? 'matches' : '≠'} pin; ` +
       `loader pins match; every published 64-hex token in the Markdown present equals a loader pin ` +
-      `or an allow-listed worked-example commitment` +
+      `, an exhibit hash, a capture-file hash named by the dataset, or an allow-listed worked-example commitment` +
       (bad.length ? `; ${bad.length} DRIFTED: ${bad.slice(0, 4).join('; ')}` : '') +
+      `; table against the production page read of 20 Oct 2026 (${page.fileSha256 ? page.fileSha256.slice(0, 12) + '…' : 'missing'}): ${page.cells - page.mismatches}/${page.cells} cells of ${page.boards} boards equal what liqd.com/originals/plinko showed (${page.cellsByNumericLabel} by a numeric bucket label, ${page.cellsBy1kLabel} by the label 1k with the page's "1,000x" sentence, ${page.cellsByPageStatement} WTF middle cells by the page's "pay nothing" sentence)` +
       `; committed emission artifacts: ${domainLeaves} numeric leaf/leaves checked against value domains derived from the pinned config` +
       (bad.length ? '' : '') +
       (readmeHasDs ? '' : '; README missing dataset pin') +
       (manifestHasBoth ? '' : '; MANIFEST missing a pin') +
       (domainOk ? '' : `; FAIL: value domain — ${domainBad.slice(0, 5).join('; ')}${domainBad.length > 5 ? `; +${domainBad.length - 5} more` : ''}`),
       { domainLeavesChecked: domainLeaves, domainFailures: domainBad.length,
-        hexTokensDrifted: bad.length }));
+        hexTokensDrifted: bad.length,
+        pageReadBoards: page.boards, pageReadCells: page.cells, pageReadCellsByNumericLabel: page.cellsByNumericLabel,
+        pageReadCellsBy1kLabel: page.cellsBy1kLabel, pageReadCellsByPageStatement: page.cellsByPageStatement,
+        pageReadMismatches: page.mismatches }));
   }
 
   return out;

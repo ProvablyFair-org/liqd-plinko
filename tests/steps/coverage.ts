@@ -3,8 +3,8 @@
  *
  * Coverage is a property of the CAPTURE DESIGN, not an integrity check: Step 7
  * proves every OBSERVED payout matches the pinned table, but it can only speak to
- * slots actually landed. This block measures which table cells the 10,100-bet
- * capture exercised, so the payout-verification / MANIFEST conditionality language
+ * slots actually landed. This block measures which table cells the production
+ * captures exercised, so the payout-verification / MANIFEST conditionality language
  * is sourced from a machine emission rather than hand-typed.
  *
  * A "cell" is one (config, slot) multiplier entry: 27 standard configs
@@ -107,7 +107,7 @@ export function run(ctx: VerifyContext): CoverageReport {
   const slot13Observed = wtfSet.has(13);
 
   const report: CoverageReport = {
-    note: 'INFO only — payout-table cell coverage is a property of capture design, not a scored integrity check. Step 7 verifies that every OBSERVED payout matches the pinned table; the unexercised cells rest on the hash-pinned plinkoConfig.json (see MANIFEST.md), not on live data.',
+    note: 'INFO only — payout-table cell coverage is a property of capture design, not a scored integrity check. Step 7 verifies that every OBSERVED payout matches the pinned table; the unexercised cells have no payout witness: they rest on the pinned plinkoConfig.json, each cell of which equals what the production game page displayed (Step 20; see MANIFEST.md).',
     totalConfigs: perConfig.length,
     totalCells,
     cellsExercised,
@@ -119,7 +119,7 @@ export function run(ctx: VerifyContext): CoverageReport {
     wtfTails: {
       slot0Observed,
       slot13Observed,
-      note: `WTF 1000x tails slots 0 and 13 ${(!slot0Observed && !slot13Observed) ? 'were never observed' : 'observation state varies'} in the capture — they rest on the hash-pinned config.`,
+      note: `WTF 1000x tails slots 0 and 13 ${(!slot0Observed && !slot13Observed) ? 'were never observed' : 'observation state varies'} in the capture${(!slot0Observed && !slot13Observed) ? ' — they have no payout witness and rest on the pinned config' : ''}.`,
     },
     perConfig,
   };

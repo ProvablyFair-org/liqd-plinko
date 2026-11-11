@@ -3,24 +3,24 @@
  * clean-room module byte for byte).
  *
  * This module was REBUILT FROM A WRITTEN SPECIFICATION, not ported from LIQD's code:
- *   spec      docs/ALGORITHM.md, a copy of games/liqd-plinko/ALGORITHM.md in the ProvablyFair.org
- *             audit framework (SHA-256 3376ef22…d1ad70bb). Written from LIQD's public pages
+ *   spec      the construction of docs/ALGORITHM.md (§1 to §3), as written on 20 Oct 2026 for the
+ *             ProvablyFair.org audit framework from LIQD's public production pages
  *             (liqd.com/provably-fair, liqd.com/originals/plinko), the standard provably-fair
- *             construction and the 10,100 live drops, without opening LIQD's code, its client
- *             bundle or any port of it (its §8 lists every file and page read).
+ *             construction and captured drops, without opening LIQD's code, its client bundle or any
+ *             port of it. docs/ALGORITHM.md in this package is the production revision of 10 Nov 2026:
+ *             same construction, every DATA line measured on the production dataset (its §8).
  *   rebuild   written by an implementer who read ONLY that spec and a module-interface file (export
  *             names and types), and never opened LIQD's code or this package's earlier src/rng.ts.
  *   self-test tests/plinko/rngSpecTests.ts (the spec's vectors and properties).
  *
- * Before 20 Oct 2026 this file was a re-implementation reconstructed from LIQD's client bundle. LIQD's
- * code is not the source of this module and is not committed in this package; the ProvablyFair.org
- * site verifier (verifier-parity/, src/site-verifier.ts) is run as a second check by Step 5.
+ * LIQD's code is not the source of this module and is not committed in this package; the
+ * ProvablyFair.org site verifier (verifier-parity/, src/site-verifier.ts) is run as a second check by
+ * Step 5, and scripts/spec-check.mjs is a third, independent write-out of the spec.
  *
- * Three-way agreement measured on integration (20 Oct 2026, all 10,100 captured drops, 202 seed
- * records paired to drops by hashing): this module vs the live drops, path 10,100/10,100 and
- * winningSlot 10,100/10,100, commitment 202/202 plus the pre-capture seed; vs the ProvablyFair.org
- * site verifier (pinned derive.js), path, slot and row count 10,100/10,100. No LIQD verifier output
- * is captured in this package, so there is no third comparison against LIQD's own verifier.
+ * Agreement on the production dataset is measured by every run, not typed here: Step 5 (this module
+ * and the site verifier against every captured drop) and Step 1 (commitments). LIQD's own production
+ * verifier was called once per round by the capture runner; the capture checker's printouts are
+ * evidence/E22 to E24.
  *
  * Off the captured data, this module differs from the earlier port on inputs no drop reaches:
  * generateProvablyFairNumber takes the first four digest bytes mod range for every range (the spec

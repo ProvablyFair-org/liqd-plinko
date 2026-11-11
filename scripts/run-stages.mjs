@@ -4,7 +4,7 @@
  * use (their scripts/run-stages.mjs); only the stage list differs. Added to this package 2026-10-14 so that
  * `check-outputs` and `release-manifest --check` still run when the verdict is RTP FIGURE OVERSTATED (exit 5).
  *
- * WHY (QA list of 2026-10-03, A-6). `npm test` was the chain `a && b && c && d`. `&&` stops at the first non-zero exit,
+ * WHY. `npm test` was the chain `a && b && c && d`. `&&` stops at the first non-zero exit,
  * and the verifier's exit code is the VERDICT — 0 Full Pass, 2 Conditional Pass, 5 RTP FIGURE OVERSTATED, 1 NOT PROVABLY
  * FAIR — so on any
  * verdict other than a Full Pass the chain never reached `release-manifest.mjs --check`, the release stage.

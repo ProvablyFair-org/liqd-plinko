@@ -6,7 +6,7 @@
     "replace": "\"step\": 19,\n      \"name\": \"Multiplier Table Symmetry\",\n      \"status\": \"FLAG\"",
     "runner": "check-outputs",
     "expect": "[check-outputs] FAIL",
-    "guard": "check-outputs requires EVERY step to be PASS, flags === 0, and summary.passed/flags/hardFail to be arithmetically consistent with the steps array — a FLAG cannot ride along under the 'PROVABLY FAIR — Full Pass' verdict string. Round-1 counterexample from the external review. Not in tests/mutations.json because it is killed by the publication guard, not by a numbered scored step."
+    "guard": "check-outputs requires EVERY step to be PASS, flags === 0, and summary.passed/flags/hardFail to be arithmetically consistent with the steps array — a FLAG cannot ride along under the 'PROVABLY FAIR — Full Pass' verdict string. Not in tests/mutations.json because it is killed by the publication guard, not by a numbered scored step."
   },
   {
     "name": "X01 canonical artifact hand-edited to FLAG with the summary counters doctored to match",
@@ -29,7 +29,7 @@
   {
     "name": "X02 required calibration figure blanked in the artifact of record",
     "file": "outputs/calibration-results.json",
-    "find": "\"zEarlyBelowCalibratedSurvivalP\": 0.5337301174256663,",
+    "find": "\"zEarlyBelowCalibratedSurvivalP\": 0.2798293035829732,",
     "replace": "\"zEarlyBelowCalibratedSurvivalP\": null,",
     "runner": "check-outputs",
     "expect": "[check-outputs] FAIL",
@@ -42,7 +42,7 @@
     "replace": "\"attest\": \"sample=2\",",
     "runner": "check-outputs",
     "expect": "[check-outputs] FAIL",
-    "guard": "check-outputs requires runMode.attest === 'full' AND Step 17's data.attestMode === 'full' with attestChecked === attestPopulation. Round-3 counterexample K4: `ATTEST_SAMPLE=2 npm run verify` returned 21/21 Full Pass, exit 0, and check-outputs reported OK, with Step 17 having recomputed 2 of 202 epochs. The only thing keeping the escape off the publication path was a comment in the source saying it must not be used there, and check-outputs never read the attest mode at all."
+    "guard": "check-outputs requires runMode.attest === 'full' AND Step 17's data.attestMode === 'full' with attestChecked === attestPopulation. K4: without this, `ATTEST_SAMPLE=2 npm run verify` returns 21/21 Full Pass, exit 0, and check-outputs reports OK, with Step 17 having recomputed 2 of the epochs."
   },
   {
     "name": "X04 canonical run produced with the EMIT_BASELINE escape",
@@ -51,7 +51,7 @@
     "replace": "\"emitBaseline\": true",
     "runner": "check-outputs",
     "expect": "[check-outputs] FAIL",
-    "guard": "EMIT_BASELINE=1 SKIPS the emission-divergence guard entirely, so a run made with it cannot be a publication run. Same shape as X03 and equally unenforced before round 3: the flag left no trace anywhere in the artifacts. It is now recorded in runMode and refused here."
+    "guard": "EMIT_BASELINE=1 SKIPS the emission-divergence guard entirely, so a run made with it cannot be a publication run. Same shape as X03: it is recorded in runMode and refused here."
   },
   {
     "name": "X05 producing artifact for the chapter figures forged (verification-stats.json)",
@@ -60,7 +60,7 @@
     "replace": "\"maxDeviationFrom99\": 0.4242424242424242",
     "runner": "check-outputs",
     "expect": "[check-outputs] FAIL",
-    "guard": "outputs/verification-stats.json is what MANIFEST.md#evidence E18 declares to be THE producing artifact for the figures quoted in the chapters, and check-outputs did not look at it: no pin, no presence check, no artifactHashes entry. Round-3 counterexample K5 — forging it and running check-outputs returned OK, exit 0. The verify-time emission-divergence guard does catch this and quarantines the run, so the exposure was the check-outputs-only path; that is the published path. It is now hashed into artifactHashes and re-asserted here."
+    "guard": "outputs/verification-stats.json is what MANIFEST.md#evidence E18 declares to be THE producing artifact for the figures quoted in the chapters. K5: the verify-time emission-divergence guard catches a forgery of it and quarantines the run; check-outputs, the published path, hashes it into artifactHashes and re-asserts it here."
   },
   {
     "name": "X06 coverage artifact forged (coverage-results.json)",
@@ -79,7 +79,7 @@
     ],
     "runner": "verify",
     "expect": "[FAIL] Step 20",
-    "guard": "emissionDivergence() returned null when the file did not exist — 'nothing to compare' — so deleting both emission artifacts gave 21/21, exit 0, and a silent regeneration. Not a forgery vector (the regeneration is honest), but the guard was a divergence check with no presence check behind it, and K5 meant nothing else looked at the files either. Round-3 counterexample K6. THIS IS A CROSS-REPO CLASS: the sibling mines and blackjack suites carry the same 'absent artifact ⇒ pass' shape and have not been fixed here. MARKER CORRECTED 2026-09-10: the entry previously declared \"committed copy is MISSING\", the emission guard’s wording. Step 20 (Artifact Hash + Value-Domain Integrity) now owns PRESENCE as well as values and fires FIRST, so the run reports [FAIL] Step 20, 20/21, NOT PROVABLY FAIR and the old marker never prints. Reproduced by hand: delete outputs/verification-stats.json and outputs/coverage-results.json, run npm run verify. The forgery is caught harder than before — a scored step now rejects it instead of a post-verdict guard — so the marker was corrected rather than the guard relaxed."
+    "guard": "emissionDivergence() returns null when the file does not exist — 'nothing to compare' — so without a presence check deleting both emission artifacts would give 21/21, exit 0, and a silent regeneration. Not a forgery vector (the regeneration is honest), but a divergence check needs a presence check behind it. K6. Step 20 (Artifact Hash + Value-Domain Integrity) now owns PRESENCE as well as values and fires FIRST, so the run reports [FAIL] Step 20, 20/21, NOT PROVABLY FAIR. Reproduced by hand: delete outputs/verification-stats.json and outputs/coverage-results.json, run npm run verify. A scored step rejects it, not a post-verdict guard."
   },
   {
     "name": "X08 fabricated 200% Pass 1 RTP row with the dependent calibration hash refreshed",
@@ -99,7 +99,7 @@
     ],
     "runner": "verify",
     "expect": "[FAIL] Step 16",
-    "guard": "exactly as the reviewer executed it: the first Pass 1 row's simRTP and theoreticalRTP are both set to 2 AND the dependent calibration artifact's recorded simulation SHA-256 is refreshed, so nothing downstream notices a stale pairing. That configuration produced 21 PASS, verify exit 0 and check-outputs exit 0 — a publication hash certifying internally consistent bytes containing a 200% RTP. M26 is the same edit without the refresh (Step 17 also catches that one on the pairing check, which is why the refreshed form is the real test). Step 16 now recomputes the reference from the pinned config, so refreshing dependent hashes does not help."
+    "guard": "the full forgery: the first Pass 1 row's simRTP and theoreticalRTP are both set to 2 AND the dependent calibration artifact's recorded simulation SHA-256 is refreshed, so nothing downstream notices a stale pairing. Without the recomputation that configuration produces 21 PASS, verify exit 0 and check-outputs exit 0 — a publication hash certifying internally consistent bytes containing a 200% RTP. M26 is the same edit without the refresh (Step 17 also catches that one on the pairing check, which is why the refreshed form is the real test). Step 16 recomputes the reference from the pinned config, so refreshing dependent hashes does not help."
   },
   {
     "name": "X09 canonical artifact carries a Full Pass verdict on a run that did not complete",
@@ -112,14 +112,14 @@
     ],
     "runner": "check-outputs",
     "expect": "[check-outputs] FAIL",
-    "guard": "The report used to be constructed BEFORE the final emission guard and then written unchanged to a `.failed.json` filename, so a run that exited 1 on artifact validation left a document reading passed: 21, hardFail: 0, verdict \"PROVABLY FAIR — Full Pass\". A consumer reading its contents infers success from a failed validation run. verify.ts now finalises the overall status AFTER every required validation (outcome.overallStatus / outcome.completed / outcome.validationErrors, with the 21 scored checks kept as the subordinate outcome.scored / outcome.scoredVerdict), and this mutation proves check-outputs re-asserts that record on the canonical file: a document claiming a Full Pass while declaring the run incomplete is refused."
+    "guard": "A report constructed BEFORE the final emission guard and then written unchanged to a `.failed.json` filename would leave, on a run that exited 1 on artifact validation, a document reading passed: 21, hardFail: 0, verdict \"PROVABLY FAIR — Full Pass\". A consumer reading its contents infers success from a failed validation run. verify.ts finalises the overall status AFTER every required validation (outcome.overallStatus / outcome.completed / outcome.validationErrors, with the 21 scored checks kept as the subordinate outcome.scored / outcome.scoredVerdict), and this mutation proves check-outputs re-asserts that record on the canonical file: a document claiming a Full Pass while declaring the run incomplete is refused."
   },
   {
     "name": "X10 Pass 2 edge-hit count inflated to a billion with the dependent calibration hash refreshed",
     "edits": [
       {
         "file": "outputs/simulation-results.json",
-        "find": "\"edgeHitsEarly\": 1063,",
+        "find": "\"edgeHitsEarly\": 334,",
         "replace": "\"edgeHitsEarly\": 1000000000,"
       }
     ],
@@ -132,14 +132,14 @@
     ],
     "runner": "verify",
     "expect": "[FAIL] Step 17",
-    "guard": "exactly as the reviewer executed it: edgeHitsEarly = 1,000,000,000 with the calibration artifact re-paired, so nothing downstream notices a stale hash. That configuration produced 21/21 PASS, verify exit 0 and check-outputs exit 0 — a publication hash certifying a billion edge hits in an experiment that contains 1,010,000 drops. Step 17 now re-counts the edge hits over the epochs it attests, and src/domains.ts bounds the field at EXPECTED_SEEDS x floor(PASS2_NONCES_PUBLISHED/2), both declared in source. M31 is the same edit without the refresh."
+    "guard": "the full forgery: edgeHitsEarly = 1,000,000,000 with the calibration artifact re-paired, so nothing downstream notices a stale hash. Without the re-count that configuration produces 21/21 PASS, verify exit 0 and check-outputs exit 0 — a publication hash certifying a billion edge hits in an experiment whose window holds a few hundred thousand drops. Step 17 re-counts the edge hits over the epochs it attests, and src/domains.ts bounds the field at EXPECTED_SEEDS x floor(PASS2_NONCES_PUBLISHED/2), both declared in source. M31 is the same edit without the refresh."
   },
   {
     "name": "X11 Pass 2 window RTP zeroed on a board whose minimum payout is 50%, calibration hash refreshed",
     "edits": [
       {
         "file": "outputs/simulation-results.json",
-        "find": "\"rtpEarly\": 1.0028000000000055,",
+        "find": "\"rtpEarly\": 1.0000000000000022,",
         "replace": "\"rtpEarly\": 0,"
       }
     ],
@@ -152,14 +152,14 @@
     ],
     "runner": "verify",
     "expect": "[FAIL] Step 17",
-    "guard": "exactly as the reviewer executed it: Epoch 0 ran on the 8-row low-risk board ([0.5, 5.6]); the artifact-wide domain was the UNION over all boards, [0, 1000], so 0 was inside it and the run returned 21/21 Full Pass with the calibration re-paired. Step 17 now recomputes the window RTPs from the revealed seeds and bounds each by ITS OWN board, taken from the dataset rather than from the row. M32 is the same edit without the refresh."
+    "guard": "the full forgery: Epoch 0 ran on the 8-row low-risk board ([0.5, 5.6]); an artifact-wide domain that is the UNION over all boards, [0, 1000], contains 0, so a domain check alone returns 21/21 Full Pass with the calibration re-paired. Step 17 recomputes the window RTPs from the revealed seeds and bounds each by ITS OWN board, taken from the dataset rather than from the row. M32 is the same edit without the refresh."
   },
   {
     "name": "X12 Pass 2 two-sided p-value replaced by zero with the dependent calibration hash refreshed",
     "edits": [
       {
         "file": "outputs/simulation-results.json",
-        "find": "\"pTwoSidedZEarlyMinusLate\": 0.5517870362092148,",
+        "find": "\"pTwoSidedZEarlyMinusLate\": 0.3670745325960165,",
         "replace": "\"pTwoSidedZEarlyMinusLate\": 0,"
       }
     ],
@@ -172,7 +172,7 @@
     ],
     "runner": "verify",
     "expect": "[FAIL] Step 17",
-    "guard": "exactly as the reviewer executed it: Zero is a legal probability, so this is the member of the class no value domain can ever catch — it is only falsifiable by recomputation. Step 17 now re-derives it from the per-epoch z values it recomputed itself, using the same src/stats.ts normalCDF the producer uses. M33 is the same edit without the refresh."
+    "guard": "the full forgery: zero is a legal probability, so this is the member of the class no value domain can ever catch — it is only falsifiable by recomputation. Step 17 re-derives it from the per-epoch z values it recomputed itself, using the same src/stats.ts normalCDF the producer uses. M33 is the same edit without the refresh."
   },
   {
     "name": "X13 Step 5 replaced by a second copy of Step 4 — 21 entries, 20 distinct steps",
@@ -184,12 +184,22 @@
     "guard": "G-BIND applied to the step list itself. check-outputs counted entries (scored === EXPECTED_STEPS) without requiring them to be DISTINCT, so duplicating Step 4 over Step 5 — deleting the outcome-recomputation step, the one that re-derives every drop path and slot from the seeds — still reported 21/21 Full Pass and exit 0. The guard now requires the ids 1..21 each exactly once, each under the name its module declares in tests/steps/, which is source rather than the artifact being checked, so a duplicate renumbered to fill the hole is caught too. A count is not an identity. Not in tests/mutations.json because it is killed by the publication guard, not by a numbered scored step."
   },
   {
-    "name": "S00 DECLARED SURVIVOR — a never-paid payout cell mis-transcribed, with the config pin regenerated",
+    "name": "S00 DECLARED SURVIVOR — a never-paid payout cell wrong in the table AND in the saved page read, with both pins regenerated",
     "edits": [
       {
         "file": "plinkoConfig.json",
-        "find": "\"odds\": [1000, 235, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 235, 1000]",
-        "replace": "\"odds\": [990, 235, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 235, 990]"
+        "find": "[620,83,27,8,3,0.5,0.2,0.2,0.2,0.2,0.5,3,8,27,83,620]",
+        "replace": "[610,83,27,8,3,0.5,0.2,0.2,0.2,0.2,0.5,3,8,27,83,610]"
+      },
+      {
+        "file": "evidence/liqd-plinko-page-reads-2026-10-20.json",
+        "find": "\"High/15\": [\n    \"620\",",
+        "replace": "\"High/15\": [\n    \"610\","
+      },
+      {
+        "file": "evidence/liqd-plinko-page-reads-2026-10-20.json",
+        "find": "\"83\",\n    \"620\"\n   ],\n   \"High/16\"",
+        "replace": "\"83\",\n    \"610\"\n   ],\n   \"High/16\""
       }
     ],
     "repin": [
@@ -198,11 +208,17 @@
         "pattern": "PLINKO_CONFIG_SHA256 = '([0-9a-f]{64})'",
         "hashOf": "plinkoConfig.json",
         "propagateToMarkdown": true
+      },
+      {
+        "file": "src/page-labels.ts",
+        "pattern": "PAGE_READ_SHA256 = '([0-9a-f]{64})'",
+        "hashOf": "evidence/liqd-plinko-page-reads-2026-10-20.json",
+        "propagateToMarkdown": true
       }
     ],
     "runner": "verify",
     "expectSurvive": true,
-    "guard": "THIS IS THE REPOSITORY'S TOP RESIDUAL, DECLARED RATHER THAN PRETENDED KILLED. Both WTF 1000x tail cells (slots 0 and 13) are among the 80 of 365 payout-table cells the capture never landed on. This mutation changes them to 990, regenerates the config SHA-256 pin in src/config.ts, and propagates the new pin to every chapter that publishes it — i.e. it produces the tree a mis-transcription present from the first commit would have produced. Result: 17 of the 21 scored steps still PASS; FOUR steps reject it — Steps 5, 10, 16 and 17 — declared here as expectFail: [5, 10, 16, 17], so the battery requires exactly those failures to occur and rejects any other. Step 7 can only check cells that actually paid; Step 19's symmetry holds because both mirror cells moved together; Steps 15 and 21 measure the captured drops, none of which landed on those cells. Step 10 rejects it for TWO reasons, and the second is the one real detection in this list. (a) Staleness: the committed outputs/rtp-claim-table.json and its pin (src/rtp-settings.ts) were generated from the original table, so the per-setting table this run computes no longer equals the committed copy — the same kind of rejection as Steps 16 and 17. (b) Detection: with both tails at 990x the WTF board returns 8090/8192 = 98.7548828125%, more than 0.1 pp below the 99% LIQD's Plinko page shows (evidence/rtp-page-labels-2026-10-01.json), so the enforced published-RTP rule (RTP-CLAIM 1.1.0, src/rtp-claim.ts) fails Step 10 on the house side of its band. (b) does not depend on any committed copy: had the cell been 990 from the first commit, the table would have been generated from it and would match, and Step 10 would still fail. What the rule cannot see is a mis-transcription that keeps every board at or above 98.9% (e.g. 1000 -> 997 gives WTF 98.92578125%, inside the band) or one in the player's favour, which the rule never fails. Before 2026-10-01, when the rule was switched on for this package, Step 10's model anchor recomputed the binomial RTP against an exhaustive path enumeration of the SAME table, so both sides moved together and agreed, and Step 10 passed. Steps 5, 16 and 17 are NOT detection. Step 17: the committed outputs/simulation-results.json was produced with the original table, so the payout-weighted z values it stores no longer re-derive (max |delta| 1.56e-2 against a 1e-9 tolerance). Step 16: it recomputes each row's theoretical RTP from the pinned plinkoConfig.json instead of reading the artifact's own theory column, and the recomputed 13r/4 theory (0.987548828125) no longer equals the committed column (0.989990234375); `simRTP within 6 SE of the RECOMPUTED theory` still reports 28/28, i.e. the SIMULATED numbers do not object. Step 5: it runs the ProvablyFair.org site verifier, whose paytables.js is a hash-pinned copy of the ORIGINAL plinkoConfig.json (the site file says it was generated from it), so the edited config no longer equals the pinned copy on the two WTF tail cells — a second anchor on the committed table, not detection: had the original transcription been wrong, the site copy generated from it would carry the same error. Had the cell been wrong from the first commit, the simulation would have been run with the wrong table and Steps 16 and 17 would agree too. So the residual narrows to errors that stay inside the published-RTP band: nothing in this repository can tell a correct transcription of a never-paid cell from a wrong one that leaves every board at or above 98.9%. Closing it needs the operator's client bundle chunk or a hashed get-game-settings response carrying the tables committed as evidence; see MANIFEST 'Residual (declared)' and Recommendations. History: reported as M3a by the round-1 external review; 21/21 at round 2; 18/21 after Step 16 (round 4) and Step 5 (2026-09-24) joined — both artifact staleness; 17/21 since 2026-10-01, when the enforced RTP-CLAIM rule added Step 10. Two further things notice the edit for the same artifact-staleness reason and are equally not detection: the derived emission guard in verify.ts (outputs/coverage-results.json carries each configuration's never-observed RTP share, which moves with the table) and, on a mocha run, the RTP pins in tests/plinko/rtpPinTests.ts — which pin OUR transcription, so a value wrong from the first commit would have been pinned along with it.",
+    "guard": "THIS IS THE REPOSITORY'S TOP RESIDUAL, DECLARED RATHER THAN PRETENDED KILLED. The two 620x edge cells of the 15-row high-risk table (slots 0 and 15) are among the payout-table cells no captured drop landed on. Since release v1.1.0 Step 20 holds every cell to the bucket labels saved from the production page, so a wrong number typed into the table alone is detected (M52). What nothing offline can detect is a never-paid cell where the PAGE shows a value the server would not pay. This mutation produces that tree: it changes both cells to 610 in plinkoConfig.json AND in the saved page read, regenerates both SHA-256 pins (src/config.ts, src/page-labels.ts) and propagates them to the documents — i.e. the state a wrong display recorded faithfully from the first commit would have produced. The board moves from 32449/32768 (99.026489%) to 32429/32768 (98.965454%), still inside the published-RTP band, so the RTP-CLAIM rule does NOT detect it. The steps in expectFail reject it only because committed copies of the original table no longer match (the simulation's theory column and Pass-2 values, the site verifier's hash-pinned paytables.js, the committed RTP-claim table): artifact staleness, not detection. Had the cells been wrong from the first commit every copy would carry the same error and agree. The steps in expectPass, Step 20 among them, pass it. Closing the residual needs a paid drop in each cell or an operator-served table hash (MANIFEST.md DL-1).",
     "expectPass": [
       1,
       2,
@@ -247,7 +263,7 @@
     ],
     "runner": "verify",
     "expect": "[FAIL] Step 5",
-    "guard": "PLINKO-24, the forgery a pin alone cannot stop: the site derive.js is changed (0-based cursor, the prior-generation module's convention the file warns against) and its pin updated to match. Step 5 then RUNS it on all 10,100 captured bets and FAILs on path/slot parity with src/rng.ts and the capture (and on the source card, which no longer equals derive.js)."
+    "guard": "PLINKO-24, the forgery a pin alone cannot stop: the site derive.js is changed (0-based cursor, the prior-generation module's convention the file warns against) and its pin updated to match. Step 5 then RUNS it on every captured bet and FAILs on path/slot parity with src/rng.ts and the capture (and on the source card, which no longer equals derive.js)."
   },
   {
     "name": "X15 site source card no longer the code that runs, re-pinned",
@@ -326,7 +342,7 @@
     "expectExit": 5,
     "expectVerdict": "RTP FIGURE OVERSTATED",
     "expect": "[RTP FIGURE OVERSTATED] Step 10",
-    "guard": "Step 10 (PLINKO-19), FIXPASS2 C3(i): one setting misses the published figure by more than the band and nothing else changes. The rows-12 medium-risk board is priced 2 % lower where the RTP table reads plinkoConfig.json (src/rtp-settings.ts computeRtpClaim), about 97.0 % against the 99 % held. With the table re-written and re-pinned and the records re-emitted (regen; `standalone` runner, full Pass 1 replay, because the emission guard refuses a record from a PF_P1_REPLAY=off run), the run must end RTP FIGURE OVERSTATED, exit 5, Step 10 OVERSTATED. The edit is not made in plinkoConfig.json itself: Step 16 recomputes the theory of every committed Pass 1 row from the pinned config and replays the committed experiment, so a real paytable change needs a re-simulation, which this entry does not run."
+    "guard": "Step 10 (PLINKO-19), C3(i): one setting misses the published figure by more than the band and nothing else changes. The rows-12 medium-risk board is priced 2 % lower where the RTP table reads plinkoConfig.json (src/rtp-settings.ts computeRtpClaim), about 97.0 % against the 99 % held. With the table re-written and re-pinned and the records re-emitted (regen; `standalone` runner, full Pass 1 replay, because the emission guard refuses a record from a PF_P1_REPLAY=off run), the run must end RTP FIGURE OVERSTATED, exit 5, Step 10 OVERSTATED. The edit is not made in plinkoConfig.json itself: Step 16 recomputes the theory of every committed Pass 1 row from the pinned config and replays the committed experiment, so a real paytable change needs a re-simulation, which this entry does not run."
   },
   {
     "name": "C3ii published figure raised to 99.25 % in the claim source, table + records regenerated",
@@ -338,7 +354,7 @@
     "expectExit": 5,
     "expectVerdict": "RTP FIGURE OVERSTATED",
     "expect": "[RTP FIGURE OVERSTATED] Step 10",
-    "guard": "Step 10 (PLINKO-19), FIXPASS2 C3(ii): the published figure raised where the verifier reads it (src/rtp-settings.ts RTP_CLAIM, the only copy the rule holds; evidence/rtp-page-labels-2026-10-01.json is cited, not read at run time). 27 of the 28 boards (all but rows 11 high, 99.160156 %) fall below a 99.25 % claim's band floor of 99.15 %. With the table and records regenerated (`standalone` runner, full Pass 1 replay) the run must end RTP FIGURE OVERSTATED, exit 5, Step 10 OVERSTATED (M51 makes the same edit without regenerating and dies on the table pin, FAIL)."
+    "guard": "Step 10 (PLINKO-19), C3(ii): the published figure raised where the verifier reads it (src/rtp-settings.ts RTP_CLAIM, the only copy the rule holds; evidence/rtp-page-labels-2026-10-01.json is cited, not read at run time). 27 of the 28 boards (all but rows 11 high, 99.160156 %) fall below a 99.25 % claim's band floor of 99.15 %. With the table and records regenerated (`standalone` runner, full Pass 1 replay) the run must end RTP FIGURE OVERSTATED, exit 5, Step 10 OVERSTATED (M51 makes the same edit without regenerating and dies on the table pin, FAIL)."
   },
   {
     "name": "X20 RTP FIGURE OVERSTATED record carrying a hard fail (Step 3 FAIL)",
@@ -371,7 +387,7 @@
     ],
     "runner": "check-outputs",
     "expect": "summary.hardFail is 1",
-    "guard": "FIXPASS2 C3, check-outputs side: the committed record hand-shaped as an RTP FIGURE OVERSTATED release (Step 10 OVERSTATED, summary and outcome counters and verdict strings reconciled, outputs/rtp-claim-table.json outcome FAIL), which check-outputs accepts since 2026-10-14 (RTP-CLAIM 1.2.0, decision D3; the acceptance itself is shown by a genuine regenerated OVERSTATED record, MANIFEST release history), plus one hard-failed step with every counter matching. An OVERSTATED verdict string must not carry a hard fail into a release: refused on summary.hardFail."
+    "guard": "check-outputs side: the committed record hand-shaped as an RTP FIGURE OVERSTATED release (Step 10 OVERSTATED, summary and outcome counters and verdict strings reconciled, outputs/rtp-claim-table.json outcome FAIL), which check-outputs accepts since 2026-10-14 (RTP-CLAIM 1.2.0), plus one hard-failed step with every counter matching. An OVERSTATED verdict string must not carry a hard fail into a release: refused on summary.hardFail."
   },
   {
     "name": "X21 RTP FIGURE OVERSTATED record carrying a FLAG (Step 3 FLAG)",
@@ -404,7 +420,7 @@
     ],
     "runner": "check-outputs",
     "expect": "1 step(s) are not PASS: 3:FLAG",
-    "guard": "FIXPASS2 C3, check-outputs side: the committed record hand-shaped as an RTP FIGURE OVERSTATED release (Step 10 OVERSTATED, summary and outcome counters and verdict strings reconciled, outputs/rtp-claim-table.json outcome FAIL), which check-outputs accepts since 2026-10-14 (RTP-CLAIM 1.2.0, decision D3; the acceptance itself is shown by a genuine regenerated OVERSTATED record, MANIFEST release history), plus one FLAGged step with every counter matching. This package pushes no Conditional Pass, and an OVERSTATED verdict does not open that door: refused."
+    "guard": "check-outputs side: the committed record hand-shaped as an RTP FIGURE OVERSTATED release (Step 10 OVERSTATED, summary and outcome counters and verdict strings reconciled, outputs/rtp-claim-table.json outcome FAIL), which check-outputs accepts since 2026-10-14 (RTP-CLAIM 1.2.0), plus one FLAGged step with every counter matching. This package pushes no Conditional Pass, and an OVERSTATED verdict does not open that door: refused."
   },
   {
     "name": "X22 Step 10 OVERSTATED over an RTP table that holds",
@@ -427,7 +443,7 @@
     ],
     "runner": "check-outputs",
     "expect": "the step's status and the rule table disagree",
-    "guard": "FIXPASS2 C3, check-outputs side: the committed record hand-shaped as an RTP FIGURE OVERSTATED release (Step 10 OVERSTATED, summary and outcome counters and verdict strings reconciled, outputs/rtp-claim-table.json outcome FAIL), which check-outputs accepts since 2026-10-14 (RTP-CLAIM 1.2.0, decision D3; the acceptance itself is shown by a genuine regenerated OVERSTATED record, MANIFEST release history), except the committed rule table is left as it is (outcome PASS). The OVERSTATED status must be the committed table's own outcome: refused."
+    "guard": "check-outputs side: the committed record hand-shaped as an RTP FIGURE OVERSTATED release (Step 10 OVERSTATED, summary and outcome counters and verdict strings reconciled, outputs/rtp-claim-table.json outcome FAIL), which check-outputs accepts since 2026-10-14 (RTP-CLAIM 1.2.0), except the committed rule table is left as it is (outcome PASS). The OVERSTATED status must be the committed table's own outcome: refused."
   },
   {
     "name": "X23 OVERSTATED placed on a step that does not carry PLINKO-19 (Step 9)",
@@ -455,6 +471,6 @@
     ],
     "runner": "check-outputs",
     "expect": "only the RTP-claim step 10 can be",
-    "guard": "FIXPASS2 C3, check-outputs side: the committed record hand-shaped as an RTP FIGURE OVERSTATED release (Step 10 OVERSTATED, summary and outcome counters and verdict strings reconciled, outputs/rtp-claim-table.json outcome FAIL), which check-outputs accepts since 2026-10-14 (RTP-CLAIM 1.2.0, decision D3; the acceptance itself is shown by a genuine regenerated OVERSTATED record, MANIFEST release history), except the OVERSTATED status sits on Step 9 instead of Step 10 (RTP_CLAIM_STEP, read from src/rtp-settings.ts). Only the RTP-claim step can be OVERSTATED: refused."
+    "guard": "check-outputs side: the committed record hand-shaped as an RTP FIGURE OVERSTATED release (Step 10 OVERSTATED, summary and outcome counters and verdict strings reconciled, outputs/rtp-claim-table.json outcome FAIL), which check-outputs accepts since 2026-10-14 (RTP-CLAIM 1.2.0), except the OVERSTATED status sits on Step 9 instead of Step 10 (RTP_CLAIM_STEP, read from src/rtp-settings.ts). Only the RTP-claim step can be OVERSTATED: refused."
   }
 ]

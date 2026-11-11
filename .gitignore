@@ -10,8 +10,6 @@ outputs/run/
 !outputs/calibration-results.json
 !outputs/coverage-results.json
 !outputs/verification-stats.json
-results/*.json
-!results/.gitkeep
 outputs/*.log
 # A fresh experiment (`npm run simulate`) writes here so it can never overwrite
 # the artifact of record in outputs/. It is a NEW experiment, not audit evidence.

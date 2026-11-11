@@ -1,8 +1,8 @@
 {
   "name": "liqd-plinko-audit",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "engines": {
-    "node": "22.x"
+    "node": ">=22.23.1 <23"
   },
   "license": "MIT",
   "description": "Provably fair audit \u2014 LIQD.com Plinko",

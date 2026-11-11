@@ -47,7 +47,7 @@
 
 import type { PlinkoConfigData } from './types';
 import { allConfigs, payoutTable, slotCount, PASS2_NONCES_PUBLISHED } from './config';
-import { EXPECTED_BETS, EXPECTED_SEEDS, EXPECTED_EPOCH_SIZE } from './loader';
+import { EXPECTED_BETS, EXPECTED_SEEDS } from './loader';
 
 export interface Domain {
   /** Short name used in the failure message. */
@@ -135,12 +135,12 @@ export function boardMultiplierRange(
 
 /**
  * Drops in ONE Pass-2 window across the whole audited seed population: every revealed
- * epoch contributes `floor(PASS2_NONCES_PUBLISHED / 2)` drops, so 202 × 5,000 = 1,010,000.
+ * epoch contributes `floor(PASS2_NONCES_PUBLISHED / 2)` drops, so 52 × 5,000 = 260,000.
  *
  * This is the ceiling on an edge-hit count, because an edge hit is one drop landing in
  * slot 0 or slot `rows`. Both factors come from source — `EXPECTED_SEEDS` in src/loader.ts
  * and `PASS2_NONCES_PUBLISHED` in src/config.ts — and NEITHER is read from the artifact,
- * which is the whole point: the round-5 counterexample set `edgeHitsEarly` to 1,000,000,000
+ * which is the whole point: the X10 counterexample sets `edgeHitsEarly` to 1,000,000,000
  * and nothing objected, because the only field that could have contradicted it
  * (`noncesPerSeed`) was inside the same file.
  */
@@ -326,6 +326,9 @@ export function domainRules(cfg: PlinkoConfigData): Record<string, Rule[]> {
       { path: /^\.steps\.step5\.(siteVerifierBetsRun|siteVerifierPathMismatches|siteVerifierSlotMismatches|siteVerifierMultiplierMismatches|siteVerifierRowMismatches)$/, domain: BET_COUNT },
       { path: /^\.steps\.step5\.(siteVerifierPaytableCells|siteVerifierPaytableCellsDiffering)$/, domain: CELL_COUNT },
 
+      // Step 2: the pre-commitment chain inside each capture and the per-capture anchors.
+      { path: /^\.steps\.step2\.(preCommitmentsChecked|preCommitmentFails|epochTransitions|preCaptureAnchors|captures)$/, domain: SEED_COUNT },
+
       { path: /^\.steps\.step6\.(tested|expectedTested|changed|samePath)$/, domain: BET_COUNT },
       { path: /^\.steps\.step6\.expectedSamePath$/, domain: NONNEG_REAL },
       { path: /^\.steps\.step6\.(samePathSurvivalP|alpha)$/, domain: PROBABILITY },
@@ -337,7 +340,7 @@ export function domainRules(cfg: PlinkoConfigData): Record<string, Rule[]> {
       // cell coverage now emitted inside the scored step. The per-cell RTP-share map is keyed
       // "rows:risk:slot"; each value is a cell's share of its config's theoretical RTP.
       { path: /^\.steps\.step9\.(standardConfigsPresent|configsBelowFloor)$/, domain: CFG_COUNT },
-      { path: /^\.steps\.step9\.(phaseAFloor|phaseAMinPerConfig|phaseAMaxPerConfig)$/, domain: BET_COUNT },
+      { path: /^\.steps\.step9\.(phaseAFloor|phaseAMinPerConfig|phaseAMaxPerConfig|phaseAWtfBets)$/, domain: BET_COUNT },
       { path: /^\.steps\.step9\.(neverPaidCells|coverageCellsTotal)$/, domain: CELL_COUNT },
       { path: /^\.steps\.step9\.neverPaidRtpShareSummed$/, domain: NONNEG_REAL },
       { path: /^\.steps\.step9\.neverPaidCellRtpShare\.\d+:\d+:\d+$/, domain: NONNEG_REAL },
@@ -351,8 +354,11 @@ export function domainRules(cfg: PlinkoConfigData): Record<string, Rule[]> {
       { path: /^\.steps\.step11\.(seedRecords|expectedSeeds)$/, domain: SEED_COUNT },
       { path: /^\.steps\.step11\.(phaseCounts|expectedPhaseBets)\.[A-E]$/, domain: BET_COUNT },
 
-      { path: /^\.steps\.step12\.(epochsByHash|epochIndexes|expectedSeeds|seedRecords)$/, domain: SEED_COUNT },
-      { path: /^\.steps\.step12\.(minEpochSize|maxEpochSize|expectedEpochSize|metaEpochSize)$/, domain: intAtMost(EXPECTED_BETS, 'bets in an epoch') },
+      { path: /^\.steps\.step12\.(epochsByHash|epochIndexes|expectedSeeds|seedRecords|epochsOnPlan)$/, domain: SEED_COUNT },
+      { path: /^\.steps\.step12\.(minEpochSize|maxEpochSize|primaryWindowNonces)$/, domain: intAtMost(EXPECTED_BETS, 'bets in an epoch') },
+      // Per plan entry (keys A, D, B, A+W, E, C): epochs and bets counted from the data.
+      { path: /^\.steps\.step12\.epochsPerPlanEntry\.[A-E](\+W)?$/, domain: SEED_COUNT },
+      { path: /^\.steps\.step12\.betsPerPlanEntry\.[A-E](\+W)?$/, domain: BET_COUNT },
 
       // Step 13 emits the two anti-circularity residuals as machine values so the
       // reproduction diff compares them numerically; the detail sentence states the bounds.
@@ -360,17 +366,21 @@ export function domainRules(cfg: PlinkoConfigData): Record<string, Rule[]> {
       { path: /^\.steps\.step13\.worstRows$/, domain: intBetween(cfg.rows.min, cfg.rows.max, 'rows on a board') },
       { path: /^\.steps\.step13\.(maxAbsCoefficientError|maxAbsSumMinusOne|sumTolerance)$/, domain: NONNEG_REAL },
 
-      { path: /^\.steps\.step14\.(phaseDBets|recomputed|exposedBets)$/, domain: BET_COUNT },
-      { path: /^\.steps\.step14\.distinctClientSeeds$/, domain: BET_COUNT },
-      { path: /^\.steps\.step14\.(phaseDWagered|phaseDPaid|exposedWagered|exposedPaid)$/, domain: NONNEG_REAL },
-      { path: /^\.steps\.step14\.(predictableEpochs\[\]|exposedEpochs\[\])$/, domain: EPOCH_IDX },
-      // -1 is the declared "no predictable epoch" sentinel; see tests/steps/phase-d.ts.
-      { path: /^\.steps\.step14\.unresolvedPredictabilityEpoch$/, domain: intBetween(-1, EXPECTED_SEEDS - 1, 'epoch index, or -1 for none') },
+      // Step 14: Phase D player-set seeds, and client-seed control on every epoch.
+      { path: /^\.steps\.step14\.(phaseDBets|phaseDRecomputed|seededBets|betsCarryingEpochSeed|recomputed)$/, domain: BET_COUNT },
+      { path: /^\.steps\.step14\.(phaseDEpochs|distinctPlayerSetSeeds|playerSetSeedFloor|playerSetShapedSeeds|playerSetSeedsOutsidePhaseD|phaseDCommittedBeforeClientSeed|distinctClientSeeds|epochsReusingPreCaptureSeed|epochsCommittedBeforeClientSeed|auditShapedSeeds)$/, domain: SEED_COUNT },
+      { path: /^\.steps\.step14\.phaseDSettings$/, domain: CFG_COUNT },
+      { path: /^\.steps\.step14\.(phaseDWagered|phaseDPaid)$/, domain: NONNEG_REAL },
 
-      { path: /^\.steps\.step15\.(wtfBets|recomputed|multipliersChecked)$/, domain: BET_COUNT },
+      { path: /^\.steps\.step15\.(wtfBets|wtfBetsAll|wtfBetsPhaseATopUp|wtfPayingDrops|recomputed|multipliersChecked)$/, domain: BET_COUNT },
+      { path: /^\.steps\.step15\.wtfSlotsReached\[\]$/, domain: intAtMost(slotCount(cfg.rows.max) - 1, 'slot index on a board') },
       { path: /^\.steps\.step15\.wtfTheoreticalRTP$/, domain: RTP },
       { path: /^\.steps\.step15\.(payingSlots|totalSlots)$/, domain: intAtMost(slotCount(cfg.rows.max), 'slots on a board') },
       { path: /^\.steps\.step15\.(pZeroPayout|pPayingSlot)$/, domain: PROBABILITY },
+
+      // Step 18: Phase C at the elevated stake.
+      { path: /^\.steps\.step18\.(phaseCBets|phaseCFloor|recomputed|recomputeMismatches|betsOffStake|payoutMismatches)$/, domain: BET_COUNT },
+      { path: /^\.steps\.step18\.drawArity$/, domain: intAtMost(16, 'declared parameters of the draw function') },
 
       { path: /^\.steps\.step16\.(expectedConfigs|resultRows|boardsPresentExactlyOnce|missingConfigs|strangerConfigs|duplicateConfigs|chi2BonferroniFails|serialUncorrectedFails|serialBonferroniFails|rtpWithin6SE|theoryRowsAgreeingWithPinnedConfig|serialPairsMeasured|aggregateDisagreements)$/, domain: CFG_COUNT },
       { path: /^\.steps\.step16\.(roundsPerConfig|totalRounds)$/, domain: NONNEG_INT },
@@ -416,6 +426,9 @@ export function domainRules(cfg: PlinkoConfigData): Record<string, Rule[]> {
       // could not reproduce its own scored record. A drifted-token count is a property of the
       // content, identical in both trees, and 0 in a healthy tree.
       { path: /^\.steps\.step20\.hexTokensDrifted$/, domain: NONNEG_INT },
+      // The pinned table against the production page read (src/page-labels.ts).
+      { path: /^\.steps\.step20\.pageReadBoards$/, domain: CFG_COUNT },
+      { path: /^\.steps\.step20\.(pageReadCells|pageReadCellsByNumericLabel|pageReadCellsBy1kLabel|pageReadCellsByPageStatement|pageReadMismatches)$/, domain: CELL_COUNT },
 
       { path: /^\.steps\.step21\.drops$/, domain: BET_COUNT },
       { path: /^\.steps\.step21\.seeds$/, domain: SEED_COUNT },

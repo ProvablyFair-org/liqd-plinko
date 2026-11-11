@@ -45,7 +45,7 @@
  *                                         is its own defect class ("absent ⇒ pass"),
  *   repin?: [{ file, pattern, hashOf }]   recompute a SHA-256 pin after the edits,
  *   regen?: true, expectExit?: n, expectVerdict?: "…"
- *                                         RTP FIGURE OVERSTATED route (FIXPASS2 C3, 2026-10-14). After the
+ *                                         RTP FIGURE OVERSTATED route (C3i, C3ii). After the
  *                                         edits, re-write outputs/rtp-claim-table.json (`ts-node
  *                                         src/rtp-settings.ts`), re-pin RTP_CLAIM_TABLE_SHA256 and re-emit the
  *                                         canonical records (PF_EMIT=1 npm run verify, same replay mode), as an
@@ -412,8 +412,8 @@ for (const reg of registries) {
       const killed = !abnormal && r.status !== 0 && (!m.expect || out.includes(m.expect)) && exitOk && verdictOk && staleOk;
 
       if (m.expectSurvive) {
-        // ── (round-4 client QA, EXECUTED counterexample) ─────────────────────
-        // This branch used to ask ONE question — "does the output contain a [FAIL]/[FLAG]
+        // ── (EXECUTED counterexample) ─────────────────────
+        // Asking only ONE question — "does the output contain a [FAIL]/[FLAG]
         // line for any in-scope step?" — and treat "no" as success. Missing execution is
         // indistinguishable from successful execution under that test. With S00 isolated
         // and a runtime `throw` injected before dataset loading, the runner printed
@@ -433,10 +433,10 @@ for (const reg of registries) {
         //     is an unrelated failure and must not be laundered into "survived", and a
         //     declared allowed failure that stops occurring means the declaration itself is
         //     stale. That last rule is not hypothetical: it caught S00's declaration going
-        //     stale when Step 16 (round 4) and Step 5 (2026-09-24) started rejecting it;
+        //     stale when Step 16 and Step 5 started rejecting it;
         //   * the console's last marker for every step agrees with the record. Step 10 used
         //     to print [PASS] and then be re-scored FAIL by the RTP-CLAIM rule; read from the
-        //     console, S00 "survived" a step that had rejected it (2026-10-02 QA, code item 1).
+        //     console, S00 "survived" a step that had rejected it.
         // Exit status alone is deliberately NOT the rule: S00 exits non-zero by design.
         const scope = Array.isArray(m.expectPass) ? m.expectPass : null;
         const allowedFail = Array.isArray(m.expectFail) ? m.expectFail : [];

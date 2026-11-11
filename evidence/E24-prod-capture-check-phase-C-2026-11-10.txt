@@ -1,0 +1,26 @@
+liqd-plinko-prod-capture-2026-11-10T12-03-39-147Z.ndjson
+LIQD plinko PROD capture check: ALL CHECKS PASS
+  PASS  file                           609 lines, 0 unreadable, SHA-256 af21865db5d5f75b84e350ce0a9c88a87584d57add9fab764f2ed41958836890
+  PASS  secret scan                    clean (JWT, e-mail, public IPv4, secret-looking keys, also inside reply bodies)
+  PASS  plan                           liqd.com (https://liqd.com), 1 epochs, 200 rounds in phases C 200 at 10.00000000 USDT (currencyId 3); every phase at or above its floor; runner plinko-prod-capture-runner 2026-11-03 build 5646c06628df
+  ----  options                        place-bet api 'originals' (UNCONFIRMED path); plinkoConfig.json SHA-256 f8eaf67e1ffc63ee... = the pin
+  PASS  pre-capture anchor             active bcb092e13ece... read and revealed before any bet: commit OK, link OK
+  PASS  epoch commitments              1/1 epochs: sha256(revealed server seed) = the hash committed before its first round (1 closed by a rotation)
+  PASS  chain                          1/1: each epoch's next hash is the hash active after its rotation
+  PASS  client seeds                   1/1 submitted client seeds accepted; 1/1 drawn after the commitment they were used under was published
+  PASS  bet count                      200 rounds recorded (cap 200), 0 recorded twice; 200 rounds started; 0 reply lost; 0 refused and skipped
+  PASS  round seeds                    seed hash 200/200 (200 served in the reply, the rest carry none); client seed 200/200 (200 served); nonce sequence 200/200
+  PASS  phases                         every round records its phase, phase id and the phase's stake 200/200; rounds per phase C 200/200
+  PASS  request = served               request body as planned (the phase's stake) 200/200; rows and risk served as requested 200/200; stake = the phase's stake (0.10 / 10.00) 200/200
+  PASS  drop (src/rng.ts)              drop path in row order 200/200; slot = count of rights 200/200
+  PASS  multiplier vs table            served multiplier = the plinkoConfig.json cell (risk 1-3: payout_tables; WTF 4/13: wtf_mode.odds) 200/200; table file = the pin 200/200
+  PASS  payout                         winningAmount = stake x multiplier in 1e-8 units 200/200; won/lost (won when multiplier >= 1) 200/200
+  PASS  coverage                       1/1 settings reached; rounds per setting 200..200
+  ----  WTF (4/13)                     0 rounds; slots reached -; paying rounds 0 (wtf_mode.odds [1000,235,0,0,0,0,0,0,0,0,0,0,235,1000])
+  PASS  verifier replies               200/200 rounds have a verify reply (HTTP 200, the expected shape); 0 other replies stored (refusals, kept as received)
+  PASS  verifier requests              request = the round's revealed inputs 200/200; POST https://liqd.com/api/v1/originals/plinko/verify 200/200
+  PASS  verifier = served round        echo 200/200; drops 200/200, ones 200/200, multiplier 200/200 equal the served round; drops = the src/rng.ts recompute 200/200
+  ----  run record                     refusals 0, re-sent after a stop 0, lost replies 0, skipped 0, gaps 0, resume checks 0, steps 0, stops 0
+  ----  money                          staked 2000.00000000 USDT, paid 1486.00000000, net -514.00000000 (live rounds illustrate variance only)
+  ----  window                         rounds 2026-11-10T11:56:10.449Z .. 2026-11-10T12:00:26.835Z; verify replies dated Tue, 10 Nov 2026 12:00:28 GMT .. Tue, 10 Nov 2026 12:03:38 GMT
+  PASS  export redaction               1 IP address(es) replaced by "[ip redacted]" in the exported copy (IPv4 1, IPv6 0; in line 1 (meta)); 1 marker(s) found in the file

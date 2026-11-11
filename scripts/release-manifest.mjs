@@ -40,27 +40,35 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const MANIFEST_PATH = path.join(ROOT, 'RELEASE-MANIFEST.json');
 const CHECK = process.argv.includes('--check');
 
+// The scored dataset is named ONCE, in src/loader.ts; read it from there.
+const loaderTs = fs.readFileSync(path.join(ROOT, 'src', 'loader.ts'), 'utf8');
+const DATASET_FILE = (loaderTs.match(/export const DATASET_FILE = '([^']+)'/) ?? [])[1];
+if (!DATASET_FILE) {
+  console.error('  [release-manifest] could not read DATASET_FILE from src/loader.ts');
+  process.exit(1);
+}
+
 /**
  * The facts no file in this package can supply.
  *
  * `signature` stays `null` until the release is actually signed — a generator must never
  * invent one, and a `null` here is an honest "unsigned", not a missing field. `auditIdStatus`
  * records that ProvablyFair.org has confirmed the audit ID that README and MANIFEST both state
- * (PF-2026-LQ03). `v1.0.1` is an errata release on `v1.0.0`, the first public release (ProvablyFair-org/liqd-plinko, one commit);
- * `v1.0.1` supersedes `v1.0.0`. `signature` is the fingerprint of the SSH key that signs the release commit
- * and tag.
+ * (PF-2026-LQ03). `v1.1.0` is a re-certification on the production captures (liqd.com, rounds of 7, 9 and
+ * 10 November 2026); it supersedes `v1.0.1`. `signature` is the fingerprint of the SSH key that signs the
+ * release commit and tag.
  */
 const DECLARED = {
   auditId: 'PF-2026-LQ03',
   auditIdStatus: 'confirmed by ProvablyFair.org',
   game: 'plinko',
   casino: 'liqd',
-  release: 'v1.0.1',
+  release: 'v1.1.0',
   framework: '1.1',
   /** `stage` and `qualifier` describe what the captured host WAS, which no artifact records. */
-  environmentStage: 'pre-production',
-  environmentQualifier: 'provisional',
-  supersedes: 'v1.0.0',
+  environmentStage: 'production',
+  environmentQualifier: 'production captures',
+  supersedes: 'v1.0.1',
   signature: 'SHA256:gEujiJm2pRyq7lQsfYQfQ1r97H/J7GdaKHbOW8GtikY',
 };
 
@@ -78,9 +86,7 @@ const DECLARED = {
  * so `npm run diff-simulation` can compare it with the committed file field by field. The file
  * carries no `generatedAt` and no `executionTimeMs` (removed 2026-09-21, PLINKO-27), so a
  * regeneration on the machine that produced it is byte-identical; on another machine one p-value
- * can differ in its last digit, which the field comparison tolerates. (This note used to say the file still carried run
- * metadata and could not be byte-reproduced; both stopped being true when that metadata was
- * removed — 2026-10-02 QA, code item 4.)
+ * can differ in its last digit, which the field comparison tolerates.
  */
 const SIMULATION = {
   seeding: 'fresh',
@@ -98,8 +104,10 @@ const ARTIFACTS = [
   'outputs/verification-results.json',
   'outputs/rtp-claim-table.json',   // RTP-CLAIM per-setting table (src/rtp-settings.ts pins it)
   'outputs/verification-stats.json',
-  'data/plinko-master-10100bets.json',
+  DATASET_FILE,
   'plinkoConfig.json',
+  // The saved production page read the pinned table is held to (src/page-labels.ts, Step 20).
+  'evidence/liqd-plinko-page-reads-2026-10-20.json',
 ];
 
 /** Documents that publish the audit ID. If any disagrees, the release is incoherent. */
@@ -126,14 +134,14 @@ const readJson = (rel) => {
   }
 };
 
-// ── The release bar (Framework 1.0 review item 14) ────────────────────────────
+// ── The release bar ───────────────────────────────────────────────────────────
 
 for (const p of checkReleaseBar(ROOT)) fail(`release bar: ${p}`);
 
 // ── Measured, not typed ───────────────────────────────────────────────────────
 
 const results = readJson('outputs/verification-results.json');
-const dataset = readJson('data/plinko-master-10100bets.json');
+const dataset = readJson(DATASET_FILE);
 
 const artifacts = {};
 for (const rel of ARTIFACTS) {
@@ -161,7 +169,7 @@ if (outcome.overallStatus !== 'PASS' || outcome.completed !== true) {
 
 // The dataset SHA-256 is computed here AND cross-checked against what the verifier recorded,
 // so a manifest can never name a dataset the audit did not actually run on.
-const datasetSha256 = artifacts['data/plinko-master-10100bets.json'] ?? null;
+const datasetSha256 = artifacts[DATASET_FILE] ?? null;
 if (datasetSha256 && results?.datasetSha256 && results.datasetSha256 !== datasetSha256) {
   fail(`dataset on disk hashes to ${datasetSha256} but the verification run recorded ${results.datasetSha256}`);
 }

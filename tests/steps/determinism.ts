@@ -52,7 +52,7 @@ export function run(ctx: VerifyContext): StepResult[] {
   // equals the full-domain draw (u itself) mod 2, so the module neither folds nor re-maps u.
   //
   // Until 20 Oct 2026 this block was arithmetic on the constants of the earlier port's rejection
-  // rule and never called src/rng.ts (2026-10-02 QA, code item 7). The rebuilt module has no
+  // rule and never called src/rng.ts. The rebuilt module has no
   // rejection step: the spec defines none, and for range 2 none is needed.
   const censusDrops: Array<{ serverSeed: string; clientSeed: string; nonce: number; rows: number }> = [];
   for (const b of bets) {

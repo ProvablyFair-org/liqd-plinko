@@ -9,26 +9,33 @@ import { revealPlinko, commitHash } from '../../src/rng';
 // tests/plinko/rngSpecTests.ts.
 
 describe('plinko: real captured bet reproduction', () => {
-  // Master dataset epoch-0 bet (seed[0]): the worked example used throughout the report.
-  // serverSeed fc9a…, clientSeed auditb1141320acde, nonce 0, rows 8 -> dropDetails "01101111" slot 6.
-  it('serverSeed fc9a… clientSeed auditb1141320acde nonce=0 rows=8 -> dropDetails "01101111" slot 6', () => {
+  // The first drop of the production dataset (epoch 0, nonce 0): the worked example used throughout the report.
+  // serverSeed 9ef0…, clientSeed auditf011676cf201, nonce 0, rows 8 -> dropDetails "10010101" slot 4.
+  it('serverSeed 9ef0… clientSeed auditf011676cf201 nonce=0 rows=8 -> dropDetails "10010101" slot 4', () => {
     const { path, winningSlot } = revealPlinko(
-      'fc9a1d6fad00e0832fddfdea45435c85',
-      'auditb1141320acde',
+      '9ef0b85313bd2d1b8d96e22df9b08ff4',
+      'auditf011676cf201',
       0,
       8,
     );
-    assert.equal(path, '01101111');
-    assert.equal(winningSlot, 6);
+    assert.equal(path, '10010101');
+    assert.equal(winningSlot, 4);
+  });
+  // A drop that landed in a 1,000x bucket (Phase B, 16 rows / high risk, epoch 35, nonce 122): sixteen lefts.
+  it('serverSeed 715b… clientSeed audit08d03eedd4b7 nonce=122 rows=16 -> sixteen lefts, slot 0', () => {
+    const { path, winningSlot } = revealPlinko('715bcb6f4a43571308e03e95b99931bc', 'audit08d03eedd4b7', 122, 16);
+    assert.equal(path, '0000000000000000');
+    assert.equal(winningSlot, 0);
   });
 });
 
 describe('rng: commitment hash (SHA-256 of utf8 hex string)', () => {
   it('commitHash reproduces a known hashedServerSeed', () => {
-    // seed[0] of the master dataset: serverSeed fc9a… -> hashedServerSeed 3b34…
+    // The pair that was active before the first capture's first round (meta.captures[0].preCapture):
+    // serverSeed ddcd… -> hashedServerSeed 3de4…
     assert.equal(
-      commitHash('fc9a1d6fad00e0832fddfdea45435c85'),
-      '3b34a0fce5732f2d9c89b16fca9c2b6a231c2b7f2de29bbc41e141861dc39d36',
+      commitHash('ddcda6f7c125e6494b4f090024ed3090'),
+      '3de47d79a186ad44530ee8c65f292879e3d3b47ce31a0dd454e947216861c222',
     );
   });
 });

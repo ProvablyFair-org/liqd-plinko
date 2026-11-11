@@ -14,7 +14,7 @@
  *     are N DISTINCT steps: ids 1..N each exactly once, each under the name tests/steps
  * declares for it (— a count is not an identity)
  *   - the recorded dataset/config pins equal the pins in source (verify.ts / config.ts)
- *     AND equal the live SHA-256 of the committed data/plinko-master-10100bets.json
+ *     AND equal the live SHA-256 of the committed scored dataset (src/loader.ts DATASET_FILE)
  *     and plinkoConfig.json (closes the "stale canonical vs re-pinned working tree" hole)
  *   - artifactHashes.config.match === true
  *   - the recorded simulation sha256 equals the live SHA-256 of the committed
@@ -39,13 +39,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { createHash } from 'crypto';
 import { fileURLToPath } from 'url';
+import { spawnSync } from 'child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
 const CANONICAL = path.join(ROOT, 'outputs', 'verification-results.json');
 const FULL_PASS_VERDICT = 'PROVABLY FAIR — Full Pass';
 /**
- * RTP FIGURE OVERSTATED is a shippable verdict (Methodology v1.1, RTP-CLAIM 1.2.0, decision D3,
+ * RTP FIGURE OVERSTATED is a shippable verdict (Methodology v1.1, RTP-CLAIM 1.2.0,
  * 2026-10-14; keno's release manifest takes the same position). An enforced RTP-CLAIM miss marks the
  * RTP-claim step OVERSTATED, which is not a hard fail: the audit publishes that verdict, exit 5.
  * Accepted here only in its exact shape: one OVERSTATED step, it is the step carrying PLINKO-19
@@ -55,7 +56,13 @@ const FULL_PASS_VERDICT = 'PROVABLY FAIR — Full Pass';
  * Pass is pushed).
  */
 const OVERSTATED_VERDICT = 'RTP FIGURE OVERSTATED';
-const EXPECTED_STEPS = 21;
+// The suite's own step count, single-sourced in tests/steps/context.ts (tests/verify.ts holds every run to it).
+const EXPECTED_STEPS = Number((fs.readFileSync(path.join(ROOT, 'tests', 'steps', 'context.ts'), 'utf8')
+  .match(/export const EXPECTED_STEPS = (\d+);/) ?? [])[1]);
+if (!Number.isInteger(EXPECTED_STEPS) || EXPECTED_STEPS <= 0) {
+  console.error('  [check-outputs] FAIL: could not read EXPECTED_STEPS from tests/steps/context.ts');
+  process.exit(1);
+}
 /**
  * Steps whose profile policy is INFORMATIONAL: they report PASS or INFO and can never FLAG or
  * FAIL. Step 21, the epoch-window slot fit (PLINKO-22; informational in every package since the
@@ -94,8 +101,8 @@ const failSteps = steps.filter(s => s.status === 'FAIL');
 // FAIL let a hand-edited canonical with one FLAG (passed:20, flags:1) keep the "Full Pass"
 // string and slip through; require every step PASS and flags === 0 as well. The one exception is
 // INFO on an INFORMATIONAL step (INFORMATIONAL_STEPS above): reported, never counted, and it does
-// not stop a Full Pass. Every rule below follows that one policy (2026-10-02 QA, code item 3: the
-// filter here allowed INFO while the pass count and the status-domain check below refused it).
+// not stop a Full Pass. Every rule below follows that one policy: the
+// filter here, the pass count and the status-domain check below treat INFO the same way.
 const infoSteps = steps.filter(s => s.status === 'INFO');
 const overstatedSteps = steps.filter(s => s.status === 'OVERSTATED');
 const flagSteps = steps.filter(s => s.status !== 'PASS' && s.status !== 'INFO' && s.status !== 'OVERSTATED');
@@ -138,7 +145,7 @@ if (scored !== EXPECTED_STEPS) {
   fail(`scored-step count is ${scored} (expected ${EXPECTED_STEPS})`);
 }
 
-// ── (round-5 client QA, EXECUTED): A COUNT IS NOT AN IDENTITY ───────────
+// ── (EXECUTED): A COUNT IS NOT AN IDENTITY ───────────
 // G-BIND, applied to the step list itself. The check above counted entries, so replacing
 // Step 5 — the outcome recomputation, which is the step that re-derives every drop path and
 // slot from the seeds — with a second copy of Step 4 produced "21/21 Full Pass" and exit 0
@@ -209,7 +216,7 @@ if (summary.flags !== flagSteps.length - failSteps.length) {
 if (summary.hardFail !== failSteps.length) {
   fail(`summary.hardFail is ${summary.hardFail} but ${failSteps.length} steps have status FAIL`);
 }
-// The one summary shape (Framework 1.0 review item 14, F20): flags = operatorFlags + captureFlags.
+// The one summary shape: flags = operatorFlags + captureFlags.
 if (summary.operatorFlags + summary.captureFlags !== summary.flags) {
   fail(`summary.flags ${summary.flags} is not operatorFlags ${summary.operatorFlags} + captureFlags ${summary.captureFlags}`);
 }
@@ -220,7 +227,7 @@ if (passCount + infoSteps.length + overstatedSteps.length !== EXPECTED_STEPS) {
 }
 
 // ── the document must describe the WHOLE COMMAND, not just the scored steps ──
-// Round-4 client QA: a run whose emission validation failed wrote a `.failed.json` whose
+// A run whose emission validation failed could write a `.failed.json` whose
 // CONTENTS still read `passed: 21, hardFail: 0, verdict: "PROVABLY FAIR — Full Pass"`,
 // because the report was constructed before the final guard and written unchanged. The
 // verifier now finalises status after every required validation and records it; this
@@ -299,18 +306,20 @@ const configTs = fs.readFileSync(path.join(ROOT, 'src', 'config.ts'), 'utf8');
 const datasetPin = (loaderTs.match(/EXPECTED_DATASET_SHA256\s*=\s*'([0-9a-f]{64})'/) ?? [])[1];
 const configPin = (configTs.match(/PLINKO_CONFIG_SHA256\s*=\s*'([0-9a-f]{64})'/) ?? [])[1];
 if (!datasetPin) fail('could not read EXPECTED_DATASET_SHA256 from src/loader.ts');
-// The epoch size — the 50 nonces played under each server seed in this capture, where the capture
-// tool rotated the seed pair every 50 bets — read from the same source of truth for the same
+// The scored Pass 2 window — the first 50 nonces of every server seed in this capture, the shortest
+// epoch of the capture plan — read from the same source of truth for the same
 // reason: this script must not carry its own copy of a constant the audit declares in code.
-const EXPECTED_EPOCH_SIZE = Number((loaderTs.match(/EXPECTED_EPOCH_SIZE\s*=\s*(\d+)/) ?? [])[1]);
-if (!Number.isInteger(EXPECTED_EPOCH_SIZE) || EXPECTED_EPOCH_SIZE <= 0) fail('could not read EXPECTED_EPOCH_SIZE from src/loader.ts');
+const PRIMARY_WINDOW_NONCES = Number((loaderTs.match(/PRIMARY_WINDOW_NONCES\s*=\s*(\d+)/) ?? [])[1]);
+if (!Number.isInteger(PRIMARY_WINDOW_NONCES) || PRIMARY_WINDOW_NONCES <= 0) fail('could not read PRIMARY_WINDOW_NONCES from src/loader.ts');
 if (!configPin) fail('could not read PLINKO_CONFIG_SHA256 from src/config.ts');
 
 // Recorded dataset pin must equal the source pin AND the live file hash.
 if (ah.dataset?.sha256 !== datasetPin) {
   fail(`recorded dataset sha256 ${ah.dataset?.sha256} != source pin ${datasetPin}`);
 }
-const liveDatasetSha = sha256File(path.join(ROOT, 'data', 'plinko-master-10100bets.json'));
+const DATASET_FILE = (loaderTs.match(/export const DATASET_FILE = '([^']+)'/) ?? [])[1];
+if (!DATASET_FILE) fail('could not read DATASET_FILE from src/loader.ts');
+const liveDatasetSha = sha256File(path.join(ROOT, DATASET_FILE ?? 'missing'));
 if (liveDatasetSha !== datasetPin) {
   fail(`committed dataset sha256 ${liveDatasetSha} != pin ${datasetPin}`);
 }
@@ -362,12 +371,12 @@ if (cal.source?.dataset?.sha256 !== datasetPin) {
 if (!Number.isFinite(cal.expectedZEarlyBelow1645Calibrated) || !Number.isFinite(cal.zEarlyBelowCalibratedSurvivalP)) {
   fail('calibration artifact is missing expectedZEarlyBelow1645Calibrated / zEarlyBelowCalibratedSurvivalP');
 }
-// The top level of this artifact is the PRIMARY window — the 50 nonces played under each seed in
+// The top level of this artifact is the PRIMARY window — the first 50 nonces played under each seed in
 // this capture (the capture tool's rotation setting, not a rule shown to be LIQD's) — and the
 // 5,000-nonce split lives in `extendedWindow`. Both are published, so a copy of the artifact that
 // has quietly lost the secondary block is not the record.
-if (cal.windowNonces !== EXPECTED_EPOCH_SIZE) {
-  fail(`calibration windowNonces ${cal.windowNonces} != the epoch size ${EXPECTED_EPOCH_SIZE} — the scored window must be the nonces played under each seed in this capture`);
+if (cal.windowNonces !== PRIMARY_WINDOW_NONCES) {
+  fail(`calibration windowNonces ${cal.windowNonces} != PRIMARY_WINDOW_NONCES ${PRIMARY_WINDOW_NONCES} — the scored window must be the first nonces every seed in this capture played`);
 }
 if (!cal.extendedWindow || !Number.isFinite(cal.extendedWindow.expectedZEarlyBelow1645Calibrated)
     || !Number.isFinite(cal.extendedWindow.zEarlyBelowCalibratedSurvivalP)) {
@@ -375,7 +384,7 @@ if (!cal.extendedWindow || !Number.isFinite(cal.extendedWindow.expectedZEarlyBel
 }
 
 // ── Derived emission artifacts (R3-K5) ────────────────────────────────────────
-// Round-3 external review: this guard pinned four artifacts and IGNORED the other two —
+// Pinning four artifacts alone would IGNORE the other two —
 // `outputs/verification-stats.json`, which MANIFEST.md#evidence declares to be THE producing
 // artifact for the figures quoted in the chapters, and `outputs/coverage-results.json`.
 // Neither had a pin, a presence check or an `artifactHashes` entry, so forging both and
@@ -402,7 +411,7 @@ for (const [key, rel] of [
 // `ATTEST_SAMPLE=<n>` and `EMIT_BASELINE=1` are local-only escapes. Before this check the
 // only thing keeping them off the publication path was a comment in the source asking
 // nicely: `ATTEST_SAMPLE=2 npm run verify` produced a 21/21 Full Pass that this script
-// signed off, with Step 17 having recomputed 2 of 202 epochs.
+// signed off, with Step 17 having recomputed only a sample of the epochs.
 const runMode = doc.runMode ?? {};
 if (runMode.attest !== 'full') {
   fail(`runMode.attest is ${JSON.stringify(runMode.attest)} (expected "full") — the canonical run used ATTEST_SAMPLE. `
@@ -441,6 +450,15 @@ console.log(`  [check-outputs] pins OK: dataset ${datasetPin.slice(0, 12)}…, c
 console.log(`  [check-outputs] emissions OK: verification-stats ${ah.verificationStats.sha256.slice(0, 12)}…, coverage-results ${ah.coverage.sha256.slice(0, 12)}…`);
 console.log(`  [check-outputs] run mode OK: attest=${runMode.attest} (${s17.data.attestChecked}/${s17.data.attestPopulation} epochs), emitBaseline=${runMode.emitBaseline}`);
 console.log(`  [check-outputs] Pass 1 replay OK: ${s16.data.replayMode}, ${s16.data.replayConfigs} configs × ${s16.data.replayRoundsPerConfig} rounds, ${s16.data.replayFiguresCompared} committed figures compared, ${s16.data.replayFiguresBeyondTolerance} beyond tolerance, census ${String(s16.data.replayCensusSha256).slice(0, 12)}…`);
-console.log(`  [check-outputs] calibrated null, PRIMARY window ${cal.windowNonces} nonces (the nonces played per seed in this capture — scored): expected ${cal.expectedZEarlyBelow1645Calibrated.toFixed(6)} vs observed ${cal.observedZEarlyBelow1645}, P(X>=obs)=${cal.zEarlyBelowCalibratedSurvivalP.toFixed(6)}`);
+console.log(`  [check-outputs] calibrated null, PRIMARY window ${cal.windowNonces} nonces (the first nonces of every seed, all played — scored): expected ${cal.expectedZEarlyBelow1645Calibrated.toFixed(6)} vs observed ${cal.observedZEarlyBelow1645}, P(X>=obs)=${cal.zEarlyBelowCalibratedSurvivalP.toFixed(6)}`);
 console.log(`  [check-outputs] calibrated null, EXTENDED window ${cal.extendedWindow.windowNonces} nonces (secondary): expected ${cal.extendedWindow.expectedZEarlyBelow1645Calibrated.toFixed(6)} vs observed ${cal.extendedWindow.observedZEarlyBelow1645}, P(X>=obs)=${cal.extendedWindow.zEarlyBelowCalibratedSurvivalP.toFixed(6)}`);
+// The three extract documents (evidence.md, exploit-testing.md, SUMMARY.md) must be exactly what
+// scripts/build-docs.mjs cuts out of MANIFEST.md and the mutation registries: one source, no drift.
+{
+  const r = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'build-docs.mjs'), '--check'], { cwd: ROOT, stdio: 'inherit' });
+  if (r.status !== 0) {
+    console.error('  [check-outputs] FAIL: an extract document does not equal its source (node scripts/build-docs.mjs)');
+    process.exit(1);
+  }
+}
 process.exit(0);

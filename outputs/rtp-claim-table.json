@@ -9,7 +9,7 @@
   "claim": {
     "kind": "flat",
     "rtp": "0.99",
-    "source": "LIQD Plinko: the game page liqd.com/originals/plinko shows \"Released: June 2026 | Edge: 1.00%\", RTP \"99% on every board\" and \"The board still holds 99% RTP\" (read 2026-10-01, evidence/rtp-page-labels-2026-10-01.json). Same figure as \"houseEdge\": 0.01 in plinkoConfig.json, transcribed from the operator client bundle (src/config.ts:15-27; declaration paytable.claimedHouseEdge 0.01)"
+    "source": "LIQD Plinko: the game page liqd.com/originals/plinko shows \"Released: June 2026 | Edge: 1.00%\", RTP \"99% on every board\" and \"The board still holds 99% RTP\" (read 2026-10-01, evidence/rtp-page-labels-2026-10-01.json). Same figure as \"houseEdge\": 0.01 in plinkoConfig.json (declaration paytable.claimedHouseEdge 0.01)"
   },
   "settings": 28,
   "trueMin": {

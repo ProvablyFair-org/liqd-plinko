@@ -4,9 +4,13 @@ const __modules = {
 "src/artifact-pins.js": function(module, exports, require, __filename, __dirname) {
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PASS1_CENSUS_SHA256 = exports.CALIBRATION_RESULTS_SHA256 = exports.SIMULATION_RESULTS_SHA256 = void 0;
-exports.SIMULATION_RESULTS_SHA256 = '3d94a510b760abfe2356d96d821f09dfe2bff40866da4bd47669fe8e3df6e0c6';
-exports.CALIBRATION_RESULTS_SHA256 = '53dabd4778e1d2562cb2ad136f6121253502eaac9fcf0cb70a064551bdaf3ca6';
+exports.PASS1_CENSUS_SHA256 = exports.CALIBRATION_RESULTS_SHA256 = exports.SIMULATION_RESULTS_SHA256 = exports.ARTIFACT_PINS = void 0;
+exports.ARTIFACT_PINS = [
+    ['outputs/simulation-results.json', 'fd336c7a77400342756000942420df9a87b122d2368ad9e075ff73208f2321fd'],
+    ['outputs/calibration-results.json', 'eeb92c508b3e8cbaed2957c7b51cd3f13fd47947c17feaa131c49deab9c3d693'],
+];
+exports.SIMULATION_RESULTS_SHA256 = exports.ARTIFACT_PINS[0][1];
+exports.CALIBRATION_RESULTS_SHA256 = exports.ARTIFACT_PINS[1][1];
 exports.PASS1_CENSUS_SHA256 = '8c840243629258e29aeeb9c3356ee637c232889bc1b5b3b2ea5b8b8a1285d1a5';
 
 },
@@ -48,7 +52,7 @@ function extractionCensus(drops) {
 "src/calibration.js": function(module, exports, require, __filename, __dirname) {
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.countBelowThreshold = exports.CALIBRATION_METHOD = exports.EXACT_LEFT_TAIL_SLOTS = exports.Z_LEFT_TAIL = void 0;
+exports.countBelowThreshold = exports.CALIBRATION_METHOD = exports.EXACT_LEFT_TAIL_SLOTS = exports.PASS2_SUMMARY_TOLERANCE = exports.Z_LEFT_TAIL = void 0;
 exports.payoutMuSd = payoutMuSd;
 exports.payoutValueDistribution = payoutValueDistribution;
 exports.leftTailSumThreshold = leftTailSumThreshold;
@@ -68,6 +72,7 @@ const config_1 = require("./config");
 const rng_1 = require("./rng");
 const parallel_1 = require("./parallel");
 exports.Z_LEFT_TAIL = 1.645;
+exports.PASS2_SUMMARY_TOLERANCE = 1e-6;
 const LATTICE_SCALE = 10;
 function payoutMuSd(cfg, rows, riskLevel) {
     const t = (0, config_1.payoutTable)(cfg, rows, riskLevel);
@@ -394,7 +399,7 @@ const node_fs_1 = require("node:fs");
 const node_crypto_1 = require("node:crypto");
 const node_path_1 = require("node:path");
 const CONFIG_PATH = (0, node_path_1.join)(__dirname, '..', 'plinkoConfig.json');
-exports.PLINKO_CONFIG_SHA256 = 'f8eaf67e1ffc63ee0dc21123447581c55f443c167dcb451b45ab7cd108fe712f';
+exports.PLINKO_CONFIG_SHA256 = '09bfaeab2b7885ef63d72cebcfe1a667cb8ec604c887cebcdea22e56c2960f0a';
 function configSha256() {
     return (0, node_crypto_1.createHash)('sha256').update((0, node_fs_1.readFileSync)(CONFIG_PATH)).digest('hex');
 }
@@ -782,13 +787,14 @@ function domainRules(cfg) {
             { path: /^\.steps\.step5\.(siteVerifierFilesPinned|siteVerifierFilesMatchingPin)$/, domain: (0, exports.intAtMost)(4, 'site-verifier files pinned in src/site-verifier.ts') },
             { path: /^\.steps\.step5\.(siteVerifierBetsRun|siteVerifierPathMismatches|siteVerifierSlotMismatches|siteVerifierMultiplierMismatches|siteVerifierRowMismatches)$/, domain: BET_COUNT },
             { path: /^\.steps\.step5\.(siteVerifierPaytableCells|siteVerifierPaytableCellsDiffering)$/, domain: CELL_COUNT },
+            { path: /^\.steps\.step2\.(preCommitmentsChecked|preCommitmentFails|epochTransitions|preCaptureAnchors|captures)$/, domain: SEED_COUNT },
             { path: /^\.steps\.step6\.(tested|expectedTested|changed|samePath)$/, domain: BET_COUNT },
             { path: /^\.steps\.step6\.expectedSamePath$/, domain: exports.NONNEG_REAL },
             { path: /^\.steps\.step6\.(samePathSurvivalP|alpha)$/, domain: exports.PROBABILITY },
             { path: /^\.steps\.step7\.(betsChecked|mismatches)$/, domain: BET_COUNT },
             { path: /^\.steps\.step7\.(cellsExercised|cellsTotal|cellsUnexercised)$/, domain: CELL_COUNT },
             { path: /^\.steps\.step9\.(standardConfigsPresent|configsBelowFloor)$/, domain: CFG_COUNT },
-            { path: /^\.steps\.step9\.(phaseAFloor|phaseAMinPerConfig|phaseAMaxPerConfig)$/, domain: BET_COUNT },
+            { path: /^\.steps\.step9\.(phaseAFloor|phaseAMinPerConfig|phaseAMaxPerConfig|phaseAWtfBets)$/, domain: BET_COUNT },
             { path: /^\.steps\.step9\.(neverPaidCells|coverageCellsTotal)$/, domain: CELL_COUNT },
             { path: /^\.steps\.step9\.neverPaidRtpShareSummed$/, domain: exports.NONNEG_REAL },
             { path: /^\.steps\.step9\.neverPaidCellRtpShare\.\d+:\d+:\d+$/, domain: exports.NONNEG_REAL },
@@ -799,20 +805,24 @@ function domainRules(cfg) {
             { path: /^\.steps\.step11\.(betsLoaded|expectedBets|planSum|metaPlannedTotal)$/, domain: BET_COUNT },
             { path: /^\.steps\.step11\.(seedRecords|expectedSeeds)$/, domain: SEED_COUNT },
             { path: /^\.steps\.step11\.(phaseCounts|expectedPhaseBets)\.[A-E]$/, domain: BET_COUNT },
-            { path: /^\.steps\.step12\.(epochsByHash|epochIndexes|expectedSeeds|seedRecords)$/, domain: SEED_COUNT },
-            { path: /^\.steps\.step12\.(minEpochSize|maxEpochSize|expectedEpochSize|metaEpochSize)$/, domain: (0, exports.intAtMost)(loader_1.EXPECTED_BETS, 'bets in an epoch') },
+            { path: /^\.steps\.step12\.(epochsByHash|epochIndexes|expectedSeeds|seedRecords|epochsOnPlan)$/, domain: SEED_COUNT },
+            { path: /^\.steps\.step12\.(minEpochSize|maxEpochSize|primaryWindowNonces)$/, domain: (0, exports.intAtMost)(loader_1.EXPECTED_BETS, 'bets in an epoch') },
+            { path: /^\.steps\.step12\.epochsPerPlanEntry\.[A-E](\+W)?$/, domain: SEED_COUNT },
+            { path: /^\.steps\.step12\.betsPerPlanEntry\.[A-E](\+W)?$/, domain: BET_COUNT },
             { path: /^\.steps\.step13\.rowsAudited$/, domain: (0, exports.intBetween)(1, cfg.rows.max, 'board sizes audited') },
             { path: /^\.steps\.step13\.worstRows$/, domain: (0, exports.intBetween)(cfg.rows.min, cfg.rows.max, 'rows on a board') },
             { path: /^\.steps\.step13\.(maxAbsCoefficientError|maxAbsSumMinusOne|sumTolerance)$/, domain: exports.NONNEG_REAL },
-            { path: /^\.steps\.step14\.(phaseDBets|recomputed|exposedBets)$/, domain: BET_COUNT },
-            { path: /^\.steps\.step14\.distinctClientSeeds$/, domain: BET_COUNT },
-            { path: /^\.steps\.step14\.(phaseDWagered|phaseDPaid|exposedWagered|exposedPaid)$/, domain: exports.NONNEG_REAL },
-            { path: /^\.steps\.step14\.(predictableEpochs\[\]|exposedEpochs\[\])$/, domain: EPOCH_IDX },
-            { path: /^\.steps\.step14\.unresolvedPredictabilityEpoch$/, domain: (0, exports.intBetween)(-1, loader_1.EXPECTED_SEEDS - 1, 'epoch index, or -1 for none') },
-            { path: /^\.steps\.step15\.(wtfBets|recomputed|multipliersChecked)$/, domain: BET_COUNT },
+            { path: /^\.steps\.step14\.(phaseDBets|phaseDRecomputed|seededBets|betsCarryingEpochSeed|recomputed)$/, domain: BET_COUNT },
+            { path: /^\.steps\.step14\.(phaseDEpochs|distinctPlayerSetSeeds|playerSetSeedFloor|playerSetShapedSeeds|playerSetSeedsOutsidePhaseD|phaseDCommittedBeforeClientSeed|distinctClientSeeds|epochsReusingPreCaptureSeed|epochsCommittedBeforeClientSeed|auditShapedSeeds)$/, domain: SEED_COUNT },
+            { path: /^\.steps\.step14\.phaseDSettings$/, domain: CFG_COUNT },
+            { path: /^\.steps\.step14\.(phaseDWagered|phaseDPaid)$/, domain: exports.NONNEG_REAL },
+            { path: /^\.steps\.step15\.(wtfBets|wtfBetsAll|wtfBetsPhaseATopUp|wtfPayingDrops|recomputed|multipliersChecked)$/, domain: BET_COUNT },
+            { path: /^\.steps\.step15\.wtfSlotsReached\[\]$/, domain: (0, exports.intAtMost)((0, config_1.slotCount)(cfg.rows.max) - 1, 'slot index on a board') },
             { path: /^\.steps\.step15\.wtfTheoreticalRTP$/, domain: RTP },
             { path: /^\.steps\.step15\.(payingSlots|totalSlots)$/, domain: (0, exports.intAtMost)((0, config_1.slotCount)(cfg.rows.max), 'slots on a board') },
             { path: /^\.steps\.step15\.(pZeroPayout|pPayingSlot)$/, domain: exports.PROBABILITY },
+            { path: /^\.steps\.step18\.(phaseCBets|phaseCFloor|recomputed|recomputeMismatches|betsOffStake|payoutMismatches)$/, domain: BET_COUNT },
+            { path: /^\.steps\.step18\.drawArity$/, domain: (0, exports.intAtMost)(16, 'declared parameters of the draw function') },
             { path: /^\.steps\.step16\.(expectedConfigs|resultRows|boardsPresentExactlyOnce|missingConfigs|strangerConfigs|duplicateConfigs|chi2BonferroniFails|serialUncorrectedFails|serialBonferroniFails|rtpWithin6SE|theoryRowsAgreeingWithPinnedConfig|serialPairsMeasured|aggregateDisagreements)$/, domain: CFG_COUNT },
             { path: /^\.steps\.step16\.(roundsPerConfig|totalRounds)$/, domain: exports.NONNEG_INT },
             { path: /^\.steps\.step16\.(replayConfigs|tracesBoundToHistogram)$/, domain: CFG_COUNT },
@@ -839,6 +849,8 @@ function domainRules(cfg) {
             { path: /^\.steps\.step17\.summaryFieldsRecomputed$/, domain: exports.NONNEG_INT },
             { path: /^\.steps\.step(16|17|20)\.(domainLeavesChecked|domainViolations|domainUndeclaredFields|domainFailures)$/, domain: exports.NONNEG_INT },
             { path: /^\.steps\.step20\.hexTokensDrifted$/, domain: exports.NONNEG_INT },
+            { path: /^\.steps\.step20\.pageReadBoards$/, domain: CFG_COUNT },
+            { path: /^\.steps\.step20\.(pageReadCells|pageReadCellsByNumericLabel|pageReadCellsBy1kLabel|pageReadCellsByPageStatement|pageReadMismatches)$/, domain: CELL_COUNT },
             { path: /^\.steps\.step21\.drops$/, domain: BET_COUNT },
             { path: /^\.steps\.step21\.seeds$/, domain: SEED_COUNT },
             { path: /^\.steps\.step21\.groups$/, domain: CFG_COUNT },
@@ -908,7 +920,8 @@ function describeDomainFailures(artifact, r) {
 "src/loader.js": function(module, exports, require, __filename, __dirname) {
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MIN_PHASE_A_BETS_PER_CONFIG = exports.EXPECTED_PHASE_BETS = exports.EXPECTED_EPOCH_SIZE = exports.EXPECTED_SEEDS = exports.EXPECTED_BETS = exports.EXPECTED_DATASET_SHA256 = void 0;
+exports.MIN_PHASE_C_BETS = exports.MIN_PHASE_D_PLAYER_SEEDS = exports.MIN_PHASE_A_BETS_PER_CONFIG = exports.PRIMARY_WINDOW_NONCES = exports.EXPECTED_CAPTURE_EPOCHS = exports.EXPECTED_PHASE_BETS = exports.EXPECTED_EPOCH_SIZE = exports.EXPECTED_PLAN = exports.EXPECTED_PHASES = exports.EXPECTED_SEEDS = exports.EXPECTED_BETS = exports.DATASET_FILE = exports.EXPECTED_DATASET_SHA256 = void 0;
+exports.planEntry = planEntry;
 exports.loadDataset = loadDataset;
 exports.revealedSeedMap = revealedSeedMap;
 exports.seedByEpoch = seedByEpoch;
@@ -916,12 +929,29 @@ exports.betsByEpoch = betsByEpoch;
 exports.phaseBets = phaseBets;
 const node_crypto_1 = require("node:crypto");
 const node_fs_1 = require("node:fs");
-exports.EXPECTED_DATASET_SHA256 = '871c485ef0d55ca38af2cece4880abdc32fe8b62584468c5d4cfdfd01506fc95';
-exports.EXPECTED_BETS = 10100;
-exports.EXPECTED_SEEDS = 202;
-exports.EXPECTED_EPOCH_SIZE = 50;
-exports.EXPECTED_PHASE_BETS = { A: 5400, B: 2000, C: 200, D: 500, E: 2000 };
+exports.EXPECTED_DATASET_SHA256 = '83965cdc5381db3ad99bf7c1c1e1d2e0d90f574132f96642027599c0edea8a16';
+exports.DATASET_FILE = 'data/plinko-prod-9750bets.json';
+exports.EXPECTED_BETS = 9750;
+exports.EXPECTED_SEEDS = 52;
+exports.EXPECTED_PHASES = ['A', 'B', 'C', 'D', 'E'];
+exports.EXPECTED_PLAN = [
+    { id: 'A', phase: 'A', capture: 1, bets: 5000, epochs: 25, epochSize: 200, stake: '0.10000000' },
+    { id: 'D', phase: 'D', capture: 2, bets: 500, epochs: 5, epochSize: 100, stake: '0.10000000' },
+    { id: 'B', phase: 'B', capture: 2, bets: 2000, epochs: 10, epochSize: 200, stake: '0.10000000' },
+    { id: 'A+W', phase: 'A', capture: 2, bets: 50, epochs: 1, epochSize: 50, stake: '0.10000000' },
+    { id: 'E', phase: 'E', capture: 2, bets: 2000, epochs: 10, epochSize: 200, stake: '0.10000000' },
+    { id: 'C', phase: 'C', capture: 3, bets: 200, epochs: 1, epochSize: 200, stake: '10.00000000' },
+];
+exports.EXPECTED_EPOCH_SIZE = Object.freeze(Object.fromEntries(exports.EXPECTED_PLAN.map(e => [e.id, e.epochSize])));
+function planEntry(id) {
+    return exports.EXPECTED_PLAN.find(e => e.id === id);
+}
+exports.EXPECTED_PHASE_BETS = { A: 5050, B: 2000, C: 200, D: 500, E: 2000 };
+exports.EXPECTED_CAPTURE_EPOCHS = [25, 26, 1];
+exports.PRIMARY_WINDOW_NONCES = 50;
 exports.MIN_PHASE_A_BETS_PER_CONFIG = 50;
+exports.MIN_PHASE_D_PLAYER_SEEDS = 2;
+exports.MIN_PHASE_C_BETS = 100;
 function loadDataset(path, expectedSha256) {
     if (!(0, node_fs_1.existsSync)(path)) {
         console.error(`ERROR: dataset not found at ${path}`);
@@ -985,6 +1015,146 @@ function unitsOf(v) {
 }
 const asMoney = (units) => (units / exports.GRID).toFixed(8);
 exports.asMoney = asMoney;
+
+},
+"src/page-labels.js": function(module, exports, require, __filename, __dirname) {
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PAGE_READ_SHA256 = exports.PAGE_READ_FILE = void 0;
+exports.checkTableAgainstPageRead = checkTableAgainstPageRead;
+const node_crypto_1 = require("node:crypto");
+const node_fs_1 = require("node:fs");
+const path = __importStar(require("node:path"));
+const config_1 = require("./config");
+exports.PAGE_READ_FILE = 'evidence/liqd-plinko-page-reads-2026-10-20.json';
+exports.PAGE_READ_SHA256 = '769754a5cb5ddd1156759940ca6b000982b5872384103a66d997fad4b093aab0';
+const RISK_NAME = { 1: 'Low', 2: 'Medium', 3: 'High' };
+const STATEMENT_1K = '1,000x (High at 16 rows, WTF at 13 rows)';
+const STATEMENT_WTF_ZERO = 'the ten middle buckets pay nothing';
+const STATEMENT_WTF_PAYING = 'The two buckets next to the edges pay 235x, the two outermost pay 1,000x';
+function checkTableAgainstPageRead(cfg, root) {
+    const out = {
+        ok: false, fileSha256: null, boards: 0, cells: 0,
+        cellsByNumericLabel: 0, cellsBy1kLabel: 0, cellsByPageStatement: 0, mismatches: 0, problems: [],
+    };
+    const p = path.join(root, exports.PAGE_READ_FILE);
+    if (!(0, node_fs_1.existsSync)(p)) {
+        out.problems.push(`${exports.PAGE_READ_FILE} is missing`);
+        return out;
+    }
+    const raw = (0, node_fs_1.readFileSync)(p);
+    out.fileSha256 = (0, node_crypto_1.createHash)('sha256').update(raw).digest('hex');
+    if (out.fileSha256 !== exports.PAGE_READ_SHA256) {
+        out.problems.push(`${exports.PAGE_READ_FILE} hashes to ${out.fileSha256}, pinned ${exports.PAGE_READ_SHA256}`);
+        return out;
+    }
+    const doc = JSON.parse(raw.toString('utf8'));
+    const text = doc.plinkoPage?.text ?? '';
+    const labels = doc.boardLabels?.labels ?? {};
+    if (doc.plinkoPage?.url !== 'https://liqd.com/originals/plinko' || doc.boardLabels?.url !== 'https://liqd.com/originals/plinko') {
+        out.problems.push('the saved read is not of https://liqd.com/originals/plinko');
+    }
+    const has1k = text.includes(STATEMENT_1K);
+    const hasZero = text.includes(STATEMENT_WTF_ZERO);
+    const hasPaying = text.includes(STATEMENT_WTF_PAYING);
+    const miss = (what) => { out.mismatches++; if (out.problems.length < 6)
+        out.problems.push(what); };
+    for (const c of (0, config_1.allConfigs)(cfg)) {
+        const table = (0, config_1.payoutTable)(cfg, c.rows, c.riskLevel);
+        out.boards++;
+        if ((0, config_1.isWtf)(c.riskLevel)) {
+            const strip = labels[`WTF/${c.rows}`];
+            const last = table.length - 1;
+            const labelled = [0, 1, last - 1, last];
+            if (!strip || strip.length !== labelled.length) {
+                miss(`WTF/${c.rows}: ${strip ? strip.length : 'no'} strip label(s), 4 expected`);
+                continue;
+            }
+            table.forEach((cell, slot) => {
+                out.cells++;
+                const li = labelled.indexOf(slot);
+                if (li >= 0) {
+                    const lab = strip[li];
+                    if (lab === '1k') {
+                        out.cellsBy1kLabel++;
+                        if (!has1k || !hasPaying || cell !== 1000)
+                            miss(`WTF/${c.rows} slot ${slot}: label 1k, cell ${cell}`);
+                    }
+                    else {
+                        out.cellsByNumericLabel++;
+                        if (!/^\d+(\.\d+)?$/.test(lab) || Number(lab) !== cell || !hasPaying)
+                            miss(`WTF/${c.rows} slot ${slot}: label ${lab}, cell ${cell}`);
+                    }
+                }
+                else {
+                    out.cellsByPageStatement++;
+                    if (!hasZero || cell !== 0)
+                        miss(`WTF/${c.rows} slot ${slot}: the page says the middle ten pay nothing, cell ${cell}`);
+                }
+            });
+            continue;
+        }
+        const key = `${RISK_NAME[c.riskLevel]}/${c.rows}`;
+        const strip = labels[key];
+        if (!strip || strip.length !== table.length) {
+            miss(`${key}: ${strip ? strip.length : 'no'} strip label(s), ${table.length} cells`);
+            continue;
+        }
+        table.forEach((cell, slot) => {
+            out.cells++;
+            const lab = strip[slot];
+            if (lab === '1k') {
+                out.cellsBy1kLabel++;
+                if (!has1k || cell !== 1000)
+                    miss(`${key} slot ${slot}: label 1k, cell ${cell}`);
+            }
+            else {
+                out.cellsByNumericLabel++;
+                if (!/^\d+(\.\d+)?$/.test(lab) || Number(lab) !== cell)
+                    miss(`${key} slot ${slot}: label ${lab}, cell ${cell}`);
+            }
+        });
+    }
+    const expectedKeys = (0, config_1.allConfigs)(cfg).map(c => (0, config_1.isWtf)(c.riskLevel) ? `WTF/${c.rows}` : `${RISK_NAME[c.riskLevel]}/${c.rows}`).sort();
+    const pageKeys = Object.keys(labels).sort();
+    if (expectedKeys.join('|') !== pageKeys.join('|'))
+        miss(`the page read holds ${pageKeys.length} board(s), the table ${expectedKeys.length}`);
+    out.ok = out.problems.length === 0 && out.mismatches === 0 && out.cells > 0;
+    return out;
+}
 
 },
 "src/parallel.js": function(module, exports, require, __filename, __dirname) {
@@ -1312,11 +1482,10 @@ exports.STEP_CLAIMS = {
     9: {
         claims: [{
                 id: 'PLINKO-15', coverage: 'full',
-                note: 'every published standard config is asserted present AND carrying at least the '
-                    + 'Phase-A floor (MIN_PHASE_A_BETS_PER_CONFIG = 50 in src/loader.ts); the never-paid '
-                    + 'cells are enumerated with their share of theoretical RTP inside this scored step '
-                    + '(data.neverPaidCellRtpShare / neverPaidRtpShareSummed). WTF is exercised in Phase E '
-                    + 'and checked by Step 15',
+                note: 'all 28 published configs (the 27 standard and WTF) are asserted present AND carrying at least the '
+                    + 'Phase-A floor (MIN_PHASE_A_BETS_PER_CONFIG = 50 in src/loader.ts; WTF\'s Phase A drops are plan id A+W); '
+                    + 'the never-paid cells are enumerated with their share of theoretical RTP inside this scored step '
+                    + '(data.neverPaidCellRtpShare / neverPaidRtpShareSummed)',
             }],
     },
     10: {
@@ -1324,21 +1493,39 @@ exports.STEP_CLAIMS = {
             { id: 'PLINKO-18', coverage: 'full' },
             {
                 id: 'PLINKO-19', coverage: 'full',
-                note: 'the published-RTP rule (RTP-CLAIM 1.1.0, src/rtp-claim.ts; enforced in this package since '
+                note: 'the published-RTP rule (RTP-CLAIM 1.2.0, src/rtp-claim.ts; enforced in this package since '
                     + '2026-10-01): every one of the 28 boards must return within 0.1 pp of the flat 99% LIQD\'s Plinko '
                     + 'page shows (evidence/rtp-page-labels-2026-10-01.json), and a board more than 0.1 pp below it on '
                     + 'the house side fails Step 10 (player-favourable never fails). The per-setting exact table is '
-                    + 'outputs/rtp-claim-table.json, pinned in src/rtp-settings.ts. Measured: 0 house-side failures, worst '
-                    + 'gap -0.09375 pp (rows 8 and 10, medium risk). FAIL probed: M51 (claim raised to 99.02%), S00 (a '
-                    + '990x WTF tail takes that board to 98.7549%)',
+                    + 'outputs/rtp-claim-table.json, pinned in src/rtp-settings.ts; the measured result is in that table '
+                    + '(worst.gapPp). FAIL probed: M51 (claim raised to 99.02%)',
             },
         ],
     },
     11: { claims: [{ id: 'PLINKO-05', coverage: 'full' }] },
     12: { claims: [{ id: 'PLINKO-05', coverage: 'full' }] },
     13: { claims: [{ id: 'PLINKO-18', coverage: 'full' }] },
-    14: { claims: [{ id: 'PLINKO-06', coverage: 'full' }] },
-    15: { claims: [{ id: 'PLINKO-17', coverage: 'full' }] },
+    14: {
+        claims: [{
+                id: 'PLINKO-06', coverage: 'full',
+                note: 'Phase D: the step recomputes every Phase D bet under its player-set client seed, requires at '
+                    + 'least 2 distinct player-set seeds (5 were played), one per epoch, none used outside Phase D, and '
+                    + 'each Phase D commitment published before the rotation that submitted the seed. It also holds every '
+                    + 'epoch of the dataset to a distinct auditor-submitted client seed, none equal to the seed in force '
+                    + 'before its capture, committed before its client seed was sent. Step 6 carries the wrong-seed '
+                    + 'coincidence bound',
+            }],
+    },
+    15: {
+        claims: [{
+                id: 'PLINKO-17', coverage: 'full',
+                note: 'LIQD declares one extra mode, WTF (risk 4, 13 rows). Production offers it and it was captured '
+                    + 'there at full coverage in its own phase: every Phase E drop and the Phase A drops on the WTF board are '
+                    + 'recomputed from the revealed seed and their multipliers held to wtf_mode.odds; a WTF drop anywhere '
+                    + 'else in the data hard-FAILs. The two 1000x WTF buckets were not reached by any captured drop '
+                    + '(MANIFEST.md DL-1)',
+            }],
+    },
     16: {
         claims: [{
                 id: 'PLINKO-31', coverage: 'full',
@@ -1355,12 +1542,12 @@ exports.STEP_CLAIMS = {
                     + 'replay are one function — on worker threads (src/parallel.ts, one configuration per thread). chi², df, '
                     + 'p, RTP, SE (exact payout sd / √n) and the serial statistics are RE-DERIVED from the replayed slot counts '
                     + 'and the gates read those, not the artifact\'s scalars; the artifact\'s copies must agree — simRTP and all '
-                    + '560 running-RTP points exactly, the rest within 1e-14 + 1e-12·max. Measured: 28/28 configurations, 784 '
-                    + 'committed figures compared, 784 bit-identical, 0 beyond tolerance. CENSUS: the committed artifact '
-                    + 'carries no per-slot counts (generated before the profile asked for them), so the replayed census is '
-                    + 'bound byte for byte to PASS1_CENSUS_SHA256 in src/artifact-pins.ts (8c840243…, recorded from the first '
+                    + '560 running-RTP points exactly, the rest within 1e-14 + 1e-12·max. The measured counts are emitted '
+                    + '(steps.step16.replayFiguresCompared / replayFiguresBitIdentical / replayFiguresBeyondTolerance). CENSUS: the committed artifact '
+                    + 'carries no per-slot counts, so the replayed census is '
+                    + 'bound byte for byte to PASS1_CENSUS_SHA256 in src/artifact-pins.ts (recorded from a '
                     + 'full in-verify replay — a regression pin, not an independent witness; the binding to the original '
-                    + 'experiment is the 784 bit-identical figures). check-outputs refuses a canonical run whose replay was not '
+                    + 'experiment is the bit-identical figures). check-outputs refuses a canonical run whose replay was not '
                     + 'full. PF_P1_REPLAY=off (mutation battery only) replays the first 50,000 rounds per row and caps the step '
                     + 'at FLAG. FAIL probed: M48 (saved seed altered), M49 (one trace point moved one ulp), X17 (census pin '
                     + 'altered, full replay)',
@@ -1374,16 +1561,35 @@ exports.STEP_CLAIMS = {
                     + 'many drops (so the cumulative payout never decreases), and the histogram total stays reachable in the '
                     + 'rounds that remain. The published chart outputs/rtp-convergence.html is re-rendered from the committed '
                     + 'traces with src/convergence-chart.ts (the renderer moved unchanged out of src/simulate.ts) and must equal '
-                    + 'the committed file byte for byte. Measured: 28/28 traces bound, 560 points, chart byte-identical. FAIL '
+                    + 'the committed file byte for byte. The measured counts are emitted (steps.step16.tracesBoundToHistogram / tracePointsChecked). FAIL '
                     + 'probed: M50 (chart byte changed), X18 (terminal point moved 1e-6, full replay)',
             }],
     },
     17: { claims: [{ id: 'PLINKO-21', coverage: 'full' }] },
-    18: { claims: [{ id: 'PLINKO-12', coverage: 'full' }] },
-    19: { claims: [{ id: 'PLINKO-14', coverage: 'full' }] },
+    18: {
+        claims: [{
+                id: 'PLINKO-12', coverage: 'full',
+                note: 'Phase C: 200 drops at 10.00 USDT on 16 rows / high risk, the board Phase B samples at 0.10 USDT '
+                    + '(the two boards are read from the bets and required equal). Every Phase C drop recomputes path and '
+                    + 'slot from the revealed seed and is paid stake × the table cell exactly; the draw function declares '
+                    + 'no wager parameter',
+            }],
+    },
+    19: {
+        claims: [{
+                id: 'PLINKO-14', coverage: 'full',
+                note: 'every table (the 27 standard boards and WTF) is left/right symmetric',
+            }],
+    },
     20: {
         claims: [
-            { id: 'PLINKO-13', coverage: 'full' },
+            {
+                id: 'PLINKO-13', coverage: 'full',
+                note: 'the table is pinned (src/config.ts) and every cell is held to what the production game page '
+                    + 'displayed: the bucket labels and page statements read on liqd.com/originals/plinko on 20 Oct 2026 '
+                    + '(evidence/liqd-plinko-page-reads-2026-10-20.json, pinned in src/page-labels.ts). A display is not a '
+                    + 'payment: the cells no captured drop landed on have no payout witness (MANIFEST.md DL-1)',
+            },
             { id: 'PLINKO-26', coverage: 'full' },
             { id: 'PLINKO-35', coverage: 'full' },
             { id: 'PLINKO-27', coverage: 'full' },
@@ -1414,7 +1620,7 @@ exports.PACKAGE_CHECKS = [
         id: 'PLINKO-09', artifact: 'tests/plinko/rngSpecTests.ts + tests/plinko/rngTests.ts', coverage: 'full',
         note: 'the docs/ALGORITHM.md spec self-test (55 checks: the page commitment example, vectors V1–V5 '
             + 'with digest, every row u32, bits, path and slot, the message format, path/slot properties, the '
-            + 'range-2 bias report and input rejection), one captured bet reproduced from its revealed seed and '
+            + 'range-2 bias report and input rejection), two captured production bets reproduced from their revealed seeds and '
             + 'the commitment-hash vector; mutations M01 (digest bytes read little-endian) and M35 (biased bit '
             + 'draw) kill it. Since 20 Oct 2026 src/rng.ts is rebuilt from the spec; the four earlier vectors at '
             + 'ranges 25, 52 and 3,000,000,000, two of which exercised the earlier port\'s rejection branch, were '
@@ -1436,13 +1642,11 @@ exports.PACKAGE_CHECKS = [
             + '(the loader of this audit\'s LIQD Mines package), runs the site\'s own derivePlinko on every captured bet (bound to '
             + 'EXPECTED_BETS) and FAILs on any path, slot, row-count or multiplier that differs from src/rng.ts '
             + 'revealPlinko or from the capture, on any paytable cell that differs from plinkoConfig.json, and on a '
-            + 'source card whose text is not derive.js. Measured 2026-09-24: 4/4 pins, 10,100/10,100 bets — 0 path, 0 '
-            + 'slot, 0 multiplier, 0 row mismatches; paytable 365/365 cells; source card = derive.js. '
-            + 'scripts/check-site-verifier.mjs against the ProvablyFair.org site repository (branch main, HEAD 0625438, the four '
-            + 'files clean): 4/4 MATCH, exit 0. What this parity is: hash-pinned behavioural equality on every captured '
-            + 'bet, not a derive.js generated from the adapter. LIVE SITE: https://www.provablyfair.org/verify-bets is '
-            + 'not covered — its HTML and the 18 script chunks it references contain no "liqd" string (GET 2026-09-24; '
-            + 'runtime-loaded chunks not fetched). FAIL probed: M47 (byte changed, no re-pin), X14 (derive.js logic '
+            + 'source card whose text is not derive.js. The measured counts are emitted (steps.step5.siteVerifier*). '
+            + 'scripts/check-site-verifier.mjs compares a checkout of the ProvablyFair.org site repository with the pins '
+            + '(not run for this release: the site repository is not part of the package). What this parity is: hash-pinned behavioural equality on every captured '
+            + 'bet, not a derive.js generated from the adapter; the same verifier is the one at https://www.provablyfair.org/verify-bets. '
+            + 'FAIL probed: M47 (byte changed, no re-pin), X14 (derive.js logic '
             + 'changed AND re-pinned), X15 (source card changed, re-pinned), X16 (site paytable cell changed, '
             + 're-pinned). Not exercised by any captured bet: derive.js\'s all-chunks-rejected retry (unreachable for '
             + 'range 2; src/rng.ts, rebuilt from docs/ALGORITHM.md on 20 Oct 2026, has no rejection step) and '
@@ -1451,57 +1655,33 @@ exports.PACKAGE_CHECKS = [
     {
         id: 'PLINKO-25', artifact: 'README.md + MANIFEST.md#verify-a-bet', coverage: 'full',
         note: 'the ordered player-verification path (commitment → per-row HMAC bits → winning slot → '
-            + 'payout) with the bet SLOjmT9dyuUEi1que576R worked example and its full byte-by-byte '
+            + 'payout) with the production bet 4PmgyUj9xOP9CXphd0Wi0 worked example and its full byte-by-byte '
             + 'derivation is in MANIFEST.md#verify-a-bet; README.md points to it',
     },
     {
         id: 'PLINKO-28',
         artifact: 'tests/verify.ts + src/diff.ts + src/diff-simulation.ts + npm test / npm run test:full',
         coverage: 'full',
-        note: 'npm test = standalone check → node test.js (57 unit tests) → node verify.js (zero-install bundle, 21 '
-            + 'scored steps, PROVABLY FAIR — Full Pass, exit 0) → check-outputs → release-manifest --check; it writes only to outputs/run/ (never '
+        note: 'npm test = standalone check → node test.js (unit tests) → node verify.js (zero-install bundle, 21 '
+            + 'scored steps) → check-outputs → release-manifest --check; it writes only to outputs/run/ (never '
             + 'a pinned artifact) and diffs the committed artifacts field by field at 1e-14 + 1e-12·max (integers and '
             + 'strings exact), recording the Node runtime in outputs/run/diff.json and exiting 1 beyond tolerance. '
-            + 'REGENERATION DIFFED (added 2026-09-24): `npm run test:full` = npm test + node replay.js + `npm run regen` '
+            + 'REGENERATION DIFFED: `npm run test:full` = npm test + node replay.js + `npm run regen` '
             + '(src/simulate.ts itself, SIM_SEEDS_FROM = the seed pairs saved in the committed rows, then '
             + 'src/calibrate.ts, into outputs/run/regen/) + `npm run diff-simulation` (field by field, the chart byte '
-            + 'for byte → outputs/run/diff-simulation.json, verdict and runtime also added to outputs/run/diff.json). '
-            + 'Measured 2026-09-24 on Node 22.23.1: test:full exit 0 in 19 min 34 s — simulation-results.json '
-            + 'byte-identical, calibration-results.json 0 fields differ (its simulation-path leaf excluded, the '
-            + 'simulation hash twin equal), rtp-convergence.html byte-identical, REPRODUCED. The first regeneration '
-            + '(same day) was NOT reproduced — the committed simulation artifact predated later generator revisions '
-            + '(one descriptive string still carrying a retracted R-CHERRY sentence; five calibrated-null fields the '
-            + 'generator had started writing), the calibration artifact likewise (one string); the generator stopped '
-            + 'writing the five undeclared fields and both artifacts were rewritten by their own generators with 0 '
-            + 'numeric leaves moved and re-pinned (MANIFEST.md). Step count 21 in README.md, MANIFEST.md and the suite; '
-            + 'audit ID PF-2026-LQ03; engines 22.x. FRESH-CLONE CHECK (emulated, 2026-09-24): the file set a commit of '
-            + 'this working tree would carry (git ls-files + untracked-not-ignored: 109 files, no node_modules, no '
-            + 'outputs/run) copied to a scratch directory; npm ci --offline exit 0; npm test exit 0 in 3 min 11 s — 58/58 '
-            + 'unit tests (the count on that date; 60 from 2026-10-02, 57 since 20 Oct 2026), 21/21, PROVABLY FAIR — Full Pass, REPRODUCED; the committed outputs/ byte-unchanged '
-            + 'afterwards. NOT an actual git clone of a pushed commit (nothing is committed), and not a second machine',
+            + 'for byte → outputs/run/diff-simulation.json). Step count 21 in README.md, MANIFEST.md and the suite; '
+            + 'audit ID PF-2026-LQ03; engines >=22.23.1 <23. The measured runs of this release are recorded in MANIFEST.md (release history)',
     },
     {
         id: 'PLINKO-29', artifact: 'tests/mutations.json + tests/mutations-extra.json + scripts/mutate.mjs', coverage: 'full',
-        note: '73 registry entries driven by scripts/mutate.mjs (52 scored-step + 21 guard-script / full-replay / '
-            + 'declared-survivor); every step that can FAIL or FLAG — steps 1..20 — has at least one mutation it must '
-            + 'reject. Step 21 is informational (PLINKO-22) and cannot fail: M46 shows it reporting INFO while Steps 5 '
-            + 'and 7 reject the same edit. Added 2026-09-24: M47 + X14..X16 (site verifier: unpinned byte, logic '
-            + 're-pinned, source card re-pinned, paytable re-pinned), M48/M49 (saved seed, one-ulp trace point), M50 '
-            + '(chart), X17/X18 (census pin, terminal point — `standalone` runner, full replay on worker threads), X19 '
-            + '(check-outputs refuses a canonical run whose Pass-1 replay was not full). Added 2026-10-02: M51 (published-'
-            + 'RTP claim raised to 99.02%, Step 10 fails); M35 re-pointed from the bias-bound arithmetic in '
-            + 'tests/steps/determinism.ts, which never calls src/rng.ts, to src/rng.ts itself (mocha; the two rejection '
-            + 'vectors fail). Retargeted 20 Oct 2026 with the rebuild of src/rng.ts from docs/ALGORITHM.md: M01 (digest '
-            + 'bytes read little-endian) and M35 (biased bit draw, u mod 3 then mod range), both killed by the spec '
-            + 'self-test and the captured-bet unit test. Since 2026-10-02 the runner works in a temporary copy of the package, never in the working '
+        note: 'registry entries driven by scripts/mutate.mjs (scored-step entries plus guard-script / full-replay / '
+            + 'declared-survivor entries); every step that can FAIL or FLAG — steps 1..20 — has at least one mutation it must '
+            + 'reject. Step 21 is informational (PLINKO-22) and cannot fail: M46 shows it reporting INFO while other steps '
+            + 'reject the same edit. The runner works in a temporary copy of the package, never in the working '
             + 'tree, and reads each verify/standalone run\'s step statuses from that run\'s scored record in outputs/run/ '
-            + '(emptied first), cross-checked against the last console marker per step — the console had shown Step 10 '
-            + 'as PASS after the RTP-CLAIM rule re-scored it FAIL. Verify-runner mutations run with PF_P1_REPLAY=off '
-            + '(Step 16 capped at FLAG; each kill decided by its own step marker). Run 2026-10-02: 73/73 behaved as '
-            + 'declared in 2 h 30 min, 32 touched files restored byte-identical in the working copy; declared survivor '
-            + 'S00 SURVIVED as declared — 17 in-scope steps PASS, read from the run record, and Steps 5, 10, 16 and 17 '
-            + 'reject it (Step 10 is detection by the published-RTP rule; 5, 16 and 17 are committed copies of the '
-            + 'original table). Earlier run 2026-09-24: 71/72 in 1 h 50 min, the miss being S00\'s then-stale declaration',
+            + '(emptied first), cross-checked against the last console marker per step. Verify-runner mutations run with PF_P1_REPLAY=off '
+            + '(Step 16 capped at FLAG; each kill decided by its own step marker). Retargeted 10 Nov 2026 to the production '
+            + 'dataset and artifacts (v1.1.0). The battery result of this release is recorded in MANIFEST.md',
     },
     {
         id: 'PLINKO-33', artifact: 'scripts/check-outputs.mjs', coverage: 'full',
@@ -1523,8 +1703,8 @@ exports.PACKAGE_CHECKS = [
     {
         id: 'PLINKO-30', artifact: 'MANIFEST.md#limitations-and-trust + MANIFEST.md#evidence', coverage: 'full',
         note: 'the DL register, the load-bearing premises table with "Could the captured data contradict '
-            + 'it?" and the exhibits E01, E02 and E04–E20 (there is no E03) are all present; the image exhibits now carry SHA-256 hashes beside their '
-            + 'dimensions, and no internal working notes ship inside the package',
+            + 'it?" and the exhibits E06–E24 are all present; no screenshot of the production UI is in this release (the UI '
+            + 'evidence is the two saved page reads, E19 and E21), and no internal working notes ship inside the package',
     },
 ];
 function profileCoverageBlock() {
@@ -2203,11 +2383,11 @@ const config_1 = require("./config");
 exports.RTP_CLAIM = {
     kind: 'flat',
     rtp: '0.99',
-    source: 'LIQD Plinko: the game page liqd.com/originals/plinko shows "Released: June 2026 | Edge: 1.00%", RTP "99% on every board" and "The board still holds 99% RTP" (read 2026-10-01, evidence/rtp-page-labels-2026-10-01.json). Same figure as "houseEdge": 0.01 in plinkoConfig.json, transcribed from the operator client bundle (src/config.ts:15-27; declaration paytable.claimedHouseEdge 0.01)',
+    source: 'LIQD Plinko: the game page liqd.com/originals/plinko shows "Released: June 2026 | Edge: 1.00%", RTP "99% on every board" and "The board still holds 99% RTP" (read 2026-10-01, evidence/rtp-page-labels-2026-10-01.json). Same figure as "houseEdge": 0.01 in plinkoConfig.json (declaration paytable.claimedHouseEdge 0.01)',
 };
 exports.RTP_CLAIM_STEP = 10;
 exports.RTP_CLAIM_TABLE = path.join(__dirname, '..', 'outputs', 'rtp-claim-table.json');
-exports.RTP_CLAIM_TABLE_SHA256 = '84f48588314bef5c38c35f0c97d94c58f01c4bd39ea089e0c9e8c2308461e239';
+exports.RTP_CLAIM_TABLE_SHA256 = '46f44fcb21791715d09e33d7bea9c3fe15ce29c829f32062ca64f721d7be67f0';
 const binom = (n, k) => {
     let r = 1n;
     for (let i = 0; i < k; i++)
@@ -2587,7 +2767,7 @@ const context_1 = require("./context");
 const rng_1 = require("../../src/rng");
 const loader_1 = require("../../src/loader");
 function run(ctx) {
-    const { seeds, byHash, bets, preCapture } = ctx;
+    const { seeds, byHash, bets, captures } = ctx;
     let checked = 0, fails = 0;
     for (const s of seeds) {
         if (!s.serverSeed)
@@ -2598,32 +2778,51 @@ function run(ctx) {
     }
     const s1 = (0, context_1.step)(1, 'Seed Hash Integrity', checked === seeds.length && checked === loader_1.EXPECTED_SEEDS && fails === 0 ? 'PASS' : 'FAIL', `${checked}/${seeds.length} seeds revealed and checked (expected ${loader_1.EXPECTED_SEEDS}, from src/loader.ts EXPECTED_SEEDS — not from the dataset's own seed-record count, which would make "all of them" true of any subset); SHA-256(utf8(serverSeed)) == hashedServerSeed; ${fails} mismatches`);
     const byEpoch = [...seeds].sort((a, b) => a.epoch - b.epoch);
-    let promoChecked = 0, promoFails = 0;
+    let promoChecked = 0, promoFails = 0, anchorsOk = 0, epochTransitions = 0;
     const preFails = [];
-    if (!preCapture) {
+    const captureShapeOk = captures.length === loader_1.EXPECTED_CAPTURE_EPOCHS.length
+        && loader_1.EXPECTED_CAPTURE_EPOCHS.every((n, i) => byEpoch.filter(s => s.capture === i + 1).length === n);
+    if (!captureShapeOk) {
         promoFails++;
-        preFails.push('meta.preCapture missing (required — it anchors the chain before epoch 0)');
+        preFails.push(`capture layout: ${captures.length} capture record(s) holding ${captures.map((_, i) => byEpoch.filter(s => s.capture === i + 1).length).join(' / ')} epoch(s), expected ${loader_1.EXPECTED_CAPTURE_EPOCHS.join(' / ')} (src/loader.ts EXPECTED_CAPTURE_EPOCHS)`);
     }
-    else {
+    for (let c = 1; c <= loader_1.EXPECTED_CAPTURE_EPOCHS.length; c++) {
+        const rec = captures.find(x => x.capture === c);
+        const own = byEpoch.filter(s => s.capture === c);
+        const pre = rec?.preCapture;
         promoChecked++;
-        if (!preCapture.revealedServerSeed || (0, rng_1.commitHash)(preCapture.revealedServerSeed) !== preCapture.hashedServerSeed) {
+        if (!pre) {
             promoFails++;
-            preFails.push('pre-capture commit mismatch');
+            preFails.push(`capture ${c}: pre-capture record missing (required — it anchors the chain before the capture's first epoch)`);
         }
-        if (byEpoch.length > 0 && preCapture.nextHashedServerSeed !== byEpoch[0].hashedServerSeed) {
-            promoFails++;
-            preFails.push('pre-capture → epoch 0 chain link mismatch');
+        else {
+            let ok = true;
+            if (!pre.revealedServerSeed || (0, rng_1.commitHash)(pre.revealedServerSeed) !== pre.hashedServerSeed) {
+                ok = false;
+                preFails.push(`capture ${c}: pre-capture commit mismatch`);
+            }
+            if (own.length === 0 || pre.nextHashedServerSeed !== own[0].hashedServerSeed) {
+                ok = false;
+                preFails.push(`capture ${c}: pre-capture → first epoch chain link mismatch`);
+            }
+            if (ok)
+                anchorsOk++;
+            else
+                promoFails++;
         }
-    }
-    const epochTransitions = Math.max(byEpoch.length - 1, 0);
-    for (let i = 0; i + 1 < byEpoch.length; i++) {
-        promoChecked++;
-        if (byEpoch[i].nextHashedServerSeed !== byEpoch[i + 1].hashedServerSeed)
-            promoFails++;
+        for (let i = 0; i + 1 < own.length; i++) {
+            promoChecked++;
+            epochTransitions++;
+            if (own[i].nextHashedServerSeed !== own[i + 1].hashedServerSeed) {
+                promoFails++;
+                if (preFails.length < 4)
+                    preFails.push(`capture ${c}: epoch ${own[i].epoch} → ${own[i + 1].epoch} link mismatch`);
+            }
+        }
     }
     const s2 = (0, context_1.step)(2, 'Next-Seed Pre-Commitment Chain', promoFails === 0 ? 'PASS' : 'FAIL', promoFails === 0
-        ? `${promoChecked}/${promoChecked} pre-commitments verified (${epochTransitions} epoch transitions${preCapture ? ' plus the pre-capture link' : ''}): each nextHashedServerSeed == the next commitment's hashedServerSeed${preCapture ? ', and the pre-capture serverSeed hashes to its committed hash' : ''}`
-        : `${promoChecked - promoFails}/${promoChecked} match; ${promoFails} mismatch${preFails.length ? ` (${preFails.join('; ')})` : ''}`);
+        ? `${promoChecked}/${promoChecked} pre-commitments verified: ${epochTransitions} epoch transitions inside the ${captures.length} captures (each nextHashedServerSeed == the next epoch's hashedServerSeed) plus ${anchorsOk} pre-capture links, one per capture (the pair active before the capture's first round hashes to its commitment and its next hash is the capture's first epoch). No link is asserted across two captures`
+        : `${promoChecked - promoFails}/${promoChecked} match; ${promoFails} mismatch${preFails.length ? ` (${preFails.join('; ')})` : ''}`, { preCommitmentsChecked: promoChecked, preCommitmentFails: promoFails, epochTransitions, preCaptureAnchors: anchorsOk, captures: captures.length });
     const betsByEpoch = new Map();
     for (const b of bets) {
         const arr = betsByEpoch.get(b.epoch) ?? [];
@@ -2638,6 +2837,7 @@ function run(ctx) {
     }
     const s3 = (0, context_1.step)(3, 'Hash Consistency Within Epoch', epochsMultipleHashes === 0 ? 'PASS' : 'FAIL', `${betsByEpoch.size} epochs: all bets within each epoch share the same hashedServerSeed; ${epochsMultipleHashes} violations`);
     const hardFailures = [];
+    const sizesSeen = new Set();
     let epochsChecked = 0;
     for (const [hash, epochBets] of byHash) {
         const sorted = [...epochBets].sort((a, b) => a.nonce - b.nonce);
@@ -2652,11 +2852,19 @@ function run(ctx) {
         }
         const maxNonce = Math.max(...nonces);
         const nonceSet = new Set(nonces);
+        const ids = new Set(sorted.map(b => b.phaseId));
+        const entry = ids.size === 1 ? (0, loader_1.planEntry)([...ids][0]) : undefined;
+        if (!entry) {
+            hardFailures.push(`Epoch ${shortHash}: plan id(s) ${[...ids].join(',')} — not one entry of the plan`);
+            epochsChecked++;
+            continue;
+        }
+        sizesSeen.add(loader_1.EXPECTED_EPOCH_SIZE[entry.id]);
         if (nonceSet.size !== sorted.length) {
             hardFailures.push(`Epoch ${shortHash}: ${sorted.length - nonceSet.size} duplicate nonce(s)`);
         }
-        if (maxNonce !== loader_1.EXPECTED_EPOCH_SIZE - 1) {
-            hardFailures.push(`Epoch ${shortHash}: max nonce is ${maxNonce} (expected ${loader_1.EXPECTED_EPOCH_SIZE - 1})`);
+        if (maxNonce !== loader_1.EXPECTED_EPOCH_SIZE[entry.id] - 1) {
+            hardFailures.push(`Epoch ${shortHash} (plan ${entry.id}): max nonce is ${maxNonce} (expected ${loader_1.EXPECTED_EPOCH_SIZE[entry.id] - 1})`);
         }
         for (let n = 0; n <= maxNonce; n++) {
             if (!nonceSet.has(n)) {
@@ -2667,7 +2875,7 @@ function run(ctx) {
         epochsChecked++;
     }
     const s4 = (0, context_1.step)(4, 'Nonce Audit', hardFailures.length === 0 ? 'PASS' : 'FAIL', hardFailures.length === 0
-        ? `${epochsChecked} epochs: nonces sequential 0–${loader_1.EXPECTED_EPOCH_SIZE - 1} (against src/loader.ts EXPECTED_EPOCH_SIZE, not meta.epochSize), single client seed per epoch`
+        ? `${epochsChecked} epochs: nonces sequential 0…size−1 with no gap or repeat, size = the epochSize of the epoch's plan entry (src/loader.ts EXPECTED_PLAN, not the dataset header; sizes ${[...sizesSeen].sort((a, b) => a - b).join(', ')}), single client seed per epoch`
         : `${hardFailures.length} violations: ${hardFailures.slice(0, 3).join('; ')}`);
     return [s1, s2, s3, s4];
 }
@@ -2676,7 +2884,9 @@ function run(ctx) {
 "tests/steps/context.js": function(module, exports, require, __filename, __dirname) {
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.EXPECTED_STEPS = void 0;
 exports.step = step;
+exports.EXPECTED_STEPS = 21;
 function step(num, name, status, detail, data) {
     const tag = status === 'PASS' ? '[PASS]' : status === 'INFO' ? '[INFO]' : status === 'FLAG' ? '[FLAG]' : '[FAIL]';
     console.log(`  ${tag} Step ${num} — ${name}`);
@@ -2747,7 +2957,7 @@ function run(ctx) {
     const slot0Observed = wtfSet.has(0);
     const slot13Observed = wtfSet.has(13);
     const report = {
-        note: 'INFO only — payout-table cell coverage is a property of capture design, not a scored integrity check. Step 7 verifies that every OBSERVED payout matches the pinned table; the unexercised cells rest on the hash-pinned plinkoConfig.json (see MANIFEST.md), not on live data.',
+        note: 'INFO only — payout-table cell coverage is a property of capture design, not a scored integrity check. Step 7 verifies that every OBSERVED payout matches the pinned table; the unexercised cells have no payout witness: they rest on the pinned plinkoConfig.json, each cell of which equals what the production game page displayed (Step 20; see MANIFEST.md).',
         totalConfigs: perConfig.length,
         totalCells,
         cellsExercised,
@@ -2759,7 +2969,7 @@ function run(ctx) {
         wtfTails: {
             slot0Observed,
             slot13Observed,
-            note: `WTF 1000x tails slots 0 and 13 ${(!slot0Observed && !slot13Observed) ? 'were never observed' : 'observation state varies'} in the capture — they rest on the hash-pinned config.`,
+            note: `WTF 1000x tails slots 0 and 13 ${(!slot0Observed && !slot13Observed) ? 'were never observed' : 'observation state varies'} in the capture${(!slot0Observed && !slot13Observed) ? ' — they have no payout witness and rest on the pinned config' : ''}.`,
         },
         perConfig,
     };
@@ -2781,7 +2991,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.run = run;
 const context_1 = require("./context");
 const loader_1 = require("../../src/loader");
-const PHASES = ['A', 'B', 'C', 'D', 'E'];
+const PHASES = loader_1.EXPECTED_PHASES;
 function run(ctx) {
     const { bets, seeds, meta } = ctx;
     const phases = new Set(bets.map(b => b.phase));
@@ -2828,32 +3038,85 @@ function run(ctx) {
         metaHeaderAgrees: metaTotalOk && metaPhasesOk,
     });
     const epochSizes = new Map();
+    const epochId = new Map();
+    const epochStake = new Map();
+    const epochCapture = new Map();
     for (const b of bets) {
-        epochSizes.set(b.hashedServerSeed, (epochSizes.get(b.hashedServerSeed) ?? 0) + 1);
+        const h = b.hashedServerSeed;
+        epochSizes.set(h, (epochSizes.get(h) ?? 0) + 1);
+        (epochId.get(h) ?? epochId.set(h, new Set()).get(h)).add(b.phaseId);
+        (epochStake.get(h) ?? epochStake.set(h, new Set()).get(h)).add(b.betAmount);
+        (epochCapture.get(h) ?? epochCapture.set(h, new Set()).get(h)).add(b.capture);
     }
     const epochIndexes = new Set(bets.map(b => b.epoch));
     const sizes = [...epochSizes.values()];
     const minSize = sizes.length ? Math.min(...sizes) : 0;
     const maxSize = sizes.length ? Math.max(...sizes) : 0;
-    const sizeOk = sizes.length > 0 && minSize === loader_1.EXPECTED_EPOCH_SIZE && maxSize === loader_1.EXPECTED_EPOCH_SIZE;
+    const faults12 = [];
+    const epochsPerEntry = {};
+    const betsPerEntry = {};
+    let epochsOnPlan = 0;
+    for (const e of loader_1.EXPECTED_PLAN) {
+        const own = [...epochSizes.keys()].filter(h => epochId.get(h).size === 1 && epochId.get(h).has(e.id));
+        epochsPerEntry[e.id] = own.length;
+        betsPerEntry[e.id] = own.reduce((a, h) => a + epochSizes.get(h), 0);
+        const good = own.filter(h => epochSizes.get(h) === loader_1.EXPECTED_EPOCH_SIZE[e.id]
+            && epochStake.get(h).size === 1 && epochStake.get(h).has(e.stake)
+            && epochCapture.get(h).size === 1 && epochCapture.get(h).has(e.capture));
+        epochsOnPlan += good.length;
+        if (own.length !== e.epochs)
+            faults12.push(`plan ${e.id}: ${own.length} epoch(s), ${e.epochs} planned`);
+        if (good.length !== own.length)
+            faults12.push(`plan ${e.id}: ${own.length - good.length} epoch(s) off the planned size ${loader_1.EXPECTED_EPOCH_SIZE[e.id]}, stake ${e.stake} or capture ${e.capture}`);
+    }
+    const mixed = [...epochId.values()].filter(v => v.size !== 1).length;
+    if (mixed)
+        faults12.push(`${mixed} epoch(s) carry more than one plan id`);
+    const undeclaredIds = [...new Set(bets.map(b => b.phaseId))].filter(id => !loader_1.EXPECTED_PLAN.some(e => e.id === id));
+    if (undeclaredIds.length)
+        faults12.push(`undeclared plan id(s) in the data: ${undeclaredIds.join(',')}`);
+    const letterOk = bets.every(b => loader_1.EXPECTED_PLAN.find(e => e.id === b.phaseId)?.phase === b.phase);
+    if (!letterOk)
+        faults12.push('a bet\'s phase letter is not the letter of its plan id');
     const seedCountOk = seeds.length === loader_1.EXPECTED_SEEDS;
     const epochCountOk = epochSizes.size === loader_1.EXPECTED_SEEDS && epochIndexes.size === loader_1.EXPECTED_SEEDS;
-    const arithmeticOk = loader_1.EXPECTED_SEEDS * loader_1.EXPECTED_EPOCH_SIZE === loader_1.EXPECTED_BETS;
-    const metaEpochOk = meta.epochSize === loader_1.EXPECTED_EPOCH_SIZE;
-    const faults12 = [];
-    if (!sizeOk)
-        faults12.push(`epoch size min=${minSize} max=${maxSize}, ${loader_1.EXPECTED_EPOCH_SIZE} pinned in src/loader.ts EXPECTED_EPOCH_SIZE`);
+    const planEpochs = loader_1.EXPECTED_PLAN.reduce((a, e) => a + e.epochs, 0);
+    const planBets = loader_1.EXPECTED_PLAN.reduce((a, e) => a + e.epochs * e.epochSize, 0);
+    const entryArithmeticOk = loader_1.EXPECTED_PLAN.every(e => e.epochs * e.epochSize === e.bets);
+    const letterSumsOk = PHASES.every(p => loader_1.EXPECTED_PLAN.filter(e => e.phase === p).reduce((a, e) => a + e.bets, 0) === loader_1.EXPECTED_PHASE_BETS[p]);
+    const arithmeticOk = planEpochs === loader_1.EXPECTED_SEEDS && planBets === loader_1.EXPECTED_BETS && entryArithmeticOk && letterSumsOk;
+    const planMinSize = Math.min(...loader_1.EXPECTED_PLAN.map(e => e.epochSize));
+    const primaryWindowOk = loader_1.PRIMARY_WINDOW_NONCES === planMinSize;
+    const metaEpochOk = PHASES.every(p => {
+        const es = loader_1.EXPECTED_PLAN.filter(e => e.phase === p);
+        const m = meta.phases?.[p];
+        return !!m && m.epochs === es.reduce((a, e) => a + e.epochs, 0)
+            && es.every(e => m.stake === e.stake && (m.epochSizes ?? []).includes(loader_1.EXPECTED_EPOCH_SIZE[e.id]) && m.ids?.[e.id] === e.bets)
+            && (m.epochSizes ?? []).length === new Set(es.map(e => e.epochSize)).size;
+    });
+    const seedRecordsOk = seeds.every(sd => {
+        const e = loader_1.EXPECTED_PLAN.find(x => x.id === sd.phaseId);
+        return !!e && sd.phase === e.phase && sd.capture === e.capture && sd.plannedBets === loader_1.EXPECTED_EPOCH_SIZE[e.id]
+            && sd.stake === e.stake && epochSizes.get(sd.hashedServerSeed) === loader_1.EXPECTED_EPOCH_SIZE[e.id];
+    });
     if (!seedCountOk)
         faults12.push(`POPULATION: ${seeds.length} seed records, ${loader_1.EXPECTED_SEEDS} pinned`);
     if (!epochCountOk)
         faults12.push(`POPULATION: ${epochSizes.size} distinct hashedServerSeed group(s) and ${epochIndexes.size} distinct epoch index(es) in the bets, ${loader_1.EXPECTED_SEEDS} pinned`);
     if (!arithmeticOk)
-        faults12.push(`pin arithmetic: ${loader_1.EXPECTED_SEEDS} × ${loader_1.EXPECTED_EPOCH_SIZE} ≠ ${loader_1.EXPECTED_BETS}`);
+        faults12.push(`pin arithmetic: Σ epochs ${planEpochs} vs EXPECTED_SEEDS ${loader_1.EXPECTED_SEEDS}; Σ epochs × epochSize ${planBets} vs EXPECTED_BETS ${loader_1.EXPECTED_BETS}; per-entry ${entryArithmeticOk ? 'ok' : 'INCONSISTENT'}; per-letter ${letterSumsOk ? 'ok' : 'INCONSISTENT'}`);
+    if (!primaryWindowOk)
+        faults12.push(`PRIMARY_WINDOW_NONCES ${loader_1.PRIMARY_WINDOW_NONCES} is not the shortest planned epoch ${planMinSize}`);
     if (!metaEpochOk)
-        faults12.push(`dataset header disagrees with the code plan: meta.epochSize=${meta.epochSize} ≠ EXPECTED_EPOCH_SIZE ${loader_1.EXPECTED_EPOCH_SIZE}`);
+        faults12.push('dataset header disagrees with the code plan: meta.phases epochs / stake / epochSizes / ids');
+    if (!seedRecordsOk)
+        faults12.push('a seed record disagrees with the plan entry of its epoch (phase, capture, planned length or stake)');
+    const planText = loader_1.EXPECTED_PLAN.map(e => `${e.id} ${epochsPerEntry[e.id]}/${e.epochs} × ${e.epochSize}`).join(', ');
     const s12 = (0, context_1.step)(12, 'Epoch Size', faults12.length === 0 ? 'PASS' : 'FAIL', `${epochSizes.size}/${loader_1.EXPECTED_SEEDS} epochs (by hashedServerSeed; ${epochIndexes.size} distinct epoch indexes) and ${seeds.length}/${loader_1.EXPECTED_SEEDS} seed records against src/loader.ts EXPECTED_SEEDS; `
-        + `min=${minSize}, max=${maxSize} bets per seed pair against EXPECTED_EPOCH_SIZE ${loader_1.EXPECTED_EPOCH_SIZE}; ${loader_1.EXPECTED_SEEDS} × ${loader_1.EXPECTED_EPOCH_SIZE} = ${loader_1.EXPECTED_SEEDS * loader_1.EXPECTED_EPOCH_SIZE} must equal EXPECTED_BETS ${loader_1.EXPECTED_BETS}. `
-        + `meta.epochSize=${meta.epochSize} is reconciled against the constant (${metaEpochOk ? 'agrees' : 'DISAGREES'}), not used as the expectation — dropping an epoch with its seed row and re-declaring the header used to leave every count in this step self-consistent`
+        + `epochs per plan entry and their length, against EXPECTED_PLAN: ${planText}; ${epochsOnPlan}/${loader_1.EXPECTED_SEEDS} epochs have their entry's length, stake and capture file; `
+        + `Σ epochs = ${planEpochs} and Σ epochs × epochSize = ${planBets} must equal EXPECTED_SEEDS ${loader_1.EXPECTED_SEEDS} and EXPECTED_BETS ${loader_1.EXPECTED_BETS}; `
+        + `the shortest planned epoch is ${planMinSize} drops = PRIMARY_WINDOW_NONCES ${loader_1.PRIMARY_WINDOW_NONCES} (Step 17's scored window). `
+        + `The header (meta.phases) is reconciled against the plan (${metaEpochOk ? 'agrees' : 'DISAGREES'}), not used as the expectation. The epoch lengths are the capture's own rotation plan; nothing in the captured records shows LIQD limiting a seed pair to any of them`
         + (faults12.length ? `. FAULTS: ${faults12.join('; ')}` : ''), {
         epochsByHash: epochSizes.size,
         epochIndexes: epochIndexes.size,
@@ -2861,8 +3124,10 @@ function run(ctx) {
         seedRecords: seeds.length,
         minEpochSize: minSize,
         maxEpochSize: maxSize,
-        expectedEpochSize: loader_1.EXPECTED_EPOCH_SIZE,
-        metaEpochSize: meta.epochSize,
+        epochsOnPlan,
+        epochsPerPlanEntry: epochsPerEntry,
+        betsPerPlanEntry: betsPerEntry,
+        primaryWindowNonces: loader_1.PRIMARY_WINDOW_NONCES,
         metaHeaderAgrees: metaEpochOk,
     });
     return [s11, s12];
@@ -3075,7 +3340,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.run = run;
 const context_1 = require("./context");
 const stats_1 = require("../../src/stats");
-const loader_1 = require("../../src/loader");
 function run(ctx) {
     const byRows = new Map();
     for (const b of ctx.bets) {
@@ -3104,7 +3368,7 @@ function run(ctx) {
     }
     const combinedP = (0, stats_1.chiSquaredPValue)(fisher, k);
     const bon = 0.01 / byRows.size;
-    return [(0, context_1.step)(21, 'Epoch-Window Slot Fit (live drops vs binomial)', minP < bon || combinedP < 0.01 ? 'INFO' : 'PASS', `${ctx.bets.length} captured drops = first ${loader_1.EXPECTED_EPOCH_SIZE} nonces of ${ctx.seeds.length} seeds; ` + rows.join(' | ') +
+    return [(0, context_1.step)(21, 'Epoch-Window Slot Fit (live drops vs binomial)', minP < bon || combinedP < 0.01 ? 'INFO' : 'PASS', `${ctx.bets.length} captured drops = every nonce played under ${ctx.seeds.length} seeds (WTF drops pool with the 13-row boards: the slot law depends on rows only); ` + rows.join(' | ') +
             `; Fisher X2=${fisher.toFixed(2)} df=${k} combined p=${combinedP.toFixed(4)}; Bonferroni per-group alpha=${bon.toExponential(2)}` +
             `; p-values are NOMINAL — the tail-merged chi²'s true size is assumed 0.05, not measured in-repo (declared limitation A4b)`, {
             drops: ctx.bets.length,
@@ -3159,7 +3423,7 @@ function run(ctx) {
     const totalCells = (0, config_1.allConfigs)(cfg).reduce((a, c) => a + ((0, config_1.isWtf)(c.riskLevel) ? cfg.wtf_mode.odds.length : c.rows + 1), 0);
     const s7 = (0, context_1.step)(7, 'Multiplier Lookup', multErrors === 0 ? 'PASS' : 'FAIL', `${multChecked} bets checked (incl. WTF) at 1e-9 tolerance; multiplier == payoutTable[winningSlot] (both required finite); ${multErrors} mismatches. `
         + `SCOPE (declared limitation S00): this compares PAID multipliers only — ${observedCells.size}/${totalCells} payout-table cells were exercised by the capture; `
-        + `the remaining ${totalCells - observedCells.size} (incl. both WTF 1000× tails) rest on the hash-pinned transcription in plinkoConfig.json, not on live data. `
+        + `the remaining ${totalCells - observedCells.size} have no payout witness and rest on the pinned plinkoConfig.json, each cell of which equals what the production game page displayed (Step 20). `
         + `See outputs/coverage-results.json, MANIFEST 'Declared limitations' and declared survivor S00 in tests/mutations-extra.json`, {
         betsChecked: multChecked,
         mismatches: multErrors,
@@ -3207,6 +3471,8 @@ function run(ctx) {
         .filter(c => c.bets < loader_1.MIN_PHASE_A_BETS_PER_CONFIG);
     const minPhaseA = phaseACounts.length ? Math.min(...phaseACounts) : 0;
     const maxPhaseA = phaseACounts.length ? Math.max(...phaseACounts) : 0;
+    const wtfPhaseA = phaseAByConfig.get(`${cfg.wtf_mode.rows}:${cfg.wtf_mode.riskLevel}`) ?? 0;
+    const wtfFloorOk = wtfPhaseA >= loader_1.MIN_PHASE_A_BETS_PER_CONFIG;
     const observedSlots = new Map();
     for (const b of bets) {
         const k = `${b.numberOfRows}:${b.riskLevel}`;
@@ -3237,19 +3503,20 @@ function run(ctx) {
         }
     }
     const neverPaidRtpShareSummed = theoreticalRtpSum > 0 ? neverPaidRtp / theoreticalRtpSum : 0;
-    const floorOk = missingStd.length === 0 && wtfPresent && belowFloor.length === 0;
+    const floorOk = missingStd.length === 0 && wtfPresent && belowFloor.length === 0 && wtfFloorOk;
     const s9 = (0, context_1.step)(9, 'Config Completeness (27 standard + WTF)', floorOk ? 'PASS' : 'FLAG', `${stdCount}/27 standard configs + ${wtfPresent ? 'WTF' : 'no WTF'} present`
-        + `; Phase A per standard config ≥ ${loader_1.MIN_PHASE_A_BETS_PER_CONFIG}-bet floor (src/loader.ts MIN_PHASE_A_BETS_PER_CONFIG): `
-        + `${expectedStd.length - belowFloor.length}/27 meet it (observed ${minPhaseA}–${maxPhaseA} bets/config)`
+        + `; Phase A per config ≥ ${loader_1.MIN_PHASE_A_BETS_PER_CONFIG}-bet floor (src/loader.ts MIN_PHASE_A_BETS_PER_CONFIG): `
+        + `${expectedStd.length - belowFloor.length}/27 standard configs meet it (observed ${minPhaseA}–${maxPhaseA} bets/config) and WTF ${wtfFloorOk ? 'meets' : 'DOES NOT meet'} it (${wtfPhaseA} Phase A bets)`
         + (belowFloor.length > 0 ? `; BELOW FLOOR: ${belowFloor.slice(0, 5).map(c => `${c.config}=${c.bets}`).join(', ')}` : '')
         + (missingStd.length > 0 ? `; missing config: ${missingStd.slice(0, 5).join(', ')}` : '')
         + `; never-paid cells ${neverPaidCount}/${totalCoverageCells} carrying ${(neverPaidRtpShareSummed * 100).toFixed(2)}% of summed theoretical RTP `
-        + `(coverage artifact — the unexercised cells rest on the hash-pinned plinkoConfig.json, not on live data; per-cell RTP shares in data.neverPaidCellRtpShare)`, {
+        + `(coverage artifact — the unexercised cells have no payout witness and rest on the pinned plinkoConfig.json; per-cell RTP shares in data.neverPaidCellRtpShare)`, {
         standardConfigsPresent: stdCount,
         wtfPresent,
         phaseAFloor: loader_1.MIN_PHASE_A_BETS_PER_CONFIG,
         phaseAMinPerConfig: minPhaseA,
         phaseAMaxPerConfig: maxPhaseA,
+        phaseAWtfBets: wtfPhaseA,
         configsBelowFloor: belowFloor.length,
         neverPaidCells: neverPaidCount,
         coverageCellsTotal: totalCoverageCells,
@@ -3301,46 +3568,101 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.run = run;
 const context_1 = require("./context");
 const rng_1 = require("../../src/rng");
+const loader_1 = require("../../src/loader");
+const PLAYER_SHAPE = /^pfaudit-prod-plinko-d[1-9]\d*-[0-9a-f]{12}$/;
+const AUDIT_SHAPE = /^audit[0-9a-f]{12}$/;
 function run(ctx) {
-    const { phaseD, seedMap } = ctx;
-    if (phaseD.length === 0) {
-        return [(0, context_1.step)(14, 'Phase D — Client Seed Variation', 'FLAG', 'No Phase D bets in dataset (PROVISIONAL)')];
-    }
-    const clientSeeds = new Set(phaseD.map(b => b.clientSeed));
-    let tested = 0, matched = 0;
+    const { bets, seeds, seedMap, captures, phaseD } = ctx;
+    const byEpoch = [...seeds].sort((a, b) => a.epoch - b.epoch);
+    const planD = loader_1.EXPECTED_PLAN.filter(e => e.phase === 'D');
+    const planDBets = planD.reduce((a, e) => a + e.bets, 0);
+    const planDEpochs = planD.reduce((a, e) => a + e.epochs, 0);
+    const dSeeds = byEpoch.filter(s => s.phase === 'D');
+    const dDistinct = new Set(dSeeds.map(s => s.clientSeed));
+    const dShaped = dSeeds.filter(s => PLAYER_SHAPE.test(s.clientSeed)).length;
+    const playerOutsideD = byEpoch.filter(s => s.phase !== 'D' && (PLAYER_SHAPE.test(s.clientSeed) || s.seedTag === 'player')).length;
+    let dTested = 0, dMatched = 0;
     for (const b of phaseD) {
+        const ss = seedMap.get(b.hashedServerSeed);
+        if (!ss)
+            continue;
+        dTested++;
+        const { path, winningSlot } = (0, rng_1.revealPlinko)(ss, b.clientSeed, b.nonce, b.numberOfRows);
+        if (path === b.dropDetails && winningSlot === b.winningSlot)
+            dMatched++;
+    }
+    const dSettings = new Set(phaseD.map(b => `${b.numberOfRows}:${b.riskLevel}`)).size;
+    const phaseDWagered = phaseD.reduce((s, b) => s + parseFloat(b.betAmount), 0);
+    const phaseDPaid = phaseD.reduce((s, b) => s + parseFloat(b.winningAmount), 0);
+    const epochSeeds = byEpoch.map(s => s.clientSeed);
+    const distinct = new Set(epochSeeds);
+    const preOf = new Map(captures.map(c => [c.capture, c.preCapture]));
+    const reusesPreCapture = byEpoch.filter(s => preOf.get(s.capture)?.clientSeed === s.clientSeed).length;
+    const seedOfEpoch = new Map(byEpoch.map(s => [s.epoch, s.clientSeed]));
+    let carried = 0, recomputed = 0, tested = 0;
+    for (const b of bets) {
+        if (seedOfEpoch.get(b.epoch) === b.clientSeed)
+            carried++;
         const ss = seedMap.get(b.hashedServerSeed);
         if (!ss)
             continue;
         tested++;
         const { path, winningSlot } = (0, rng_1.revealPlinko)(ss, b.clientSeed, b.nonce, b.numberOfRows);
         if (path === b.dropDetails && winningSlot === b.winningSlot)
-            matched++;
+            recomputed++;
     }
-    const PREDICTABLE = /^pfaudit-\d+-\d+$/;
-    const predictableEpochs = [...new Set(phaseD.filter(b => PREDICTABLE.test(b.clientSeed)).map(b => b.epoch))].sort((a, b) => a - b);
-    const unresolvedEpoch = predictableEpochs.length > 0 ? predictableEpochs[0] : null;
-    const exposedEpochs = predictableEpochs.slice(1);
-    const exposedBets = phaseD.filter(b => exposedEpochs.includes(b.epoch));
-    const exposedWagered = exposedBets.reduce((s, b) => s + parseFloat(b.betAmount), 0);
-    const exposedPaid = exposedBets.reduce((s, b) => s + parseFloat(b.winningAmount), 0);
-    const phaseDWagered = phaseD.reduce((s, b) => s + parseFloat(b.betAmount), 0);
-    const phaseDPaid = phaseD.reduce((s, b) => s + parseFloat(b.winningAmount), 0);
-    const s14 = (0, context_1.step)(14, 'Phase D — Client Seed Variation', tested > 0 && tested === phaseD.length && clientSeeds.size >= 2 && matched === tested ? 'PASS' : 'FLAG', `${phaseD.length} bets, ${clientSeeds.size} distinct client seeds; recomputation: ${matched}/${tested} match (tested ${tested}, expected ${phaseD.length})`
-        + `; predictable-client-seed epochs ${predictableEpochs.length} (${predictableEpochs[0] ?? '-'}–${predictableEpochs[predictableEpochs.length - 1] ?? '-'})`
-        + `: epoch ${unresolvedEpoch ?? '-'} is UNRESOLVED (its run-id was guessable in distribution; a prior hash blocks substitution, not grinding against a predictable future client seed, and the negligible-power assumption for ~10^4 candidates is not demonstrated in-repo)`
-        + `; ${exposedEpochs.length} epochs (${exposedEpochs[0] ?? '-'}–${exposedEpochs[exposedEpochs.length - 1] ?? '-'}) used client seeds the operator already held at commitment: ${exposedBets.length} bets, $${exposedWagered.toFixed(2)} wagered, $${exposedPaid.toFixed(2)} paid — no adverse signal, but containment there is statistical, not structural`, {
+    let committedBefore = 0;
+    for (let i = 0; i < byEpoch.length; i++) {
+        const first = i === 0 || byEpoch[i - 1].capture !== byEpoch[i].capture;
+        const announced = first ? preOf.get(byEpoch[i].capture)?.nextHashedServerSeed : byEpoch[i - 1].nextHashedServerSeed;
+        if (announced !== undefined && announced === byEpoch[i].hashedServerSeed)
+            committedBefore++;
+    }
+    const dCommittedBefore = dSeeds.filter(s => {
+        const i = byEpoch.indexOf(s);
+        const first = i === 0 || byEpoch[i - 1].capture !== s.capture;
+        const announced = first ? preOf.get(s.capture)?.nextHashedServerSeed : byEpoch[i - 1].nextHashedServerSeed;
+        return announced === s.hashedServerSeed;
+    }).length;
+    const auditShaped = byEpoch.filter(s => s.phase !== 'D' && AUDIT_SHAPE.test(s.clientSeed)).length;
+    const nonD = byEpoch.length - dSeeds.length;
+    const dOk = phaseD.length === planDBets && dSeeds.length === planDEpochs
+        && dDistinct.size === dSeeds.length && dDistinct.size >= loader_1.MIN_PHASE_D_PLAYER_SEEDS
+        && dShaped === dSeeds.length && playerOutsideD === 0
+        && dTested === phaseD.length && dTested > 0 && dMatched === dTested
+        && dCommittedBefore === dSeeds.length;
+    const allOk = byEpoch.length === loader_1.EXPECTED_SEEDS && distinct.size === loader_1.EXPECTED_SEEDS
+        && reusesPreCapture === 0 && captures.length > 0
+        && carried === bets.length && tested === bets.length && recomputed === tested
+        && committedBefore === loader_1.EXPECTED_SEEDS && auditShaped === nonD;
+    const ok = dOk && allOk;
+    const s14 = (0, context_1.step)(14, 'Phase D — Player-Set Client Seeds', ok ? 'PASS' : 'FLAG', `Phase D: ${phaseD.length} bets (plan ${planDBets}) in ${dSeeds.length} epochs over ${dSettings} settings, ${dDistinct.size} distinct player-set client seeds (floor ${loader_1.MIN_PHASE_D_PLAYER_SEEDS}, src/loader.ts MIN_PHASE_D_PLAYER_SEEDS), `
+        + `${dShaped}/${dSeeds.length} of the shape pfaudit-prod-plinko-d<k>-<12 hex>; recomputation under the player-set seed: ${dMatched}/${dTested} match (expected ${phaseD.length}); `
+        + `${dCommittedBefore}/${dSeeds.length} Phase D commitments were published before the rotation that submitted the epoch's seed; player-set seeds used outside Phase D: ${playerOutsideD}. `
+        + `Every epoch: ${distinct.size}/${loader_1.EXPECTED_SEEDS} opened with a distinct auditor-submitted client seed (expected ${loader_1.EXPECTED_SEEDS}, src/loader.ts), ${reusesPreCapture} equal to the seed in force before its capture; `
+        + `${carried}/${bets.length} bets carry their epoch's seed and ${recomputed}/${tested} recompute path-and-slot under it; `
+        + `${committedBefore}/${loader_1.EXPECTED_SEEDS} epoch commitments equal the next-seed hash published before the rotation that submitted the epoch's client seed (first epoch of a capture: that capture's pre-capture record), `
+        + `so seed substitution is blocked on every epoch, conditional on authentic commitment timing (P1/DL-3); ${auditShaped}/${nonD} non-Phase-D seeds have the shape audit + 12 hex `
+        + `(shape only: the generator's entropy is not demonstrated by the dataset, DL-5)`
+        + (ok ? '' : '; FLAG: client-seed control not established as planned'), {
         phaseDBets: phaseD.length,
-        distinctClientSeeds: clientSeeds.size,
-        recomputed: matched,
+        phaseDEpochs: dSeeds.length,
+        phaseDSettings: dSettings,
+        distinctPlayerSetSeeds: dDistinct.size,
+        playerSetSeedFloor: loader_1.MIN_PHASE_D_PLAYER_SEEDS,
+        playerSetShapedSeeds: dShaped,
+        playerSetSeedsOutsidePhaseD: playerOutsideD,
+        phaseDRecomputed: dMatched,
+        phaseDCommittedBeforeClientSeed: dCommittedBefore,
         phaseDWagered,
         phaseDPaid,
-        predictableEpochs,
-        unresolvedPredictabilityEpoch: unresolvedEpoch ?? -1,
-        exposedEpochs,
-        exposedBets: exposedBets.length,
-        exposedWagered,
-        exposedPaid,
+        seededBets: bets.length,
+        betsCarryingEpochSeed: carried,
+        distinctClientSeeds: distinct.size,
+        epochsReusingPreCaptureSeed: reusesPreCapture,
+        recomputed,
+        epochsCommittedBeforeClientSeed: committedBefore,
+        auditShapedSeeds: auditShaped,
     });
     return [s14];
 }
@@ -3849,7 +4171,7 @@ function run(ctx) {
     }
     const calEpochs = (0, calibration_1.revealedEpochConfigs)(bets, seeds);
     const calEpochByEpoch = new Map(calEpochs.map(e => [e.epoch, e]));
-    const primaryWindow = loader_1.EXPECTED_EPOCH_SIZE;
+    const primaryWindow = loader_1.PRIMARY_WINDOW_NONCES;
     const seedPairs = (0, calibration_1.revealedSeedsByEpoch)(seeds);
     const primaryStats = primaryWindow > 0 && calEpochs.length > 0
         ? (0, calibration_1.windowStats)(cfg, calEpochs, seedPairs, primaryWindow, calibration_1.Z_LEFT_TAIL)
@@ -4192,7 +4514,7 @@ function run(ctx) {
     }
     const meanA = (a) => a.reduce((s, v) => s + v, 0) / a.length;
     const sampleSdA = (a, m) => Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / (a.length - 1));
-    const SUMMARY_TOL = 1e-6;
+    const SUMMARY_TOL = calibration_1.PASS2_SUMMARY_TOLERANCE;
     const summaryFailures = [];
     let summaryFieldsRecomputed = 0;
     if (attestMode === 'full' && recZEarly.length > 1) {
@@ -4240,13 +4562,13 @@ function run(ctx) {
     const s17HardFail = !pass2Ok || !attestOk || !s17DomainOk;
     const s17Status = s17HardFail ? 'FAIL' : pass2ScaleReduced ? 'FLAG' : 'PASS';
     const primaryStr = calibration
-        ? `; payout-weighted, PRIMARY window ${primaryWindow} nonces (played per seed in this capture — SCORED):`
+        ? `; payout-weighted, PRIMARY window ${primaryWindow} nonces (the first nonces of every seed, all played — SCORED):`
             + ` zEarly mean ${primaryZEarlyMean.toFixed(3)}, ${primaryCount} of ${primaryStats.length} seeds below z=-${calibration_1.Z_LEFT_TAIL}`
             + ` (calibrated expectation ${calExpected.toFixed(4)} ± ${calibration.sdCalibrated.toFixed(4)},`
             + ` Poisson-binomial P(X>=${primaryCount})=${calSurvival.toFixed(4)}), early−late t=${primaryT.toFixed(2)}`
         : '';
     const pwStr = pwPresent
-        ? `; EXTENDED window ${half.toLocaleString()} nonces (secondary, reported not scored — 100x the nonces played per seed in this capture):`
+        ? `; EXTENDED window ${half.toLocaleString()} nonces (secondary, reported not scored — ${(half / primaryWindow).toLocaleString()}x the scored window):`
             + ` zEarly mean ${pw.zEarlyMean.toFixed(3)}, ${countBelow} seeds below z=-${calibration_1.Z_LEFT_TAIL}`
             + ` (calibrated expectation ${extExpected.toFixed(4)}`
             + (extCalibration ? ` ± ${extCalibration.sdCalibrated.toFixed(4)}` : '')
@@ -4352,13 +4674,25 @@ const context_1 = require("./context");
 const rng_1 = require("../../src/rng");
 const domains_1 = require("../../src/domains");
 const config_1 = require("../../src/config");
+const loader_1 = require("../../src/loader");
+const page_labels_1 = require("../../src/page-labels");
 function run(ctx) {
     const { bets, seedMap, cfg } = ctx;
     const out = [];
     {
         const c = ctx.phaseC;
-        let chk = 0, bad = 0;
+        const planC = loader_1.EXPECTED_PLAN.filter((e) => e.phase === 'C');
+        const planCBets = planC.reduce((a, e) => a + e.bets, 0);
+        const planCStake = planC[0]?.stake ?? '';
+        const lowStakes = [...new Set(loader_1.EXPECTED_PLAN.filter((e) => e.phase !== 'C').map((e) => e.stake))];
+        let chk = 0, bad = 0, offStake = 0, payBad = 0;
         for (const b of c) {
+            if (b.betAmount !== planCStake)
+                offStake++;
+            const cell = (0, config_1.payoutTable)(cfg, b.numberOfRows, b.riskLevel)[b.winningSlot];
+            const stakeUnits = Math.round(Number(b.betAmount) * 1e8), winUnits = Math.round(Number(b.winningAmount) * 1e8);
+            if (!Number.isFinite(cell) || Math.round(stakeUnits * cell) !== winUnits)
+                payBad++;
             const ss = seedMap.get(b.hashedServerSeed);
             if (!ss)
                 continue;
@@ -4367,7 +4701,7 @@ function run(ctx) {
             if (path !== b.dropDetails || winningSlot !== b.winningSlot)
                 bad++;
         }
-        const stakes = [...new Set(bets.map((b) => Number(b.betAmount)))].sort((a, z) => a - z);
+        const stakes = [...new Set(bets.map((b) => b.betAmount))].sort((a, z) => Number(a) - Number(z));
         const boardOf = (rows) => [...new Set(rows.map((b) => `${b.numberOfRows}r/risk${b.riskLevel}`))].sort();
         const phaseCConfigs = boardOf(c);
         const singleConfig = phaseCConfigs.length === 1;
@@ -4375,14 +4709,16 @@ function run(ctx) {
         const phaseBConfigs = boardOf(ctx.phaseB ?? []);
         const phaseBLabel = phaseBConfigs.join(', ') || 'none';
         const sameBoard = phaseBConfigs.length > 0 && phaseCConfigs.join(',') === phaseBConfigs.join(',');
-        const phaseCStake = [...new Set(c.map((b) => Number(b.betAmount)))].sort((a, z) => a - z).map((s) => `$${s}`).join(', ');
-        const ok = chk === c.length && chk > 0 && bad === 0 && singleConfig && sameBoard;
-        out.push((0, context_1.step)(18, 'Bet-Size Invariance', ok ? 'PASS' : 'FAIL', `${chk}/${c.length} Phase C drops at ${phaseCStake || '$10.00'} (${configLabel}${singleConfig ? '' : ' — EXPECTED a single config'}) recompute path-and-slot from the revealed seed — ${bad} mismatch. ` +
+        const elevated = planCStake !== '' && lowStakes.every((s) => Number(planCStake) > Number(s));
+        const arity = rng_1.revealPlinko.length;
+        const ok = c.length === planCBets && c.length >= loader_1.MIN_PHASE_C_BETS && chk === c.length && chk > 0 && bad === 0
+            && offStake === 0 && payBad === 0 && singleConfig && sameBoard && elevated && arity === 4;
+        out.push((0, context_1.step)(18, 'Bet-Size Invariance', ok ? 'PASS' : 'FAIL', `${chk}/${c.length} Phase C drops (plan ${planCBets}, floor ${loader_1.MIN_PHASE_C_BETS}) at ${planCStake} USDT (${configLabel}${singleConfig ? '' : ' — EXPECTED a single config'}) recompute path-and-slot from the revealed seed — ${bad} mismatch; ${c.length - offStake}/${c.length} at the planned elevated stake; ${c.length - payBad}/${c.length} paid stake × the table cell exactly. ` +
             (sameBoard
                 ? `Phase C runs the Phase B board (${phaseBLabel}), so bet size is the only variable that moved. `
                 : `COMPARISON NOT ISOLATED: Phase C runs ${configLabel} but Phase B runs ${phaseBLabel} — stake and board both changed. `) +
-            `revealPlinko takes no wager argument (serverSeed, clientSeed, nonce, rows only); drops at $10.00 are produced by the identical engine as the $0.10 drops (stakes present: ${stakes.map((s) => `$${s}`).join(', ')}), so the path cannot depend on bet size` +
-            (chk === 0 ? '; COVERAGE FAIL: 0 Phase C drops recomputed' : '')));
+            `revealPlinko declares ${arity} parameters (serverSeed, clientSeed, nonce, rows — no wager); the drops at ${planCStake} are produced by the identical engine as the drops at ${lowStakes.join(', ')} (stakes present: ${stakes.join(', ')}), so the path cannot depend on bet size` +
+            (chk === 0 ? '; COVERAGE FAIL: 0 Phase C drops recomputed' : ''), { phaseCBets: c.length, phaseCFloor: loader_1.MIN_PHASE_C_BETS, recomputed: chk - bad, recomputeMismatches: bad, betsOffStake: offStake, payoutMismatches: payBad, drawArity: arity }));
     }
     {
         let tables = 0, asymmetric = 0;
@@ -4398,13 +4734,9 @@ function run(ctx) {
                 }
             }
         };
-        for (const rowsKey of Object.keys(cfg.payout_tables)) {
-            const rows = Number(rowsKey);
-            for (const risk of [1, 2, 3]) {
-                check((0, config_1.payoutTable)(cfg, rows, risk), `${rows}r/risk${risk}`);
-            }
+        for (const c of (0, config_1.allConfigs)(cfg)) {
+            check((0, config_1.payoutTable)(cfg, c.rows, c.riskLevel), (0, config_1.isWtf)(c.riskLevel) ? `WTF(${c.rows}r)` : `${c.rows}r/risk${c.riskLevel}`);
         }
-        check((0, config_1.payoutTable)(cfg, cfg.wtf_mode.rows, config_1.WTF_RISK), `WTF(${cfg.wtf_mode.rows}r)`);
         const ok = tables > 0 && asymmetric === 0;
         out.push((0, context_1.step)(19, 'Multiplier Table Symmetry', ok ? 'PASS' : 'FAIL', `${tables} multiplier tables (standard rows × risk 1–3, plus WTF) all left/right symmetric (multiplier[k] == multiplier[rows−k]) — ${asymmetric} asymmetric` +
             (fails.length ? `; e.g. ${fails.join(', ')}` : '') +
@@ -4425,6 +4757,7 @@ function run(ctx) {
                     exhibitHashes.add((0, crypto_1.createHash)('sha256').update((0, fs_1.readFileSync)(p)).digest('hex'));
             }
         }
+        const allowedSourceHashes = new Set(ctx.captures.map(c => c.sha256));
         const bad = [];
         for (const f of docs) {
             const text = (0, fs_1.readFileSync)(path.join(root, f), 'utf8');
@@ -4435,6 +4768,8 @@ function run(ctx) {
                 const isCommitmentReveal = /SHA-256\(utf8/.test(line) && /hashedServerSeed/.test(line);
                 for (const h of hashes) {
                     if (h === ctx.expectedDatasetHash || h === config_1.PLINKO_CONFIG_SHA256)
+                        continue;
+                    if (allowedSourceHashes.has(h))
                         continue;
                     if (isCommitmentReveal)
                         continue;
@@ -4473,18 +4808,25 @@ function run(ctx) {
             domainBad.push(...(0, domains_1.describeDomainFailures)(rel, r));
         }
         const domainOk = domainBad.length === 0;
+        const page = (0, page_labels_1.checkTableAgainstPageRead)(cfg, root);
+        if (!page.ok)
+            bad.push(`page-label table check: ${page.problems.slice(0, 3).join('; ')}`);
         const ok = dsOk && cfgOk && bad.length === 0 && readmeHasDs && manifestHasBoth && domainOk;
         out.push((0, context_1.step)(20, 'Artifact Hash + Value-Domain Integrity', ok ? 'PASS' : 'FAIL', `dataset SHA-256 ${ctx.datasetSha256.slice(0, 16)}… ${dsOk ? 'matches' : '≠'} pin; ` +
             `multiplier-config SHA-256 ${cfgActual.slice(0, 16)}… ${cfgOk ? 'matches' : '≠'} pin; ` +
             `loader pins match; every published 64-hex token in the Markdown present equals a loader pin ` +
-            `or an allow-listed worked-example commitment` +
+            `, an exhibit hash, a capture-file hash named by the dataset, or an allow-listed worked-example commitment` +
             (bad.length ? `; ${bad.length} DRIFTED: ${bad.slice(0, 4).join('; ')}` : '') +
+            `; table against the production page read of 20 Oct 2026 (${page.fileSha256 ? page.fileSha256.slice(0, 12) + '…' : 'missing'}): ${page.cells - page.mismatches}/${page.cells} cells of ${page.boards} boards equal what liqd.com/originals/plinko showed (${page.cellsByNumericLabel} by a numeric bucket label, ${page.cellsBy1kLabel} by the label 1k with the page's "1,000x" sentence, ${page.cellsByPageStatement} WTF middle cells by the page's "pay nothing" sentence)` +
             `; committed emission artifacts: ${domainLeaves} numeric leaf/leaves checked against value domains derived from the pinned config` +
             (bad.length ? '' : '') +
             (readmeHasDs ? '' : '; README missing dataset pin') +
             (manifestHasBoth ? '' : '; MANIFEST missing a pin') +
             (domainOk ? '' : `; FAIL: value domain — ${domainBad.slice(0, 5).join('; ')}${domainBad.length > 5 ? `; +${domainBad.length - 5} more` : ''}`), { domainLeavesChecked: domainLeaves, domainFailures: domainBad.length,
-            hexTokensDrifted: bad.length }));
+            hexTokensDrifted: bad.length,
+            pageReadBoards: page.boards, pageReadCells: page.cells, pageReadCellsByNumericLabel: page.cellsByNumericLabel,
+            pageReadCellsBy1kLabel: page.cellsBy1kLabel, pageReadCellsByPageStatement: page.cellsByPageStatement,
+            pageReadMismatches: page.mismatches }));
     }
     return out;
 }
@@ -4499,7 +4841,7 @@ function run(ctx) {
     const { bets } = ctx;
     const items = [];
     if (bets.length === 0) {
-        items.push({ label: 'Live bets', detail: 'No bets in dataset (PROVISIONAL)' });
+        items.push({ label: 'Live bets', detail: 'No bets in dataset' });
         return items;
     }
     const totalPayout = bets.reduce((s, b) => s + parseFloat(b.winningAmount), 0);
@@ -4593,8 +4935,11 @@ exports.run = run;
 const context_1 = require("./context");
 const rng_1 = require("../../src/rng");
 const config_1 = require("../../src/config");
+const loader_1 = require("../../src/loader");
 function run(ctx) {
-    const { phaseE, seedMap, cfg } = ctx;
+    const { phaseE, seedMap, cfg, bets } = ctx;
+    const planE = loader_1.EXPECTED_PLAN.filter(e => e.phase === 'E').reduce((a, e) => a + e.bets, 0);
+    const planTopUp = loader_1.EXPECTED_PLAN.filter(e => e.id === 'A+W').reduce((a, e) => a + e.bets, 0);
     if (phaseE.length === 0) {
         return [(0, context_1.step)(15, 'Phase E — WTF Mode Verification', 'FAIL', 'No Phase E (WTF) bets found in dataset')];
     }
@@ -4609,11 +4954,27 @@ function run(ctx) {
     const failures = [];
     let recomputeChecked = 0, recomputeFails = 0;
     let multChecked = 0, multFails = 0;
+    const allWtf = bets.filter(b => b.riskLevel === cfg.wtf_mode.riskLevel);
+    const topUp = allWtf.filter(b => b.phaseId === 'A+W');
+    const misplaced = allWtf.filter(b => b.phase !== 'E' && b.phaseId !== 'A+W');
+    if (misplaced.length)
+        failures.push(`${misplaced.length} WTF bet(s) outside Phase E and plan id A+W (e.g. ${misplaced[0].id})`);
+    if (phaseE.length !== planE)
+        failures.push(`Phase E holds ${phaseE.length} bets, ${planE} planned`);
+    if (topUp.length !== planTopUp)
+        failures.push(`plan id A+W holds ${topUp.length} WTF bets, ${planTopUp} planned`);
     for (const b of phaseE) {
         if (b.riskLevel !== 4)
             failures.push(`bet ${b.id}: riskLevel ${b.riskLevel} (expected 4)`);
+    }
+    const slotsReached = new Set();
+    let payingDrops = 0;
+    for (const b of allWtf) {
         if (b.numberOfRows !== 13)
             failures.push(`bet ${b.id}: numberOfRows ${b.numberOfRows} (expected 13)`);
+        slotsReached.add(b.winningSlot);
+        if (b.multiplier > 0)
+            payingDrops++;
         const ss = seedMap.get(b.hashedServerSeed);
         if (ss) {
             const { path, winningSlot } = (0, rng_1.revealPlinko)(ss, b.clientSeed, b.nonce, b.numberOfRows);
@@ -4633,11 +4994,16 @@ function run(ctx) {
         }
     }
     const pass = failures.length === 0 && recomputeFails === 0 && multFails === 0
-        && recomputeChecked === phaseE.length && multChecked === phaseE.length;
+        && recomputeChecked === allWtf.length && multChecked === allWtf.length;
+    const reached = [...slotsReached].sort((a, b) => a - b);
     const s15 = (0, context_1.step)(15, 'Phase E — WTF Mode Verification', pass ? 'PASS' : 'FAIL', pass
-        ? `${phaseE.length} WTF bets: all riskLevel 4 / 13 rows; ${recomputeChecked}/${phaseE.length} dropDetails recomputed (expected ${phaseE.length}); ${multChecked}/${phaseE.length} multipliers == odds[slot] (odds=[${wtfOdds.join(',')}]); WTF theoretical RTP = ${(wtfRTP * 100).toFixed(4)}%; only ${wtfOdds.filter(o => o > 0).length}/${wtfOdds.length} slots pay — P(zero payout) = ${(pZero * 100).toFixed(4)}%, P(paying slot) = ${(pPaying * 100).toFixed(4)}%`
-        : `${failures.length} issue(s) [recomputed ${recomputeChecked}/${phaseE.length}, mult ${multChecked}/${phaseE.length}]: ${failures.slice(0, 3).join('; ')}`, {
+        ? `Phase E: ${phaseE.length}/${planE} WTF bets, all riskLevel 4 / 13 rows; with the ${topUp.length} WTF drops of Phase A (plan id A+W) ${allWtf.length} WTF drops in all, none elsewhere; ${recomputeChecked}/${allWtf.length} dropDetails recomputed; ${multChecked}/${allWtf.length} multipliers == odds[slot] (odds=[${wtfOdds.join(',')}]); slots reached ${reached.join(',')} of 0–${wtfOdds.length - 1}; ${payingDrops} drop(s) paid; WTF theoretical RTP = ${(wtfRTP * 100).toFixed(4)}%; only ${wtfOdds.filter(o => o > 0).length}/${wtfOdds.length} slots pay — P(zero payout) = ${(pZero * 100).toFixed(4)}%, P(paying slot) = ${(pPaying * 100).toFixed(4)}%`
+        : `${failures.length} issue(s) [recomputed ${recomputeChecked}/${allWtf.length}, mult ${multChecked}/${allWtf.length}]: ${failures.slice(0, 3).join('; ')}`, {
         wtfBets: phaseE.length,
+        wtfBetsAll: allWtf.length,
+        wtfBetsPhaseATopUp: topUp.length,
+        wtfSlotsReached: reached,
+        wtfPayingDrops: payingDrops,
         recomputed: recomputeChecked,
         multipliersChecked: multChecked,
         wtfTheoreticalRTP: wtfRTP,
@@ -4696,19 +5062,20 @@ const diff_1 = require("../src/diff");
 const profile_map_1 = require("../src/profile-map");
 const rtp_settings_1 = require("../src/rtp-settings");
 const rtp_claim_1 = require("../src/rtp-claim");
+const context_1 = require("./steps/context");
 const commitment = __importStar(require("./steps/commitment"));
 const determinism = __importStar(require("./steps/determinism"));
 const payouts = __importStar(require("./steps/payouts"));
 const dataset = __importStar(require("./steps/dataset"));
 const antiCirc = __importStar(require("./steps/anti-circularity"));
-const phaseD = __importStar(require("./steps/phase-d"));
+const phaseDStep = __importStar(require("./steps/phase-d"));
 const wtf = __importStar(require("./steps/wtf"));
 const simulation = __importStar(require("./steps/simulation"));
 const statistical = __importStar(require("./steps/statistical"));
 const coverage = __importStar(require("./steps/coverage"));
 const standardization = __importStar(require("./steps/standardization"));
 const liveFit = __importStar(require("./steps/live-fit"));
-const DATASET_PATH = path.join(__dirname, '../data/plinko-master-10100bets.json');
+const DATASET_PATH = path.join(__dirname, '..', loader_1.DATASET_FILE);
 const EXPECTED_DATASET_HASH = loader_1.EXPECTED_DATASET_SHA256;
 const OUTPUTS_DIR = path.join(__dirname, '../outputs');
 const RUN_DIR = path.join(OUTPUTS_DIR, 'run');
@@ -4720,7 +5087,7 @@ console.log(EMIT
     ? '  MODE: REPORT GENERATION (PF_EMIT=1) — the committed artifacts WILL be rewritten'
     : '  MODE: verification — committed artifacts are read-only; results go to outputs/run/');
 if (!fs.existsSync(DATASET_PATH)) {
-    console.log('\n  [ERROR] Dataset not found at data/plinko-master-10100bets.json');
+    console.log(`\n  [ERROR] Dataset not found at ${loader_1.DATASET_FILE}`);
     console.log('  Cannot run verification without the captured master dataset.');
     console.log('\n══════════════════════════════════════════════════════════\n');
     process.exit(1);
@@ -4743,20 +5110,20 @@ for (const b of bets) {
 const phaseA = bets.filter(b => b.phase === 'A');
 const phaseB = bets.filter(b => b.phase === 'B');
 const phaseC = bets.filter(b => b.phase === 'C');
-const phaseDBets = bets.filter(b => b.phase === 'D');
+const phaseD = bets.filter(b => b.phase === 'D');
 const phaseE = bets.filter(b => b.phase === 'E');
 if (!fs.existsSync(OUTPUTS_DIR))
     fs.mkdirSync(OUTPUTS_DIR, { recursive: true });
 console.log(`  Dataset: ${bets.length} bets | Seeds: ${seeds.length} | SHA-256 verified`);
-console.log(`  Phase A:${phaseA.length} B:${phaseB.length} C:${phaseC.length} D:${phaseDBets.length} E:${phaseE.length}\n`);
+console.log(`  Phase A:${phaseA.length}  B:${phaseB.length}  C:${phaseC.length}  D:${phaseD.length}  E:${phaseE.length}\n`);
 const ctx = {
     bets, seeds, cfg, seedMap, byHash,
-    phaseA, phaseB, phaseC, phaseD: phaseDBets, phaseE,
+    phaseA, phaseB, phaseC, phaseD, phaseE,
     meta: ds.meta,
     outputsDir: OUTPUTS_DIR,
     datasetSha256: ds.sha256,
     expectedDatasetHash: EXPECTED_DATASET_HASH,
-    preCapture: ds.meta.preCapture,
+    captures: ds.meta.captures ?? [],
 };
 const results = [
     ...commitment.run(ctx),
@@ -4764,12 +5131,16 @@ const results = [
     ...payouts.run(ctx),
     ...dataset.run(ctx),
     ...antiCirc.run(ctx),
-    ...phaseD.run(ctx),
+    ...phaseDStep.run(ctx),
     ...wtf.run(ctx),
     ...simulation.run(ctx),
     ...standardization.run(ctx),
     ...liveFit.run(ctx),
 ];
+if (results.length !== context_1.EXPECTED_STEPS) {
+    console.log(`\n  [ERROR] ${results.length} scored steps ran; this suite has ${context_1.EXPECTED_STEPS}. A partial run is not an audit result.`);
+    process.exit(1);
+}
 const labelled = results.map(r => ({ ...r, ...(0, profile_map_1.labelFor)(r.step) }));
 const infoItems = statistical.run(ctx);
 const coverageReport = coverage.run(ctx);
@@ -4883,7 +5254,7 @@ function buildReport(overall) {
         datasetSha256: ds.sha256,
         runMode,
         artifactHashes: {
-            dataset: { file: 'data/plinko-master-10100bets.json', sha256: ds.sha256 },
+            dataset: { file: loader_1.DATASET_FILE, sha256: ds.sha256 },
             config: { file: 'plinkoConfig.json', expected: config_1.PLINKO_CONFIG_SHA256, actual: cfgActualSha, match: cfgActualSha === config_1.PLINKO_CONFIG_SHA256 },
             simulation: simArtifact,
             calibration: calArtifact,

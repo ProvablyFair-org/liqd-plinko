@@ -29,8 +29,9 @@ import {
   revealedEpochConfigs,
   revealedSeedsByEpoch,
   windowStats,
+  PASS2_SUMMARY_TOLERANCE,
 } from '../../src/calibration';
-import { EXPECTED_EPOCH_SIZE } from '../../src/loader';
+import { PRIMARY_WINDOW_NONCES } from '../../src/loader';
 import { PLINKO_CONFIG_SHA256 } from '../../src/config';
 import { domainRules, validateDomains, describeDomainFailures, boardMultiplierRange } from '../../src/domains';
 
@@ -60,7 +61,7 @@ export function run(ctx: VerifyContext): StepResult[] {
 
   const sim = JSON.parse(fs.readFileSync(simPath, 'utf-8'));
 
-  // ── (round-4 client QA): VALUE-DOMAIN validation of the consumed artifact ──
+  // ── VALUE-DOMAIN validation of the consumed artifact ──
   // Every numeric leaf of simulation-results.json must be a value the physics of this game
   // admits — counts non-negative integers bounded by a population known from code,
   // probabilities in [0,1], any payout average inside the pinned paytable's attainable
@@ -87,7 +88,7 @@ export function run(ctx: VerifyContext): StepResult[] {
   // ── Step 16: Pass 1 (fresh seeds, FWER) ──────────────────────────────────────
   const pass1 = sim.pass1_fresh_seeds ?? {};
   // ── G-BIND: the Pass-1 POPULATION comes from the pinned config, never from the
-  // artifact (R3-K1 / R3-K2, round-3 external review) ───────────────────────────
+  // artifact (R3-K1 / R3-K2) ────────────────────────────────────────────────────
   // `configs = pass1.configs ?? 28` let the artifact declare its own population. Two
   // executed counterexamples came through that one line:
   //   K1  configs: 0, results: []  (totalRounds/roundsPerConfig left alone) → every
@@ -269,7 +270,7 @@ export function run(ctx: VerifyContext): StepResult[] {
   // payoutSD/√rounds — a degenerate/blanked row (simRTP 0 or missing) is many SE away and
   // FAILs; genuine fresh-seed noise (observed max 2.3 SE) is far inside k = 6.
   //
-  // ── (round-4 client QA, EXECUTED counterexample) ────────────────────────
+  // ── (EXECUTED counterexample) ────────────────────────
   // `dev = |r.simRTP − r.theoreticalRTP|` compared TWO EDITABLE VALUES IN THE SAME
   // ARTIFACT. Setting the first row's `simRTP` AND `theoreticalRTP` both to `2` and
   // refreshing only the dependent calibration file's simulation hash produced 21 PASS,
@@ -625,10 +626,10 @@ export function run(ctx: VerifyContext): StepResult[] {
     && typeof pw.zEarlyMean === 'number' && typeof pw.meanZEarlyMinusLate === 'number';
 
   // ── Calibrated null, recomputed here ─────────────────────────────────
-  // Round-2 external review N1: the corrected expected count ("≈5.86") was carried in
+  // N1: the corrected expected count ("≈5.86") was carried in
   // nine chapters and pasted as a HARD-CODED LITERAL into this step's detail string,
   // while the artifact still recorded the naive 0.05·n = 10.1 and the FAIL rule was
-  // still Binom(202, 0.05). Nothing in the repository computed it.
+  // still Binom(seeds, 0.05). Nothing in the repository computed it.
   //
   // It is computed now, and it is computed HERE as well as in the producer:
   //   * the population is rebuilt from the DATASET (ctx.bets / ctx.seeds), not from the
@@ -654,10 +655,10 @@ export function run(ctx: VerifyContext): StepResult[] {
   const calEpochByEpoch = new Map(calEpochs.map(e => [e.epoch, e]));
 
   // ── PRIMARY vs EXTENDED window ───────────────────────────────────────────────
-  // The scored window is EXPECTED_EPOCH_SIZE nonces — what was played under each server seed
-  // in this capture (the capture rotated the seed pair every 50 bets; nothing in the captured
-  // records shows LIQD limiting a seed pair to 50). Those are the drops a cherry-picked seed
-  // paid in this capture; a statistic over 5,000 nonces measures a session nobody here played,
+  // The scored window is PRIMARY_WINDOW_NONCES nonces — the first 50 drops of every server seed
+  // in this capture (the shortest epoch of the capture plan, so every seed played at least that
+  // many; nothing in the captured records shows LIQD limiting a seed pair to any length). Those
+  // are drops a cherry-picked seed paid in this capture; a statistic over 5,000 nonces measures a session nobody here played,
   // and its power is spent on a population that was never observed.
   //
   // The primary observed count is not available from the simulation artifact, which only
@@ -665,7 +666,7 @@ export function run(ctx: VerifyContext): StepResult[] {
   // same `windowStats` the producer uses. The extended 5,000/5,000 split is kept as a
   // secondary figure — it has far more power against a seed biased across its whole stream —
   // and is checked against the artifact's `extendedWindow` block.
-  const primaryWindow = EXPECTED_EPOCH_SIZE;
+  const primaryWindow = PRIMARY_WINDOW_NONCES;
   const seedPairs = revealedSeedsByEpoch(seeds);
   const primaryStats = primaryWindow > 0 && calEpochs.length > 0
     ? windowStats(cfg, calEpochs, seedPairs, primaryWindow, Z_LEFT_TAIL)
@@ -725,8 +726,8 @@ export function run(ctx: VerifyContext): StepResult[] {
     cmpCal('expectedZEarlyBelow1645Calibrated', calExpected, num('expectedZEarlyBelow1645Calibrated'), CAL_TOL);
     cmpCal('sdZEarlyBelow1645Calibrated', calibration.sdCalibrated, num('sdZEarlyBelow1645Calibrated'), CAL_TOL);
     // ── R3-K3: everything the previous cmpCal set did NOT read ────────────────────
-    // Round-3 external review doctored every field outside the seven scalars checked
-    // above — all 202 perEpoch rows relabelled to 16r/3, and in every byConfig row
+    // A forged artifact doctored every field outside the seven scalars checked
+    // above — all perEpoch rows relabelled to 16r/3, and in every byConfig row
     // epochs→1, mu→0.5, sd→99.0, sumThreshold→−1, windowRtpThreshold→−1, latticeUnit→7,
     // crossCheck→{fabricated, 0.999, 0.0}, method→"I made this up" — and the suite still
     // returned 21/21 Full Pass with the doctored file on disk. The `crossCheck` block was
@@ -795,7 +796,7 @@ export function run(ctx: VerifyContext): StepResult[] {
         }
       }
       // perEpoch[] is the population the Poisson-binomial aggregate is taken over. It was
-      // completely unread: relabelling all 202 rows to 16r/3 changed nothing. Re-derive it
+      // completely unread: relabelling all rows to 16r/3 changed nothing. Re-derive it
       // against `revealedEpochConfigs(bets, seeds)` — the DATASET, not the artifact.
       const storedEpochs = Array.isArray(node.perEpoch) ? node.perEpoch as Record<string, unknown>[] : [];
       if (storedEpochs.length !== block.perEpoch.length) {
@@ -862,7 +863,7 @@ export function run(ctx: VerifyContext): StepResult[] {
   const calOk = calFailures.length === 0;
   // The SCORED rule is the calibrated Poisson-binomial survival — not Binom(n, 0.05) — on the
   // PRIMARY window: the count and the paired early−late t are both computed over
-  // the 50 nonces played under each seed in this capture. The extended-window figures are
+  // the first 50 nonces played under each seed in this capture. The extended-window figures are
   // reported beside them but do not decide the step, because no seed here was played 5,000 times.
   const pwOk = pwPresent
     && calOk
@@ -908,7 +909,7 @@ export function run(ctx: VerifyContext): StepResult[] {
   // pre-gameable — perturbing any non-sampled epoch slips through — so the publication
   // path recomputes all epochs. ATTEST_SAMPLE=<n> selects an evenly-spaced n-epoch
   // subset (endpoints always included) for quick LOCAL runs only; it is NOT the
-  // default. Round-3 review R3-K4: saying so in this comment was the ONLY thing stopping
+  // default. R3-K4: saying so in this comment was the ONLY thing stopping
   // it on the publication path, and a comment is not a guard — `ATTEST_SAMPLE=2` shipped
   // a 21/21 Full Pass past `check-outputs`. The mode is now emitted as structured `data`
   // below and `scripts/check-outputs.mjs` REFUSES anything but `full`.
@@ -939,7 +940,7 @@ export function run(ctx: VerifyContext): StepResult[] {
   // payoutWeighted summary block.
   const recZEarly: number[] = [];
   const recZLate: number[] = [];
-  // ── (round-5 client QA, EXECUTED): the rest of the Pass 2 result set ──────
+  // ── (EXECUTED): the rest of the Pass 2 result set ──────
   // Until now the attestation recomputed the per-epoch chi² p-values and the payout-weighted
   // z's, and the summary re-derivation covered four scalars. Everything else the artifact
   // REPORTS was carried unverified, and three separate mutations each took a 21/21 Full Pass
@@ -1107,7 +1108,7 @@ export function run(ctx: VerifyContext): StepResult[] {
   // (sample mode covers a subset, so its summary would legitimately differ).
   const meanA = (a: number[]) => a.reduce((s, v) => s + v, 0) / a.length;
   const sampleSdA = (a: number[], m: number) => Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / (a.length - 1));
-  const SUMMARY_TOL = 1e-6;
+  const SUMMARY_TOL = PASS2_SUMMARY_TOLERANCE;
   const summaryFailures: string[] = [];
   let summaryFieldsRecomputed = 0;
   if (attestMode === 'full' && recZEarly.length > 1) {
@@ -1140,7 +1141,7 @@ export function run(ctx: VerifyContext): StepResult[] {
     // against the dataset, not a field read out of the artifact. `normalCDF` and
     // `binomialSurvival` are imported from src/stats.ts, the same module the producer uses
     // (audit-rules 9.4), so the two sides cannot drift into disagreement over an
-    // approximation. The three fields the round-5 reviewer forged are among them.
+    // approximation. The three fields of the X10-X12 forgeries are among them.
     const n = recZEarly.length;
     const recZEarlySd = sampleSdA(recZEarly, recZEarlyMean);
     cmp('zEarlySd', recZEarlySd, pw.zEarlySd, SUMMARY_TOL);
@@ -1195,13 +1196,13 @@ export function run(ctx: VerifyContext): StepResult[] {
   // labelled as secondary, with the superseded naive 0.05·n null shown so the size of the
   // correction stays legible.
   const primaryStr = calibration
-    ? `; payout-weighted, PRIMARY window ${primaryWindow} nonces (played per seed in this capture — SCORED):`
+    ? `; payout-weighted, PRIMARY window ${primaryWindow} nonces (the first nonces of every seed, all played — SCORED):`
       + ` zEarly mean ${primaryZEarlyMean.toFixed(3)}, ${primaryCount} of ${primaryStats.length} seeds below z=-${Z_LEFT_TAIL}`
       + ` (calibrated expectation ${calExpected.toFixed(4)} ± ${calibration.sdCalibrated.toFixed(4)},`
       + ` Poisson-binomial P(X>=${primaryCount})=${calSurvival.toFixed(4)}), early−late t=${primaryT.toFixed(2)}`
     : '';
   const pwStr = pwPresent
-    ? `; EXTENDED window ${half.toLocaleString()} nonces (secondary, reported not scored — 100x the nonces played per seed in this capture):`
+    ? `; EXTENDED window ${half.toLocaleString()} nonces (secondary, reported not scored — ${(half / primaryWindow).toLocaleString()}x the scored window):`
       + ` zEarly mean ${pw.zEarlyMean.toFixed(3)}, ${countBelow} seeds below z=-${Z_LEFT_TAIL}`
       + ` (calibrated expectation ${extExpected.toFixed(4)}`
       + (extCalibration ? ` ± ${extCalibration.sdCalibrated.toFixed(4)}` : '')
@@ -1213,8 +1214,8 @@ export function run(ctx: VerifyContext): StepResult[] {
     s17Status,
     `${seedsTested} casino seeds × ${noncesPerSeed.toLocaleString()} nonces, ${results2.length}/${seedsTested} result rows; `
       + `cherry-pick flags: ${flags}`
-      // DECLARED LIMITATION A4b (round-3 K8), stated where the reader meets the number rather
-      // than only in the chapters: `expectedFlagsByChance` is 202 × 0.05 × 0.95, which assumes
+      // DECLARED LIMITATION A4b, stated where the reader meets the number rather
+      // than only in the chapters: `expectedFlagsByChance` is seeds × 0.05 × 0.95, which assumes
       // the tail-merged slot chi² has size exactly 0.05. Independence of the two windows holds
       // (disjoint nonce ranges); the SIZE does not follow, and nothing in this repository
       // measures it. This figure and the survival P derived from it are therefore NOMINAL, not
@@ -1262,7 +1263,7 @@ export function run(ctx: VerifyContext): StepResult[] {
       resultRows: results2.length,
       noncesPerSeed,
       // ── The primary (scored) window and the secondary extended one ───────────────
-      // The primary figures are recomputed here from the revealed seeds over the 50 nonces
+      // The primary figures are recomputed here from the revealed seeds over the first 50 nonces
       // played under each seed in this capture; `pwOk` is decided on them. The `extended*` figures are the
       // 5,000/5,000 split Pass 2 measured, kept because it has far more power against a seed
       // biased across its whole stream, and reported rather than scored.

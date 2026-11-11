@@ -3,9 +3,11 @@
  * against src/rng.ts.
  *
  * Written by the clean-room implementer together with src/rng.ts, from docs/ALGORITHM.md and the
- * module interface alone (never from LIQD's code). Integrated 20 Oct 2026: the checks are unchanged;
- * only the import path, the mocha wrapper and the reporting (failures collected instead of printed)
- * were adapted.
+ * module interface alone (never from LIQD's code). Integrated 20 Oct 2026: only the import path, the
+ * mocha wrapper and the reporting (failures collected instead of printed) were adapted. 10 Nov 2026:
+ * the five §5 vectors and the message example are the production ones of the revised
+ * docs/ALGORITHM.md (printed by `node scripts/spec-check.mjs --vectors` from the production dataset);
+ * the checks themselves are unchanged.
  */
 import { strict as assert } from 'node:assert';
 import { createHmac } from "crypto";
@@ -39,48 +41,48 @@ function runSelftest(): { passed: number; total: number; failed: string[] } {
   // Copied from ALGORITHM.md §5 (V1..V5).
   const vectors: Vec[] = [
     {
-      id: "V1", serverSeed: "fc9a1d6fad00e0832fddfdea45435c85",
-      commitment: "3b34a0fce5732f2d9c89b16fca9c2b6a231c2b7f2de29bbc41e141861dc39d36",
-      clientSeed: "auditb1141320acde", nonce: 0, rows: 8,
-      digest1: "1bc5cc26bf9ba6d661badc7907e87182fd2a3b9e3a9f4e183789cbd37d14db12",
-      u32: [465947686, 261972339, 3688591245, 4099969822, 3461456877, 91014705, 217623221, 325826245],
-      path: "01101111", slot: 6,
+      id: "V1", serverSeed: "9ef0b85313bd2d1b8d96e22df9b08ff4",
+      commitment: "fc09cc34555528c74b6242b31ea0fbe2e4a51b085b66d58c5aa50d68b1c090fd",
+      clientSeed: "auditf011676cf201", nonce: 0, rows: 8,
+      digest1: "5269454bf2bc713c77ed5c6f9fb6c4a14d689cd68b8b9ac1f21453cd547e9c21",
+      u32: [1382630731, 2843172180, 3774875546, 736692549, 4033295762, 990658859, 1408222412, 2487925249],
+      path: "10010101", slot: 4,
     },
     {
-      id: "V2", serverSeed: "ea78c284099479c0624dcc65bd49a6b4",
-      commitment: "4a20f49109bae29e360b795bb26ee9d2d1a41545cfd9e7db9d55c5291d4d752a",
-      clientSeed: "auditfdbdfd859cad", nonce: 4, rows: 16,
-      digest1: "14a65daf28f097e59a986d398ba5c41975fc2c8ffb33c4c08e55e9e2d77e1939",
-      u32: [346447279, 1187183741, 504372685, 2146127743, 3132006485, 4121536863, 3580981619, 1665279301,
-        3177010849, 2445154865, 2892111452, 3238620967, 1061105011, 1168669417, 1313618577, 2487409767],
-      path: "1111111111011111", slot: 15,
+      id: "V2", serverSeed: "715bcb6f4a43571308e03e95b99931bc",
+      commitment: "bc99a69f4b131bf7cebc8cd4267b8559c7524769eaade6737314528257fa4d03",
+      clientSeed: "audit08d03eedd4b7", nonce: 122, rows: 16,
+      digest1: "10a520d28b3ee526a0b0b8cb1edd7aac8d7bf539442f93514483ec59510b010c",
+      u32: [279257298, 2459872134, 847434472, 2983027234, 3429187080, 2721595078, 3082358334, 2282858064,
+        735793118, 430178866, 461077886, 4170719104, 3446436280, 1367243104, 3863180374, 1986618352],
+      path: "0000000000000000", slot: 0,
     },
     {
-      id: "V3", serverSeed: "7946393604bd5d1a42972a32dcb34a6c",
-      commitment: "ac6291949101c6057cb6d48818b13229ee3085fb9877642c5c64118343cacf50",
-      clientSeed: "audit4235425fddbb", nonce: 18, rows: 16,
-      digest1: "8f6617f7a56642a390b297adfb8cba0fdf324414a97b72a2bfe60b18f3db617d",
-      u32: [2405832695, 842234661, 2664265389, 1239853252, 555793299, 1955308833, 1660070429, 700809953,
-        3925203730, 3097751101, 2464513283, 3083207281, 634065437, 907262603, 4272985791, 1693099616],
-      path: "1110111101111110", slot: 13,
+      id: "V3", serverSeed: "eb417d31525821f1278b0ccea8edeb18",
+      commitment: "45996e535bce855e59b8f945d0f3adb3447e4040b7f3ddbed25c48551fe087de",
+      clientSeed: "audit65a06fd5119c", nonce: 9, rows: 16,
+      digest1: "fd807e735aff094bb3759c956e5b4396ec3f5f89233cba9d6e65bd461aac32a7",
+      u32: [4253056627, 853350442, 3769460548, 1875099557, 2991491813, 2444037069, 977134801, 2770240191,
+        1524905081, 2936522273, 2279798965, 3273965895, 2417993271, 3757241147, 683083631, 2935554119],
+      path: "1001111111111111", slot: 14,
     },
     {
-      id: "V4", serverSeed: "d7fc3e5d19db3e1646ffc5ec1da2bb9a",
-      commitment: "d36168fe4bd1110de73dd9bf67919c3f6c12414468f5fce7b811c90d5be9ac9a",
-      clientSeed: "pfaudit-1783390325646-152", nonce: 13, rows: 12,
-      digest1: "b09c64f83793d74eff688e3cc48642d1d7f13edab56cccb64e5a5b876e724fdb",
-      u32: [2963039480, 609955217, 1753020910, 2092186930, 3168917280, 4228365897, 2546896041, 408347392,
-        1501153080, 100619428, 1009938668, 1422609502],
-      path: "010001100000", slot: 3,
+      id: "V4", serverSeed: "afdbff1826807b581e82e15ccd53a90d",
+      commitment: "df6243d149a59eafbd9e6e6986bdc7c1806f25a12960d4452f6019e539a9b0af",
+      clientSeed: "pfaudit-prod-plinko-d3-b43f85abca8a", nonce: 15, rows: 16,
+      digest1: "f7d4c4c1a6efbbee65b1f04957bba49aa9b53f85e77273ca7d90f0ae04ef7c80",
+      u32: [4157916353, 2112150979, 2642622427, 3886798582, 639340445, 2478021331, 1753002797, 3587131851,
+        3629458181, 4153036531, 3354855894, 2658060931, 1018867619, 1939733663, 3834424449, 3586559355],
+      path: "1110111111011111", slot: 14,
     },
     {
-      id: "V5", serverSeed: "0d249f81e03a903d6b17c71ebc82817a",
-      commitment: "1e74e08a9dd50f50ef689e15b52a37ca15c83fbcb1b166202a85f7ea78cec70b",
-      clientSeed: "auditc680c9435be0", nonce: 32, rows: 13,
-      digest1: "a8a25bc36f1d2b339d641ada2ad3a1fa653ef6cbba4dd9ff9c2fa7a464b88450",
-      u32: [2829212611, 3975601995, 3693746059, 345428137, 2205473013, 320649226, 2045002243, 2307408443,
-        2466660811, 2056615533, 5637941, 1289934329, 2014158041],
-      path: "1111101111111", slot: 12,
+      id: "V5", serverSeed: "0d37ca1328cc862aead5e3aa5f2d853d",
+      commitment: "136668587a94490a30f2802f6060ccbac102697707d70e4cca914ab345d79b9f",
+      clientSeed: "audit2737549576ae", nonce: 34, rows: 13,
+      digest1: "ad3c9e7d1040b1f075bc27ab79b4ec7390e7faadbd5850f659a2054a30804e2f",
+      u32: [2906431101, 1901887950, 2075721589, 334739687, 2593919865, 3658226095, 3128206033, 1524910409,
+        1515008241, 2858343663, 189450267, 684219243, 4291166137],
+      path: "1011111111111", slot: 12,
     },
   ];
 
@@ -113,7 +115,7 @@ function runSelftest(): { passed: number; total: number; failed: string[] } {
   }
 
   // Message format example from §2 Step 1.
-  check("message example auditb1141320acde:0:8", getProvablyFairHmacSalt("auditb1141320acde", 0, 8) === "auditb1141320acde:0:8");
+  check("message example auditf011676cf201:0:8", getProvablyFairHmacSalt("auditf011676cf201", 0, 8) === "auditf011676cf201:0:8");
 
   // Properties: ranges and path/slot consistency over many random drops.
   let rangeOk = true;

@@ -1,87 +1,141 @@
 /**
- * Step 14: Phase D — client seed variation (standalone scored step).
+ * Step 14: Phase D — player-set client seeds, and client-seed control on every epoch.
+ *
+ * Phase D is the part of the plan played under client seeds the player chose by name: five epochs of
+ * 100 drops over the 27 standard settings in turn, each opened by a rotation that submitted
+ * `pfaudit-prod-plinko-d<k>-` + 12 hex characters (k = 1…5). Every other epoch was opened with the
+ * runner's own per-epoch seed, `audit` + 12 hex characters. Both kinds are seeds the auditor's browser
+ * generated and submitted; neither is a seed the site proposed.
+ *
+ * What the step asserts, all from the dataset and src/loader.ts, never from a capture-side flag:
+ *   (a) PHASE D: its bets recompute path-and-slot under their player-set seed; the phase holds at least
+ *       MIN_PHASE_D_PLAYER_SEEDS distinct player-set seeds (profile floor 2), one per epoch, every one of
+ *       the `pfaudit-prod-plinko-d<k>-<12 hex>` shape, and no epoch outside Phase D uses one;
+ *   (b) EVERY EPOCH: one client seed per epoch, EXPECTED_SEEDS distinct seeds in all, none equal to the
+ *       seed in force before its capture (meta.captures[i].preCapture.clientSeed); every bet carries its
+ *       epoch's seed and recomputes under it;
+ *   (c) ORDERING: each epoch's commitment equals the next-seed hash published BEFORE the rotation that
+ *       submitted the epoch's client seed (first epoch of a capture: that capture's
+ *       preCapture.nextHashedServerSeed; otherwise the previous epoch's nextHashedServerSeed). The
+ *       operator was therefore bound to each server seed before it was sent the client seed it would be
+ *       combined with: seed SUBSTITUTION is blocked, conditional on authentic commitment timing
+ *       (premise P1 / DL-3);
+ *   (d) SHAPE: every non-Phase-D seed is `audit` + 12 lowercase hex. The shapes are evidence of the
+ *       generator the runner names (6 bytes of crypto.getRandomValues), not proof of its entropy (DL-5).
+ *       The Phase D seeds were drawn when the plan was built, before the capture's first rotation, and
+ *       were sent only at the rotation opening their epoch (the runner's record, capture/).
+ *
+ * FLAG-only (a capture-design check).
  */
 
 import type { StepResult } from './context';
 import { step } from './context';
 import type { VerifyContext } from './context';
 import { revealPlinko } from '../../src/rng';
+import { EXPECTED_SEEDS, EXPECTED_PLAN, MIN_PHASE_D_PLAYER_SEEDS } from '../../src/loader';
+
+const PLAYER_SHAPE = /^pfaudit-prod-plinko-d[1-9]\d*-[0-9a-f]{12}$/;
+const AUDIT_SHAPE = /^audit[0-9a-f]{12}$/;
 
 export function run(ctx: VerifyContext): StepResult[] {
-  const { phaseD, seedMap } = ctx;
+  const { bets, seeds, seedMap, captures, phaseD } = ctx;
+  const byEpoch = [...seeds].sort((a, b) => a.epoch - b.epoch);
+  const planD = EXPECTED_PLAN.filter(e => e.phase === 'D');
+  const planDBets = planD.reduce((a, e) => a + e.bets, 0);
+  const planDEpochs = planD.reduce((a, e) => a + e.epochs, 0);
 
-  if (phaseD.length === 0) {
-    return [step(14, 'Phase D — Client Seed Variation',
-      'FLAG', 'No Phase D bets in dataset (PROVISIONAL)')];
-  }
-
-  const clientSeeds = new Set(phaseD.map(b => b.clientSeed));
-  let tested = 0, matched = 0;
+  // (a) Phase D.
+  const dSeeds = byEpoch.filter(s => s.phase === 'D');
+  const dDistinct = new Set(dSeeds.map(s => s.clientSeed));
+  const dShaped = dSeeds.filter(s => PLAYER_SHAPE.test(s.clientSeed)).length;
+  const playerOutsideD = byEpoch.filter(s => s.phase !== 'D' && (PLAYER_SHAPE.test(s.clientSeed) || s.seedTag === 'player')).length;
+  let dTested = 0, dMatched = 0;
   for (const b of phaseD) {
+    const ss = seedMap.get(b.hashedServerSeed);
+    if (!ss) continue;
+    dTested++;
+    const { path, winningSlot } = revealPlinko(ss, b.clientSeed, b.nonce, b.numberOfRows);
+    if (path === b.dropDetails && winningSlot === b.winningSlot) dMatched++;
+  }
+  const dSettings = new Set(phaseD.map(b => `${b.numberOfRows}:${b.riskLevel}`)).size;
+  const phaseDWagered = phaseD.reduce((s, b) => s + parseFloat(b.betAmount), 0);
+  const phaseDPaid = phaseD.reduce((s, b) => s + parseFloat(b.winningAmount), 0);
+
+  // (b) every epoch: one seed per epoch, all distinct, none the pre-capture seed of its capture.
+  const epochSeeds = byEpoch.map(s => s.clientSeed);
+  const distinct = new Set(epochSeeds);
+  const preOf = new Map(captures.map(c => [c.capture, c.preCapture]));
+  const reusesPreCapture = byEpoch.filter(s => preOf.get(s.capture)?.clientSeed === s.clientSeed).length;
+  const seedOfEpoch = new Map(byEpoch.map(s => [s.epoch, s.clientSeed]));
+  let carried = 0, recomputed = 0, tested = 0;
+  for (const b of bets) {
+    if (seedOfEpoch.get(b.epoch) === b.clientSeed) carried++;
     const ss = seedMap.get(b.hashedServerSeed);
     if (!ss) continue;
     tested++;
     const { path, winningSlot } = revealPlinko(ss, b.clientSeed, b.nonce, b.numberOfRows);
-    if (path === b.dropDetails && winningSlot === b.winningSlot) matched++;
+    if (path === b.dropDetails && winningSlot === b.winningSlot) recomputed++;
   }
 
-  // ── Predictable-client-seed subset (sweep) ─────────────────────────────
-  // The chapters quote the exposure of the epochs whose client seeds follow the
-  // predictable `pfaudit-<run-id>-<epoch>` pattern — the ones the by-construction R-CHERRY
-  // closure does NOT cover, because the operator already held those client seeds when it
-  // committed their server-seed hashes. Those figures were hand-derived from the dataset and
-  // no code emitted them, which is the same defect class as the calibrated expectation in
-  // round-2 finding N1. They are computed here and written to outputs/verification-stats.json.
-  //
-  // The subset is derived from the DATA, not from a hard-coded epoch range: a Phase D epoch
-  // is exposed when its client seed carries the run-id pattern.
-  const PREDICTABLE = /^pfaudit-\d+-\d+$/;
-  const predictableEpochs = [...new Set(
-    phaseD.filter(b => PREDICTABLE.test(b.clientSeed)).map(b => b.epoch),
-  )].sort((a, b) => a - b);
-  // ── (round-4 client QA): the earliest predictable epoch is UNRESOLVED, not safe ──
-  // This used to read: "The earliest predictable epoch is safe: its hash was committed by
-  // the rotation that submitted the PREVIOUS (non-pfaudit) client seed, before any run-id
-  // existed." Two things were wrong with that.
-  //   1. "before any run-id existed" is not established by a prior commitment. The rotation
-  //      ordering shows the operator had not been SENT that client seed. It does not show
-  //      the run-id — a millisecond Unix timestamp the auditor's tool generated — was
-  //      unpredictable to a party that knew roughly when the capture would run.
-  //   2. A prior hash blocks later seed SUBSTITUTION. It does not block GRINDING a server
-  //      seed against a guessable FUTURE client seed before committing to it.
-  // The audit's position is that ~10^4 plausible timestamp candidates carry negligible
-  // cherry-pick power. That assumption is NOT demonstrated anywhere in this repository, so
-  // the earliest predictable epoch is reported as an explicit unresolved premise. It is not
-  // relabelled as compromised either: no evidence of an attack exists.
-  const unresolvedEpoch = predictableEpochs.length > 0 ? predictableEpochs[0] : null;
-  const exposedEpochs = predictableEpochs.slice(1);
-  const exposedBets = phaseD.filter(b => exposedEpochs.includes(b.epoch));
-  const exposedWagered = exposedBets.reduce((s, b) => s + parseFloat(b.betAmount), 0);
-  const exposedPaid = exposedBets.reduce((s, b) => s + parseFloat(b.winningAmount), 0);
-  const phaseDWagered = phaseD.reduce((s, b) => s + parseFloat(b.betAmount), 0);
-  const phaseDPaid = phaseD.reduce((s, b) => s + parseFloat(b.winningAmount), 0);
+  // (c) commitment published before the client seed was sent.
+  let committedBefore = 0;
+  for (let i = 0; i < byEpoch.length; i++) {
+    const first = i === 0 || byEpoch[i - 1].capture !== byEpoch[i].capture;
+    const announced = first ? preOf.get(byEpoch[i].capture)?.nextHashedServerSeed : byEpoch[i - 1].nextHashedServerSeed;
+    if (announced !== undefined && announced === byEpoch[i].hashedServerSeed) committedBefore++;
+  }
+  const dCommittedBefore = dSeeds.filter(s => {
+    const i = byEpoch.indexOf(s);
+    const first = i === 0 || byEpoch[i - 1].capture !== s.capture;
+    const announced = first ? preOf.get(s.capture)?.nextHashedServerSeed : byEpoch[i - 1].nextHashedServerSeed;
+    return announced === s.hashedServerSeed;
+  }).length;
 
-  const s14 = step(14, 'Phase D — Client Seed Variation',
-    tested > 0 && tested === phaseD.length && clientSeeds.size >= 2 && matched === tested ? 'PASS' : 'FLAG',
-    `${phaseD.length} bets, ${clientSeeds.size} distinct client seeds; recomputation: ${matched}/${tested} match (tested ${tested}, expected ${phaseD.length})`
-      + `; predictable-client-seed epochs ${predictableEpochs.length} (${predictableEpochs[0] ?? '-'}–${predictableEpochs[predictableEpochs.length - 1] ?? '-'})`
-      + `: epoch ${unresolvedEpoch ?? '-'} is UNRESOLVED (its run-id was guessable in distribution; a prior hash blocks substitution, not grinding against a predictable future client seed, and the negligible-power assumption for ~10^4 candidates is not demonstrated in-repo)`
-      + `; ${exposedEpochs.length} epochs (${exposedEpochs[0] ?? '-'}–${exposedEpochs[exposedEpochs.length - 1] ?? '-'}) used client seeds the operator already held at commitment: ${exposedBets.length} bets, $${exposedWagered.toFixed(2)} wagered, $${exposedPaid.toFixed(2)} paid — no adverse signal, but containment there is statistical, not structural`,
+  // (d) shapes.
+  const auditShaped = byEpoch.filter(s => s.phase !== 'D' && AUDIT_SHAPE.test(s.clientSeed)).length;
+  const nonD = byEpoch.length - dSeeds.length;
+
+  const dOk = phaseD.length === planDBets && dSeeds.length === planDEpochs
+    && dDistinct.size === dSeeds.length && dDistinct.size >= MIN_PHASE_D_PLAYER_SEEDS
+    && dShaped === dSeeds.length && playerOutsideD === 0
+    && dTested === phaseD.length && dTested > 0 && dMatched === dTested
+    && dCommittedBefore === dSeeds.length;
+  const allOk = byEpoch.length === EXPECTED_SEEDS && distinct.size === EXPECTED_SEEDS
+    && reusesPreCapture === 0 && captures.length > 0
+    && carried === bets.length && tested === bets.length && recomputed === tested
+    && committedBefore === EXPECTED_SEEDS && auditShaped === nonD;
+  const ok = dOk && allOk;
+
+  const s14 = step(14, 'Phase D — Player-Set Client Seeds',
+    ok ? 'PASS' : 'FLAG',
+    `Phase D: ${phaseD.length} bets (plan ${planDBets}) in ${dSeeds.length} epochs over ${dSettings} settings, ${dDistinct.size} distinct player-set client seeds (floor ${MIN_PHASE_D_PLAYER_SEEDS}, src/loader.ts MIN_PHASE_D_PLAYER_SEEDS), `
+      + `${dShaped}/${dSeeds.length} of the shape pfaudit-prod-plinko-d<k>-<12 hex>; recomputation under the player-set seed: ${dMatched}/${dTested} match (expected ${phaseD.length}); `
+      + `${dCommittedBefore}/${dSeeds.length} Phase D commitments were published before the rotation that submitted the epoch's seed; player-set seeds used outside Phase D: ${playerOutsideD}. `
+      + `Every epoch: ${distinct.size}/${EXPECTED_SEEDS} opened with a distinct auditor-submitted client seed (expected ${EXPECTED_SEEDS}, src/loader.ts), ${reusesPreCapture} equal to the seed in force before its capture; `
+      + `${carried}/${bets.length} bets carry their epoch's seed and ${recomputed}/${tested} recompute path-and-slot under it; `
+      + `${committedBefore}/${EXPECTED_SEEDS} epoch commitments equal the next-seed hash published before the rotation that submitted the epoch's client seed (first epoch of a capture: that capture's pre-capture record), `
+      + `so seed substitution is blocked on every epoch, conditional on authentic commitment timing (P1/DL-3); ${auditShaped}/${nonD} non-Phase-D seeds have the shape audit + 12 hex `
+      + `(shape only: the generator's entropy is not demonstrated by the dataset, DL-5)`
+      + (ok ? '' : '; FLAG: client-seed control not established as planned'),
     {
       phaseDBets: phaseD.length,
-      distinctClientSeeds: clientSeeds.size,
-      recomputed: matched,
+      phaseDEpochs: dSeeds.length,
+      phaseDSettings: dSettings,
+      distinctPlayerSetSeeds: dDistinct.size,
+      playerSetSeedFloor: MIN_PHASE_D_PLAYER_SEEDS,
+      playerSetShapedSeeds: dShaped,
+      playerSetSeedsOutsidePhaseD: playerOutsideD,
+      phaseDRecomputed: dMatched,
+      phaseDCommittedBeforeClientSeed: dCommittedBefore,
       phaseDWagered,
       phaseDPaid,
-      predictableEpochs,
-      // the three tiers as machine values, so no chapter has to restate them.
-      // -1 when there is no predictable epoch at all; the StepResult data contract does
-      // not carry null, and a sentinel is honest here because epochs are non-negative.
-      unresolvedPredictabilityEpoch: unresolvedEpoch ?? -1,
-      exposedEpochs,
-      exposedBets: exposedBets.length,
-      exposedWagered,
-      exposedPaid,
+      seededBets: bets.length,
+      betsCarryingEpochSeed: carried,
+      distinctClientSeeds: distinct.size,
+      epochsReusingPreCaptureSeed: reusesPreCapture,
+      recomputed,
+      epochsCommittedBeforeClientSeed: committedBefore,
+      auditShapedSeeds: auditShaped,
     },
   );
   return [s14];

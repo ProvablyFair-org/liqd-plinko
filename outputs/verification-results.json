@@ -1,37 +1,37 @@
 {
-  "totalBets": 10100,
-  "totalSeeds": 202,
-  "datasetSha256": "871c485ef0d55ca38af2cece4880abdc32fe8b62584468c5d4cfdfd01506fc95",
+  "totalBets": 9750,
+  "totalSeeds": 52,
+  "datasetSha256": "83965cdc5381db3ad99bf7c1c1e1d2e0d90f574132f96642027599c0edea8a16",
   "runMode": {
     "attest": "full",
     "emitBaseline": false
   },
   "artifactHashes": {
     "dataset": {
-      "file": "data/plinko-master-10100bets.json",
-      "sha256": "871c485ef0d55ca38af2cece4880abdc32fe8b62584468c5d4cfdfd01506fc95"
+      "file": "data/plinko-prod-9750bets.json",
+      "sha256": "83965cdc5381db3ad99bf7c1c1e1d2e0d90f574132f96642027599c0edea8a16"
     },
     "config": {
       "file": "plinkoConfig.json",
-      "expected": "f8eaf67e1ffc63ee0dc21123447581c55f443c167dcb451b45ab7cd108fe712f",
-      "actual": "f8eaf67e1ffc63ee0dc21123447581c55f443c167dcb451b45ab7cd108fe712f",
+      "expected": "09bfaeab2b7885ef63d72cebcfe1a667cb8ec604c887cebcdea22e56c2960f0a",
+      "actual": "09bfaeab2b7885ef63d72cebcfe1a667cb8ec604c887cebcdea22e56c2960f0a",
       "match": true
     },
     "simulation": {
       "file": "outputs/simulation-results.json",
-      "sha256": "3d94a510b760abfe2356d96d821f09dfe2bff40866da4bd47669fe8e3df6e0c6"
+      "sha256": "fd336c7a77400342756000942420df9a87b122d2368ad9e075ff73208f2321fd"
     },
     "calibration": {
       "file": "outputs/calibration-results.json",
-      "sha256": "53dabd4778e1d2562cb2ad136f6121253502eaac9fcf0cb70a064551bdaf3ca6"
+      "sha256": "eeb92c508b3e8cbaed2957c7b51cd3f13fd47947c17feaa131c49deab9c3d693"
     },
     "verificationStats": {
       "file": "outputs/verification-stats.json",
-      "sha256": "d4d62ef3e7083e6b87cc17316c17167b8a9b6b9ac92aad200ca64e545e5e3c19"
+      "sha256": "50a4f537d28aba984ba67ef168d43224d773d5fe7605f9827e789a45074c0c54"
     },
     "coverage": {
       "file": "outputs/coverage-results.json",
-      "sha256": "7ec2cebb165d7952164be58f8cc5aff1536b12262ec03d8a7d252abb99b70611"
+      "sha256": "d5fdb9af955910024b5deac0fbb1dea0e3fe2e185ca7644bf6c5a72c12b055ee"
     }
   },
   "steps": [
@@ -39,7 +39,7 @@
       "step": 1,
       "name": "Seed Hash Integrity",
       "status": "PASS",
-      "detail": "202/202 seeds revealed and checked (expected 202, from src/loader.ts EXPECTED_SEEDS — not from the dataset's own seed-record count, which would make \"all of them\" true of any subset); SHA-256(utf8(serverSeed)) == hashedServerSeed; 0 mismatches",
+      "detail": "52/52 seeds revealed and checked (expected 52, from src/loader.ts EXPECTED_SEEDS — not from the dataset's own seed-record count, which would make \"all of them\" true of any subset); SHA-256(utf8(serverSeed)) == hashedServerSeed; 0 mismatches",
       "profileIds": [
         "PLINKO-01"
       ],
@@ -54,7 +54,14 @@
       "step": 2,
       "name": "Next-Seed Pre-Commitment Chain",
       "status": "PASS",
-      "detail": "202/202 pre-commitments verified (201 epoch transitions plus the pre-capture link): each nextHashedServerSeed == the next commitment's hashedServerSeed, and the pre-capture serverSeed hashes to its committed hash",
+      "detail": "52/52 pre-commitments verified: 49 epoch transitions inside the 3 captures (each nextHashedServerSeed == the next epoch's hashedServerSeed) plus 3 pre-capture links, one per capture (the pair active before the capture's first round hashes to its commitment and its next hash is the capture's first epoch). No link is asserted across two captures",
+      "data": {
+        "preCommitmentsChecked": 52,
+        "preCommitmentFails": 0,
+        "epochTransitions": 49,
+        "preCaptureAnchors": 3,
+        "captures": 3
+      },
       "profileIds": [
         "PLINKO-02"
       ],
@@ -69,7 +76,7 @@
       "step": 3,
       "name": "Hash Consistency Within Epoch",
       "status": "PASS",
-      "detail": "202 epochs: all bets within each epoch share the same hashedServerSeed; 0 violations",
+      "detail": "52 epochs: all bets within each epoch share the same hashedServerSeed; 0 violations",
       "profileIds": [
         "PLINKO-03"
       ],
@@ -84,7 +91,7 @@
       "step": 4,
       "name": "Nonce Audit",
       "status": "PASS",
-      "detail": "202 epochs: nonces sequential 0–49 (against src/loader.ts EXPECTED_EPOCH_SIZE, not meta.epochSize), single client seed per epoch",
+      "detail": "52 epochs: nonces sequential 0…size−1 with no gap or repeat, size = the epochSize of the epoch's plan entry (src/loader.ts EXPECTED_PLAN, not the dataset header; sizes 50, 100, 200), single client seed per epoch",
       "profileIds": [
         "PLINKO-03",
         "PLINKO-04"
@@ -104,9 +111,9 @@
       "step": 5,
       "name": "Path + Slot Recomputation",
       "status": "PASS",
-      "detail": "10100/10100 verified (expected 10100, 0 skipped); 0 mismatches; 0 skipped (unrevealed seeds); bit-extraction bias bound (docs/ALGORITHM.md §2: bit = u mod 2 over the whole 2^32 domain, no rejection step; src/bias.ts): residual modulo bias 0 at range 2 (ceiling 2e-10), 0/4294967296 of the domain unused; census on src/rng.ts over 10100 drops, 131970 row draws: path bit = range-2 draw 131970/131970, range-2 draw = full-domain draw mod 2 131970/131970 ⇒ an exact even split, bias 0; site verifier (ProvablyFair.org docs VerifyBets games/plinko, 4/4 files match their SHA-256 pins, source card is derive.js): run on 10100/10100 captured bets — 0 path, 0 slot, 0 multiplier, 0 row-count mismatch(es) against src/rng.ts and the capture; its paytable 365/365 cells equal to plinkoConfig.json",
+      "detail": "9750/9750 verified (expected 9750, 0 skipped); 0 mismatches; 0 skipped (unrevealed seeds); bit-extraction bias bound (docs/ALGORITHM.md §2: bit = u mod 2 over the whole 2^32 domain, no rejection step; src/bias.ts): residual modulo bias 0 at range 2 (ceiling 2e-10), 0/4294967296 of the domain unused; census on src/rng.ts over 9750 drops, 127830 row draws: path bit = range-2 draw 127830/127830, range-2 draw = full-domain draw mod 2 127830/127830 ⇒ an exact even split, bias 0; site verifier (ProvablyFair.org docs VerifyBets games/plinko, 4/4 files match their SHA-256 pins, source card is derive.js): run on 9750/9750 captured bets — 0 path, 0 slot, 0 multiplier, 0 row-count mismatch(es) against src/rng.ts and the capture; its paytable 365/365 cells equal to plinkoConfig.json",
       "data": {
-        "verified": 10100,
+        "verified": 9750,
         "mismatches": 0,
         "skipped": 0,
         "extractionRange": 2,
@@ -116,7 +123,7 @@
         "siteVerifierFilesPinned": 4,
         "siteVerifierFilesMatchingPin": 4,
         "siteVerifierSourceCardIsDerive": true,
-        "siteVerifierBetsRun": 10100,
+        "siteVerifierBetsRun": 9750,
         "siteVerifierPathMismatches": 0,
         "siteVerifierSlotMismatches": 0,
         "siteVerifierMultiplierMismatches": 0,
@@ -143,14 +150,14 @@
       "step": 6,
       "name": "Client Seed Influence",
       "status": "PASS",
-      "detail": "1008/1010 bets: wrong clientSeed → different path (tested 1010, expected 1010); 2 same-path coincidence(s) against an exact null of 0.5425 (Σ 2^−rows over the sample), Poisson-binomial P(X ≥ 2) = 1.0318e-1 vs α = 1e-3",
+      "detail": "260/260 bets: wrong clientSeed → different path (tested 260, expected 260); 0 same-path coincidence(s) against an exact null of 0.1282 (Σ 2^−rows over the sample), Poisson-binomial P(X ≥ 0) = 1.0000e+0 vs α = 1e-3",
       "data": {
-        "tested": 1010,
-        "expectedTested": 1010,
-        "changed": 1008,
-        "samePath": 2,
-        "expectedSamePath": 0.5425262451171875,
-        "samePathSurvivalP": 0.10318193106557218,
+        "tested": 260,
+        "expectedTested": 260,
+        "changed": 260,
+        "samePath": 0,
+        "expectedSamePath": 0.1281585693359375,
+        "samePathSurvivalP": 1,
         "alpha": 0.001
       },
       "profileIds": [
@@ -172,9 +179,9 @@
       "step": 7,
       "name": "Multiplier Lookup",
       "status": "PASS",
-      "detail": "10100 bets checked (incl. WTF) at 1e-9 tolerance; multiplier == payoutTable[winningSlot] (both required finite); 0 mismatches. SCOPE (declared limitation S00): this compares PAID multipliers only — 285/365 payout-table cells were exercised by the capture; the remaining 80 (incl. both WTF 1000× tails) rest on the hash-pinned transcription in plinkoConfig.json, not on live data. See outputs/coverage-results.json, MANIFEST 'Declared limitations' and declared survivor S00 in tests/mutations-extra.json",
+      "detail": "9750 bets checked (incl. WTF) at 1e-9 tolerance; multiplier == payoutTable[winningSlot] (both required finite); 0 mismatches. SCOPE (declared limitation S00): this compares PAID multipliers only — 285/365 payout-table cells were exercised by the capture; the remaining 80 have no payout witness and rest on the pinned plinkoConfig.json, each cell of which equals what the production game page displayed (Step 20). See outputs/coverage-results.json, MANIFEST 'Declared limitations' and declared survivor S00 in tests/mutations-extra.json",
       "data": {
-        "betsChecked": 10100,
+        "betsChecked": 9750,
         "mismatches": 0,
         "cellsExercised": 285,
         "cellsTotal": 365,
@@ -194,7 +201,7 @@
       "step": 8,
       "name": "Payout Math (betAmount × multiplier == winningAmount)",
       "status": "PASS",
-      "detail": "10100 bets reconciled EXACTLY in integer 1e-8 units — no tolerance on money; 0 amount(s) off the grid, 0 error(s)",
+      "detail": "9750 bets reconciled EXACTLY in integer 1e-8 units — no tolerance on money; 0 amount(s) off the grid, 0 error(s)",
       "profileIds": [
         "PLINKO-11"
       ],
@@ -209,44 +216,45 @@
       "step": 9,
       "name": "Config Completeness (27 standard + WTF)",
       "status": "PASS",
-      "detail": "27/27 standard configs + WTF present; Phase A per standard config ≥ 50-bet floor (src/loader.ts MIN_PHASE_A_BETS_PER_CONFIG): 27/27 meet it (observed 200–200 bets/config); never-paid cells 80/365 carrying 7.41% of summed theoretical RTP (coverage artifact — the unexercised cells rest on the hash-pinned plinkoConfig.json, not on live data; per-cell RTP shares in data.neverPaidCellRtpShare)",
+      "detail": "27/27 standard configs + WTF present; Phase A per config ≥ 50-bet floor (src/loader.ts MIN_PHASE_A_BETS_PER_CONFIG): 27/27 standard configs meet it (observed 185–186 bets/config) and WTF meets it (50 Phase A bets); never-paid cells 80/365 carrying 7.59% of summed theoretical RTP (coverage artifact — the unexercised cells have no payout witness and rest on the pinned plinkoConfig.json; per-cell RTP shares in data.neverPaidCellRtpShare)",
       "data": {
         "standardConfigsPresent": 27,
         "wtfPresent": true,
         "phaseAFloor": 50,
-        "phaseAMinPerConfig": 200,
-        "phaseAMaxPerConfig": 200,
+        "phaseAMinPerConfig": 185,
+        "phaseAMaxPerConfig": 186,
+        "phaseAWtfBets": 50,
         "configsBelowFloor": 0,
         "neverPaidCells": 80,
         "coverageCellsTotal": 365,
-        "neverPaidRtpShareSummed": 0.07408553821551163,
+        "neverPaidRtpShareSummed": 0.0758940758339747,
         "neverPaidCellRtpShare": {
-          "8:2:0": 0.05134281200631912,
+          "8:2:8": 0.05134281200631912,
+          "8:3:0": 0.1143533123028391,
           "9:1:0": 0.011049723756906077,
           "9:1:9": 0.011049723756906077,
+          "9:2:0": 0.035460992907801414,
+          "9:3:0": 0.08477917981072555,
           "9:3:9": 0.08477917981072555,
           "10:1:0": 0.008778851844545276,
           "10:1:10": 0.008778851844545276,
           "10:2:0": 0.021721958925750396,
           "10:2:10": 0.021721958925750396,
           "10:3:0": 0.0749211356466877,
-          "10:3:10": 0.0749211356466877,
           "11:1:0": 0.004142828960347209,
-          "11:1:10": 0.01627539948707832,
           "11:1:11": 0.004142828960347209,
-          "11:2:0": 0.011834319526627219,
-          "11:2:2": 0.08136094674556213,
-          "11:2:11": 0.011834319526627219,
+          "11:2:10": 0.03254437869822485,
           "11:3:0": 0.059090013787669884,
+          "11:3:1": 0.07583218436084302,
+          "11:3:10": 0.07583218436084302,
+          "11:3:11": 0.059090013787669884,
           "12:1:0": 0.0024665778698633517,
-          "12:1:11": 0.008879680331508067,
           "12:1:12": 0.0024665778698633517,
           "12:2:0": 0.008138903960933261,
           "12:2:1": 0.032555615843733045,
           "12:2:11": 0.032555615843733045,
-          "12:2:12": 0.008138903960933261,
           "12:3:0": 0.04187398394009557,
-          "12:3:11": 0.07093945514557368,
+          "12:3:1": 0.07093945514557368,
           "12:3:12": 0.04187398394009557,
           "13:1:0": 0.0009987669543773119,
           "13:1:11": 0.028853267570900124,
@@ -264,11 +272,12 @@
           "14:1:13": 0.003452485172809213,
           "14:1:14": 0.00043772579869545377,
           "14:2:0": 0.00357600868106935,
+          "14:2:1": 0.012947617638354544,
+          "14:2:12": 0.03927444016967545,
           "14:2:13": 0.012947617638354544,
           "14:2:14": 0.00357600868106935,
           "14:3:0": 0.025899387047839867,
           "14:3:1": 0.04834552248930109,
-          "14:3:2": 0.10100760948657549,
           "14:3:13": 0.04834552248930109,
           "14:3:14": 0.025899387047839867,
           "15:1:0": 0.0004623835564077113,
@@ -277,26 +286,25 @@
           "15:1:15": 0.0004623835564077113,
           "15:2:0": 0.002712717094433381,
           "15:2:1": 0.00832310926701151,
+          "15:2:13": 0.03560441186443813,
           "15:2:14": 0.00832310926701151,
           "15:2:15": 0.002712717094433381,
           "15:3:0": 0.01910690622207156,
           "15:3:1": 0.03836790039754692,
-          "15:3:2": 0.08736786957995624,
-          "15:3:13": 0.08736786957995624,
           "15:3:14": 0.03836790039754692,
           "15:3:15": 0.01910690622207156,
           "16:1:0": 0.00024660988474070513,
-          "16:1:1": 0.002219488962666346,
+          "16:1:2": 0.0036991482711105765,
+          "16:1:13": 0.01208388435229455,
           "16:1:14": 0.0036991482711105765,
           "16:1:15": 0.002219488962666346,
           "16:1:16": 0.00024660988474070513,
           "16:2:0": 0.001695620674240439,
           "16:2:1": 0.010112065111833891,
-          "16:2:13": 0.04316125352612027,
+          "16:2:2": 0.01849768008262297,
           "16:2:14": 0.01849768008262297,
           "16:2:15": 0.010112065111833891,
           "16:2:16": 0.001695620674240439,
-          "16:3:0": 0.015416587014300426,
           "16:3:1": 0.03206650098974489,
           "16:3:16": 0.015416587014300426,
           "13:4:0": 0.12330456226880394,
@@ -310,7 +318,7 @@
         {
           "id": "PLINKO-15",
           "coverage": "full",
-          "note": "every published standard config is asserted present AND carrying at least the Phase-A floor (MIN_PHASE_A_BETS_PER_CONFIG = 50 in src/loader.ts); the never-paid cells are enumerated with their share of theoretical RTP inside this scored step (data.neverPaidCellRtpShare / neverPaidRtpShareSummed). WTF is exercised in Phase E and checked by Step 15"
+          "note": "all 28 published configs (the 27 standard and WTF) are asserted present AND carrying at least the Phase-A floor (MIN_PHASE_A_BETS_PER_CONFIG = 50 in src/loader.ts; WTF's Phase A drops are plan id A+W); the never-paid cells are enumerated with their share of theoretical RTP inside this scored step (data.neverPaidCellRtpShare / neverPaidRtpShareSummed)"
         }
       ]
     },
@@ -351,7 +359,7 @@
         {
           "id": "PLINKO-19",
           "coverage": "full",
-          "note": "the published-RTP rule (RTP-CLAIM 1.1.0, src/rtp-claim.ts; enforced in this package since 2026-10-01): every one of the 28 boards must return within 0.1 pp of the flat 99% LIQD's Plinko page shows (evidence/rtp-page-labels-2026-10-01.json), and a board more than 0.1 pp below it on the house side fails Step 10 (player-favourable never fails). The per-setting exact table is outputs/rtp-claim-table.json, pinned in src/rtp-settings.ts. Measured: 0 house-side failures, worst gap -0.09375 pp (rows 8 and 10, medium risk). FAIL probed: M51 (claim raised to 99.02%), S00 (a 990x WTF tail takes that board to 98.7549%)"
+          "note": "the published-RTP rule (RTP-CLAIM 1.2.0, src/rtp-claim.ts; enforced in this package since 2026-10-01): every one of the 28 boards must return within 0.1 pp of the flat 99% LIQD's Plinko page shows (evidence/rtp-page-labels-2026-10-01.json), and a board more than 0.1 pp below it on the house side fails Step 10 (player-favourable never fails). The per-setting exact table is outputs/rtp-claim-table.json, pinned in src/rtp-settings.ts; the measured result is in that table (worst.gapPp). FAIL probed: M51 (claim raised to 99.02%)"
         }
       ]
     },
@@ -359,28 +367,28 @@
       "step": 11,
       "name": "Phase Labels",
       "status": "PASS",
-      "detail": "Phases present: A, B, C, D, E (A=5400/5400 B=2000/2000 C=200/200 D=500/500 E=2000/2000 against src/loader.ts EXPECTED_PHASE_BETS, Σ=10100); total 10100/10100 bets and 202/202 seed records, both compared against CODE constants in src/loader.ts — never against meta.plannedTotal or meta.phases, which are inside the file being scored (G-BIND: a row count is not an identity). The dataset header is reconciled against those constants rather than believed (meta.plannedTotal=10100: agrees; meta.phases: agrees), so shrinking the capture and doctoring its header to match is a hard fail rather than an unread field",
+      "detail": "Phases present: A, B, C, D, E (A=5050/5050 B=2000/2000 C=200/200 D=500/500 E=2000/2000 against src/loader.ts EXPECTED_PHASE_BETS, Σ=9750); total 9750/9750 bets and 52/52 seed records, both compared against CODE constants in src/loader.ts — never against meta.plannedTotal or meta.phases, which are inside the file being scored (G-BIND: a row count is not an identity). The dataset header is reconciled against those constants rather than believed (meta.plannedTotal=9750: agrees; meta.phases: agrees), so shrinking the capture and doctoring its header to match is a hard fail rather than an unread field",
       "data": {
-        "betsLoaded": 10100,
-        "expectedBets": 10100,
-        "seedRecords": 202,
-        "expectedSeeds": 202,
+        "betsLoaded": 9750,
+        "expectedBets": 9750,
+        "seedRecords": 52,
+        "expectedSeeds": 52,
         "phaseCounts": {
-          "A": 5400,
+          "A": 5050,
           "B": 2000,
           "C": 200,
           "D": 500,
           "E": 2000
         },
         "expectedPhaseBets": {
-          "A": 5400,
+          "A": 5050,
           "B": 2000,
           "C": 200,
           "D": 500,
           "E": 2000
         },
-        "planSum": 10100,
-        "metaPlannedTotal": 10100,
+        "planSum": 9750,
+        "metaPlannedTotal": 9750,
         "metaHeaderAgrees": true
       },
       "profileIds": [
@@ -397,16 +405,32 @@
       "step": 12,
       "name": "Epoch Size",
       "status": "PASS",
-      "detail": "202/202 epochs (by hashedServerSeed; 202 distinct epoch indexes) and 202/202 seed records against src/loader.ts EXPECTED_SEEDS; min=50, max=50 bets per seed pair against EXPECTED_EPOCH_SIZE 50; 202 × 50 = 10100 must equal EXPECTED_BETS 10100. meta.epochSize=50 is reconciled against the constant (agrees), not used as the expectation — dropping an epoch with its seed row and re-declaring the header used to leave every count in this step self-consistent",
+      "detail": "52/52 epochs (by hashedServerSeed; 52 distinct epoch indexes) and 52/52 seed records against src/loader.ts EXPECTED_SEEDS; epochs per plan entry and their length, against EXPECTED_PLAN: A 25/25 × 200, D 5/5 × 100, B 10/10 × 200, A+W 1/1 × 50, E 10/10 × 200, C 1/1 × 200; 52/52 epochs have their entry's length, stake and capture file; Σ epochs = 52 and Σ epochs × epochSize = 9750 must equal EXPECTED_SEEDS 52 and EXPECTED_BETS 9750; the shortest planned epoch is 50 drops = PRIMARY_WINDOW_NONCES 50 (Step 17's scored window). The header (meta.phases) is reconciled against the plan (agrees), not used as the expectation. The epoch lengths are the capture's own rotation plan; nothing in the captured records shows LIQD limiting a seed pair to any of them",
       "data": {
-        "epochsByHash": 202,
-        "epochIndexes": 202,
-        "expectedSeeds": 202,
-        "seedRecords": 202,
+        "epochsByHash": 52,
+        "epochIndexes": 52,
+        "expectedSeeds": 52,
+        "seedRecords": 52,
         "minEpochSize": 50,
-        "maxEpochSize": 50,
-        "expectedEpochSize": 50,
-        "metaEpochSize": 50,
+        "maxEpochSize": 200,
+        "epochsOnPlan": 52,
+        "epochsPerPlanEntry": {
+          "A": 25,
+          "D": 5,
+          "B": 10,
+          "A+W": 1,
+          "E": 10,
+          "C": 1
+        },
+        "betsPerPlanEntry": {
+          "A": 5000,
+          "D": 500,
+          "B": 2000,
+          "A+W": 50,
+          "E": 2000,
+          "C": 200
+        },
+        "primaryWindowNonces": 50,
         "metaHeaderAgrees": true
       },
       "profileIds": [
@@ -443,42 +467,28 @@
     },
     {
       "step": 14,
-      "name": "Phase D — Client Seed Variation",
+      "name": "Phase D — Player-Set Client Seeds",
       "status": "PASS",
-      "detail": "500 bets, 10 distinct client seeds; recomputation: 500/500 match (tested 500, expected 500); predictable-client-seed epochs 10 (152–161): epoch 152 is UNRESOLVED (its run-id was guessable in distribution; a prior hash blocks substitution, not grinding against a predictable future client seed, and the negligible-power assumption for ~10^4 candidates is not demonstrated in-repo); 9 epochs (153–161) used client seeds the operator already held at commitment: 450 bets, $45.00 wagered, $49.74 paid — no adverse signal, but containment there is statistical, not structural",
+      "detail": "Phase D: 500 bets (plan 500) in 5 epochs over 27 settings, 5 distinct player-set client seeds (floor 2, src/loader.ts MIN_PHASE_D_PLAYER_SEEDS), 5/5 of the shape pfaudit-prod-plinko-d<k>-<12 hex>; recomputation under the player-set seed: 500/500 match (expected 500); 5/5 Phase D commitments were published before the rotation that submitted the epoch's seed; player-set seeds used outside Phase D: 0. Every epoch: 52/52 opened with a distinct auditor-submitted client seed (expected 52, src/loader.ts), 0 equal to the seed in force before its capture; 9750/9750 bets carry their epoch's seed and 9750/9750 recompute path-and-slot under it; 52/52 epoch commitments equal the next-seed hash published before the rotation that submitted the epoch's client seed (first epoch of a capture: that capture's pre-capture record), so seed substitution is blocked on every epoch, conditional on authentic commitment timing (P1/DL-3); 47/47 non-Phase-D seeds have the shape audit + 12 hex (shape only: the generator's entropy is not demonstrated by the dataset, DL-5)",
       "data": {
         "phaseDBets": 500,
-        "distinctClientSeeds": 10,
-        "recomputed": 500,
+        "phaseDEpochs": 5,
+        "phaseDSettings": 27,
+        "distinctPlayerSetSeeds": 5,
+        "playerSetSeedFloor": 2,
+        "playerSetShapedSeeds": 5,
+        "playerSetSeedsOutsidePhaseD": 0,
+        "phaseDRecomputed": 500,
+        "phaseDCommittedBeforeClientSeed": 5,
         "phaseDWagered": 50.00000000000044,
-        "phaseDPaid": 54.690000000000076,
-        "predictableEpochs": [
-          152,
-          153,
-          154,
-          155,
-          156,
-          157,
-          158,
-          159,
-          160,
-          161
-        ],
-        "unresolvedPredictabilityEpoch": 152,
-        "exposedEpochs": [
-          153,
-          154,
-          155,
-          156,
-          157,
-          158,
-          159,
-          160,
-          161
-        ],
-        "exposedBets": 450,
-        "exposedWagered": 45.00000000000037,
-        "exposedPaid": 49.74000000000003
+        "phaseDPaid": 49.680000000000106,
+        "seededBets": 9750,
+        "betsCarryingEpochSeed": 9750,
+        "distinctClientSeeds": 52,
+        "epochsReusingPreCaptureSeed": 0,
+        "recomputed": 9750,
+        "epochsCommittedBeforeClientSeed": 52,
+        "auditShapedSeeds": 47
       },
       "profileIds": [
         "PLINKO-06"
@@ -486,7 +496,8 @@
       "profileChecks": [
         {
           "id": "PLINKO-06",
-          "coverage": "full"
+          "coverage": "full",
+          "note": "Phase D: the step recomputes every Phase D bet under its player-set client seed, requires at least 2 distinct player-set seeds (5 were played), one per epoch, none used outside Phase D, and each Phase D commitment published before the rotation that submitted the seed. It also holds every epoch of the dataset to a distinct auditor-submitted client seed, none equal to the seed in force before its capture, committed before its client seed was sent. Step 6 carries the wrong-seed coincidence bound"
         }
       ]
     },
@@ -494,11 +505,28 @@
       "step": 15,
       "name": "Phase E — WTF Mode Verification",
       "status": "PASS",
-      "detail": "2000 WTF bets: all riskLevel 4 / 13 rows; 2000/2000 dropDetails recomputed (expected 2000); 2000/2000 multipliers == odds[slot] (odds=[1000,235,0,0,0,0,0,0,0,0,0,0,235,1000]); WTF theoretical RTP = 98.9990%; only 4/14 slots pay — P(zero payout) = 99.6582%, P(paying slot) = 0.3418%",
+      "detail": "Phase E: 2000/2000 WTF bets, all riskLevel 4 / 13 rows; with the 50 WTF drops of Phase A (plan id A+W) 2050 WTF drops in all, none elsewhere; 2050/2050 dropDetails recomputed; 2050/2050 multipliers == odds[slot] (odds=[1000,235,0,0,0,0,0,0,0,0,0,0,235,1000]); slots reached 1,2,3,4,5,6,7,8,9,10,11,12 of 0–13; 4 drop(s) paid; WTF theoretical RTP = 98.9990%; only 4/14 slots pay — P(zero payout) = 99.6582%, P(paying slot) = 0.3418%",
       "data": {
         "wtfBets": 2000,
-        "recomputed": 2000,
-        "multipliersChecked": 2000,
+        "wtfBetsAll": 2050,
+        "wtfBetsPhaseATopUp": 50,
+        "wtfSlotsReached": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "wtfPayingDrops": 4,
+        "recomputed": 2050,
+        "multipliersChecked": 2050,
         "wtfTheoreticalRTP": 0.989990234375,
         "payingSlots": 4,
         "totalSlots": 14,
@@ -511,7 +539,8 @@
       "profileChecks": [
         {
           "id": "PLINKO-17",
-          "coverage": "full"
+          "coverage": "full",
+          "note": "LIQD declares one extra mode, WTF (risk 4, 13 rows). Production offers it and it was captured there at full coverage in its own phase: every Phase E drop and the Phase A drops on the WTF board are recomputed from the revealed seed and their multipliers held to wtf_mode.odds; a WTF drop anywhere else in the data hard-FAILs. The two 1000x WTF buckets were not reached by any captured drop (MANIFEST.md DL-1)"
         }
       ]
     },
@@ -519,7 +548,7 @@
       "step": 16,
       "name": "Simulation — Pass 1 Slot Uniformity (FWER)",
       "status": "PASS",
-      "detail": "28 configs (27 std + WTF) × 1,000,000 rounds = 28,000,000, 28/28 result rows; chi²: 0/28 uncorrected, 0/28 at Bonferroni α/28=3.571e-4; serial: 1/28 uncorrected, 0/28 at Bonferroni; mean sim RTP 98.9249%; theory recomputed from the pinned config (not read from the artifact): 28/28 rows agree at 1e-12; simRTP within 6·SE of the RECOMPUTED theory: 28/28; header scalars and convergence traces reconcile with the rows: yes; value domains (bounds from the pinned config, not from the artifact): 2714 numeric leaf/leaves checked, 0 impossible, 0 undeclared; population bound to allConfigs(plinkoConfig.json): 28/28 expected boards present exactly once; dispersion guard (re-derived chi²/p): worst p 9.4660e-1 (fail > 0.9999), min chi²/df 0.4104 (fail < 0.02) → 0 implausibly-good fit(s); serial statistics are one test, not two: corr(r1Z, runsZ)=-0.999999964, max|r1Z+runsZ|=1.6527e-3 over 28 rows; EXPERIMENT REPLAYED from the saved seeds: 28/28 configs × 1,000,000 rounds, census bound to its pin (match), the gates above read the statistics re-derived from it; 784 committed figures compared, 784 bit-identical, 0 beyond tolerance (simRTP and trace points exact; others 1e-14 + 1e-12·max); convergence traces bound to the histogram: 28/28 (terminal = histogram RTP within the float bound — largest gap 1.550e-11, 14.1% of its bound; every point inside the payout support, increments feasible, total reachable; 560 points), published chart re-rendered from the committed traces byte-identical",
+      "detail": "28 configs (27 std + WTF) × 1,000,000 rounds = 28,000,000, 28/28 result rows; chi²: 0/28 uncorrected, 0/28 at Bonferroni α/28=3.571e-4; serial: 1/28 uncorrected, 0/28 at Bonferroni; mean sim RTP 98.9249%; theory recomputed from the pinned config (not read from the artifact): 28/28 rows agree at 1e-12; simRTP within 6·SE of the RECOMPUTED theory: 28/28; header scalars and convergence traces reconcile with the rows: yes; value domains (bounds from the pinned config, not from the artifact): 1364 numeric leaf/leaves checked, 0 impossible, 0 undeclared; population bound to allConfigs(plinkoConfig.json): 28/28 expected boards present exactly once; dispersion guard (re-derived chi²/p): worst p 9.4660e-1 (fail > 0.9999), min chi²/df 0.4104 (fail < 0.02) → 0 implausibly-good fit(s); serial statistics are one test, not two: corr(r1Z, runsZ)=-0.999999964, max|r1Z+runsZ|=1.6527e-3 over 28 rows; EXPERIMENT REPLAYED from the saved seeds: 28/28 configs × 1,000,000 rounds, census bound to its pin (match), the gates above read the statistics re-derived from it; 784 committed figures compared, 784 bit-identical, 0 beyond tolerance (simRTP and trace points exact; others 1e-14 + 1e-12·max); convergence traces bound to the histogram: 28/28 (terminal = histogram RTP within the float bound — largest gap 1.550e-11, 14.1% of its bound; every point inside the payout support, increments feasible, total reachable; 560 points), published chart re-rendered from the committed traces byte-identical",
       "data": {
         "expectedConfigs": 28,
         "resultRows": 28,
@@ -538,7 +567,7 @@
         "theoryRecomputeTolerance": 1e-12,
         "aggregatesReconcile": true,
         "aggregateDisagreements": 0,
-        "domainLeavesChecked": 2714,
+        "domainLeavesChecked": 1364,
         "domainViolations": 0,
         "domainUndeclaredFields": 0,
         "serialR1ZRunsZCorrelation": -0.9999999643182262,
@@ -580,12 +609,12 @@
         {
           "id": "PLINKO-20",
           "coverage": "full",
-          "note": "28 configurations × 1,000,000 rounds; chi² at the Bonferroni threshold (0.01/28) and serial independence (lag-1 / runs) gated. THE COMMITTED EXPERIMENT IS REPLAYED IN FULL inside this step on every run (since 2026-09-24; until then only under `npm run replay`, outside the scored path): all 28,000,000 rounds regenerated from the seed pairs saved in the committed rows by src/pass1.ts playPass1Config — the per-configuration loop moved unchanged out of src/simulate.ts, so generator and replay are one function — on worker threads (src/parallel.ts, one configuration per thread). chi², df, p, RTP, SE (exact payout sd / √n) and the serial statistics are RE-DERIVED from the replayed slot counts and the gates read those, not the artifact's scalars; the artifact's copies must agree — simRTP and all 560 running-RTP points exactly, the rest within 1e-14 + 1e-12·max. Measured: 28/28 configurations, 784 committed figures compared, 784 bit-identical, 0 beyond tolerance. CENSUS: the committed artifact carries no per-slot counts (generated before the profile asked for them), so the replayed census is bound byte for byte to PASS1_CENSUS_SHA256 in src/artifact-pins.ts (8c840243…, recorded from the first full in-verify replay — a regression pin, not an independent witness; the binding to the original experiment is the 784 bit-identical figures). check-outputs refuses a canonical run whose replay was not full. PF_P1_REPLAY=off (mutation battery only) replays the first 50,000 rounds per row and caps the step at FLAG. FAIL probed: M48 (saved seed altered), M49 (one trace point moved one ulp), X17 (census pin altered, full replay)"
+          "note": "28 configurations × 1,000,000 rounds; chi² at the Bonferroni threshold (0.01/28) and serial independence (lag-1 / runs) gated. THE COMMITTED EXPERIMENT IS REPLAYED IN FULL inside this step on every run (since 2026-09-24; until then only under `npm run replay`, outside the scored path): all 28,000,000 rounds regenerated from the seed pairs saved in the committed rows by src/pass1.ts playPass1Config — the per-configuration loop moved unchanged out of src/simulate.ts, so generator and replay are one function — on worker threads (src/parallel.ts, one configuration per thread). chi², df, p, RTP, SE (exact payout sd / √n) and the serial statistics are RE-DERIVED from the replayed slot counts and the gates read those, not the artifact's scalars; the artifact's copies must agree — simRTP and all 560 running-RTP points exactly, the rest within 1e-14 + 1e-12·max. The measured counts are emitted (steps.step16.replayFiguresCompared / replayFiguresBitIdentical / replayFiguresBeyondTolerance). CENSUS: the committed artifact carries no per-slot counts, so the replayed census is bound byte for byte to PASS1_CENSUS_SHA256 in src/artifact-pins.ts (recorded from a full in-verify replay — a regression pin, not an independent witness; the binding to the original experiment is the bit-identical figures). check-outputs refuses a canonical run whose replay was not full. PF_P1_REPLAY=off (mutation battery only) replays the first 50,000 rounds per row and caps the step at FLAG. FAIL probed: M48 (saved seed altered), M49 (one trace point moved one ulp), X17 (census pin altered, full replay)"
         },
         {
           "id": "PLINKO-32",
           "coverage": "full",
-          "note": "every committed running-RTP trace is bound to the histogram it claims: the grid is CONVERGENCE_STEP = 50,000 rounds from src/config.ts (20 points per row); the terminal point must equal the RTP derived from the REPLAYED histogram (Σ count × table / n) within the float-summation bound (n + rows + 5)·2^-53·RTP (Higham γ bound for n additions in nonce order — measured gaps are printed with their share of it); every point lies inside the board's payout support, every increment between points is payable by that many drops (so the cumulative payout never decreases), and the histogram total stays reachable in the rounds that remain. The published chart outputs/rtp-convergence.html is re-rendered from the committed traces with src/convergence-chart.ts (the renderer moved unchanged out of src/simulate.ts) and must equal the committed file byte for byte. Measured: 28/28 traces bound, 560 points, chart byte-identical. FAIL probed: M50 (chart byte changed), X18 (terminal point moved 1e-6, full replay)"
+          "note": "every committed running-RTP trace is bound to the histogram it claims: the grid is CONVERGENCE_STEP = 50,000 rounds from src/config.ts (20 points per row); the terminal point must equal the RTP derived from the REPLAYED histogram (Σ count × table / n) within the float-summation bound (n + rows + 5)·2^-53·RTP (Higham γ bound for n additions in nonce order — measured gaps are printed with their share of it); every point lies inside the board's payout support, every increment between points is payable by that many drops (so the cumulative payout never decreases), and the histogram total stays reachable in the rounds that remain. The published chart outputs/rtp-convergence.html is re-rendered from the committed traces with src/convergence-chart.ts (the renderer moved unchanged out of src/simulate.ts) and must equal the committed file byte for byte. The measured counts are emitted (steps.step16.tracesBoundToHistogram / tracePointsChecked). FAIL probed: M50 (chart byte changed), X18 (terminal point moved 1e-6, full replay)"
         }
       ]
     },
@@ -593,33 +622,33 @@
       "step": 17,
       "name": "Simulation — Pass 2 Cherry-Pick Test",
       "status": "PASS",
-      "detail": "202 casino seeds × 10,000 nonces, 202/202 result rows; cherry-pick flags: 11 (expected ~9.6 by chance on the NOMINAL size-0.05 null — that size is assumed, not measured in-repo; declared limitation A4b, see MANIFEST.md#declared-limitations-register; survival P=0.3652, nominal on the same basis); payout-weighted, PRIMARY window 50 nonces (played per seed in this capture — SCORED): zEarly mean 0.013, 1 of 202 seeds below z=-1.645 (calibrated expectation 1.4099 ± 1.1721, Poisson-binomial P(X>=1)=0.7603), early−late t=-0.19; EXTENDED window 5,000 nonces (secondary, reported not scored — 100x the nonces played per seed in this capture): zEarly mean 0.002, 6 seeds below z=-1.645 (calibrated expectation 5.8556 ± 2.3708, Poisson-binomial P(X>=6)=0.5337, recomputed here over 202 revealed epochs; superseded naive 0.05·n null: 10.1), early−late t=0.60 (p=0.5518), edge hits early/late 1063/1020; execution-attested (full): recomputed early/late chi² P, payout-weighted z, window RTP and cherry-pick flag for 202/202 epochs (202 window-RTP row(s), each also bounded by its own board's paytable), every |Δ| vs stored within tol 1e-9 (measured max in data.attestMaxAbsDiff); edge hits re-counted 1063/1020 early/late; 14 summary + header scalar(s) re-derived from those rows",
+      "detail": "52 casino seeds × 10,000 nonces, 52/52 result rows; cherry-pick flags: 2 (expected ~2.5 by chance on the NOMINAL size-0.05 null — that size is assumed, not measured in-repo; declared limitation A4b, see MANIFEST.md#declared-limitations-register; survival P=0.7139, nominal on the same basis); payout-weighted, PRIMARY window 50 nonces (the first nonces of every seed, all played — SCORED): zEarly mean -0.210, 1 of 52 seeds below z=-1.645 (calibrated expectation 0.3242 ± 0.5623, Poisson-binomial P(X>=1)=0.2798), early−late t=-1.64; EXTENDED window 5,000 nonces (secondary, reported not scored — 100x the scored window): zEarly mean -0.153, 2 seeds below z=-1.645 (calibrated expectation 1.5227 ± 1.2091, Poisson-binomial P(X>=2)=0.4533, recomputed here over 52 revealed epochs; superseded naive 0.05·n null: 2.6), early−late t=-0.90 (p=0.3671), edge hits early/late 334/301; execution-attested (full): recomputed early/late chi² P, payout-weighted z, window RTP and cherry-pick flag for 52/52 epochs (52 window-RTP row(s), each also bounded by its own board's paytable), every |Δ| vs stored within tol 1e-9 (measured max in data.attestMaxAbsDiff); edge hits re-counted 334/301 early/late; 14 summary + header scalar(s) re-derived from those rows",
       "data": {
         "attestMode": "full",
-        "attestChecked": 202,
-        "attestPopulation": 202,
-        "revealedEpochs": 202,
+        "attestChecked": 52,
+        "attestPopulation": 52,
+        "revealedEpochs": 52,
         "missingRows": 0,
         "attestMaxAbsDiff": 0,
-        "seedsTested": 202,
-        "revealedSeedCount": 202,
-        "resultRows": 202,
+        "seedsTested": 52,
+        "revealedSeedCount": 52,
+        "resultRows": 52,
         "noncesPerSeed": 10000,
         "primaryWindowNonces": 50,
         "primaryCountZEarlyBelow1645": 1,
-        "primaryEpochsMeasured": 202,
-        "primaryZEarlyMean": 0.01292224256731259,
-        "primaryTZEarlyMinusLate": -0.19040066705725817,
+        "primaryEpochsMeasured": 52,
+        "primaryZEarlyMean": -0.21042072352947663,
+        "primaryTZEarlyMinusLate": -1.6437666896800025,
         "extendedWindowNonces": 5000,
-        "cherryPickFlags": 11,
-        "calibratedExpectation": 1.4098772428038084,
-        "calibratedSurvivalP": 0.7602796268621799,
-        "extendedCalibratedExpectation": 5.8555669877159655,
-        "extendedCalibratedSurvivalP": 0.5337301174256663,
-        "countZEarlyBelow1645": 6,
-        "rtpRowsRecomputed": 202,
-        "recomputedEdgeHitsEarly": 1063,
-        "recomputedEdgeHitsLate": 1020,
+        "cherryPickFlags": 2,
+        "calibratedExpectation": 0.32418611672774905,
+        "calibratedSurvivalP": 0.2798293035829732,
+        "extendedCalibratedExpectation": 1.52273633243238,
+        "extendedCalibratedSurvivalP": 0.4532772323021277,
+        "countZEarlyBelow1645": 2,
+        "rtpRowsRecomputed": 52,
+        "recomputedEdgeHitsEarly": 334,
+        "recomputedEdgeHitsLate": 301,
         "summaryFieldsRecomputed": 14,
         "domainViolations": 0,
         "domainUndeclaredFields": 0
@@ -638,14 +667,24 @@
       "step": 18,
       "name": "Bet-Size Invariance",
       "status": "PASS",
-      "detail": "200/200 Phase C drops at $10 (16r/risk3) recompute path-and-slot from the revealed seed — 0 mismatch. Phase C runs the Phase B board (16r/risk3), so bet size is the only variable that moved. revealPlinko takes no wager argument (serverSeed, clientSeed, nonce, rows only); drops at $10.00 are produced by the identical engine as the $0.10 drops (stakes present: $0.1, $10), so the path cannot depend on bet size",
+      "detail": "200/200 Phase C drops (plan 200, floor 100) at 10.00000000 USDT (16r/risk3) recompute path-and-slot from the revealed seed — 0 mismatch; 200/200 at the planned elevated stake; 200/200 paid stake × the table cell exactly. Phase C runs the Phase B board (16r/risk3), so bet size is the only variable that moved. revealPlinko declares 4 parameters (serverSeed, clientSeed, nonce, rows — no wager); the drops at 10.00000000 are produced by the identical engine as the drops at 0.10000000 (stakes present: 0.10000000, 10.00000000), so the path cannot depend on bet size",
+      "data": {
+        "phaseCBets": 200,
+        "phaseCFloor": 100,
+        "recomputed": 200,
+        "recomputeMismatches": 0,
+        "betsOffStake": 0,
+        "payoutMismatches": 0,
+        "drawArity": 4
+      },
       "profileIds": [
         "PLINKO-12"
       ],
       "profileChecks": [
         {
           "id": "PLINKO-12",
-          "coverage": "full"
+          "coverage": "full",
+          "note": "Phase C: 200 drops at 10.00 USDT on 16 rows / high risk, the board Phase B samples at 0.10 USDT (the two boards are read from the bets and required equal). Every Phase C drop recomputes path and slot from the revealed seed and is paid stake × the table cell exactly; the draw function declares no wager parameter"
         }
       ]
     },
@@ -660,7 +699,8 @@
       "profileChecks": [
         {
           "id": "PLINKO-14",
-          "coverage": "full"
+          "coverage": "full",
+          "note": "every table (the 27 standard boards and WTF) is left/right symmetric"
         }
       ]
     },
@@ -668,11 +708,17 @@
       "step": 20,
       "name": "Artifact Hash + Value-Domain Integrity",
       "status": "PASS",
-      "detail": "dataset SHA-256 871c485ef0d55ca3… matches pin; multiplier-config SHA-256 f8eaf67e1ffc63ee… matches pin; loader pins match; every published 64-hex token in the Markdown present equals a loader pin or an allow-listed worked-example commitment; committed emission artifacts: 835 numeric leaf/leaves checked against value domains derived from the pinned config",
+      "detail": "dataset SHA-256 83965cdc5381db3a… matches pin; multiplier-config SHA-256 09bfaeab2b7885ef… matches pin; loader pins match; every published 64-hex token in the Markdown present equals a loader pin , an exhibit hash, a capture-file hash named by the dataset, or an allow-listed worked-example commitment; table against the production page read of 20 Oct 2026 (769754a5cb5d…): 365/365 cells of 28 boards equal what liqd.com/originals/plinko showed (351 by a numeric bucket label, 4 by the label 1k with the page's \"1,000x\" sentence, 10 WTF middle cells by the page's \"pay nothing\" sentence); committed emission artifacts: 871 numeric leaf/leaves checked against value domains derived from the pinned config",
       "data": {
-        "domainLeavesChecked": 835,
+        "domainLeavesChecked": 871,
         "domainFailures": 0,
-        "hexTokensDrifted": 0
+        "hexTokensDrifted": 0,
+        "pageReadBoards": 28,
+        "pageReadCells": 365,
+        "pageReadCellsByNumericLabel": 351,
+        "pageReadCellsBy1kLabel": 4,
+        "pageReadCellsByPageStatement": 10,
+        "pageReadMismatches": 0
       },
       "profileIds": [
         "PLINKO-13",
@@ -683,7 +729,8 @@
       "profileChecks": [
         {
           "id": "PLINKO-13",
-          "coverage": "full"
+          "coverage": "full",
+          "note": "the table is pinned (src/config.ts) and every cell is held to what the production game page displayed: the bucket labels and page statements read on liqd.com/originals/plinko on 20 Oct 2026 (evidence/liqd-plinko-page-reads-2026-10-20.json, pinned in src/page-labels.ts). A display is not a payment: the cells no captured drop landed on have no payout witness (MANIFEST.md DL-1)"
         },
         {
           "id": "PLINKO-26",
@@ -703,48 +750,48 @@
       "step": 21,
       "name": "Epoch-Window Slot Fit (live drops vs binomial)",
       "status": "PASS",
-      "detail": "10100 captured drops = first 50 nonces of 202 seeds; rows 8: n=657 chi2=6.05 df=6 p=0.4177 | rows 9: n=657 chi2=3.61 df=7 p=0.8239 | rows 10: n=657 chi2=7.49 df=8 p=0.4852 | rows 11: n=657 chi2=7.82 df=7 p=0.3489 | rows 12: n=656 chi2=11.97 df=8 p=0.1525 | rows 13: n=2654 chi2=11.93 df=9 p=0.2173 | rows 14: n=654 chi2=3.03 df=8 p=0.9325 | rows 15: n=654 chi2=15.37 df=9 p=0.0814 | rows 16: n=2854 chi2=12.61 df=12 p=0.3977; Fisher X2=19.50 df=18 combined p=0.3615; Bonferroni per-group alpha=1.11e-3; p-values are NOMINAL — the tail-merged chi²'s true size is assumed 0.05, not measured in-repo (declared limitation A4b)",
+      "detail": "9750 captured drops = every nonce played under 52 seeds (WTF drops pool with the 13-row boards: the slot law depends on rows only); rows 8: n=612 chi2=3.18 df=6 p=0.7859 | rows 9: n=612 chi2=1.94 df=7 p=0.9632 | rows 10: n=612 chi2=9.75 df=8 p=0.2829 | rows 11: n=612 chi2=1.25 df=7 p=0.9898 | rows 12: n=612 chi2=9.98 df=8 p=0.2668 | rows 13: n=2660 chi2=20.74 df=9 p=0.0139 | rows 14: n=610 chi2=6.75 df=8 p=0.5636 | rows 15: n=610 chi2=9.51 df=9 p=0.3919 | rows 16: n=2810 chi2=10.69 df=12 p=0.5554; Fisher X2=18.50 df=18 combined p=0.4234; Bonferroni per-group alpha=1.11e-3; p-values are NOMINAL — the tail-merged chi²'s true size is assumed 0.05, not measured in-repo (declared limitation A4b)",
       "data": {
-        "drops": 10100,
-        "seeds": 202,
+        "drops": 9750,
+        "seeds": 52,
         "groups": 9,
-        "fisherX2": 19.502175463680178,
+        "fisherX2": 18.49759335654631,
         "fisherDf": 18,
-        "fisherCombinedP": 0.36153199360264976,
-        "minGroupP": 0.08135645474355213,
+        "fisherCombinedP": 0.4233534264314074,
+        "minGroupP": 0.013875859564669413,
         "bonferroniPerGroupAlpha": 0.0011111111111111111,
         "perGroupP": {
-          "rows8": 0.4177201991493229,
-          "rows9": 0.8239087887706853,
-          "rows10": 0.48518789141441976,
-          "rows11": 0.3489098004998257,
-          "rows12": 0.15246535284416463,
-          "rows13": 0.21727189648337053,
-          "rows14": 0.9324598097871313,
-          "rows15": 0.08135645474355213,
-          "rows16": 0.3977148576647702
+          "rows8": 0.7858541912891877,
+          "rows9": 0.9631984858337024,
+          "rows10": 0.28291365860075435,
+          "rows11": 0.9897790848179809,
+          "rows12": 0.2667583366731754,
+          "rows13": 0.013875859564669413,
+          "rows14": 0.5635931243932373,
+          "rows15": 0.39185416606737433,
+          "rows16": 0.5553677218130404
         },
         "perGroupChi2": {
-          "rows8": 6.049029982363315,
-          "rows9": 3.6056775627551882,
-          "rows10": 7.4862646908309,
-          "rows11": 7.818066736038522,
-          "rows12": 11.971826410356819,
-          "rows13": 11.930218706077953,
-          "rows14": 3.0300153703628228,
-          "rows15": 15.366175245074327,
-          "rows16": 12.613928320318635
+          "rows8": 3.180661894387385,
+          "rows9": 1.937877373171491,
+          "rows10": 9.751347272915899,
+          "rows11": 1.248012378477699,
+          "rows12": 9.975377694017556,
+          "rows13": 20.735951483045305,
+          "rows14": 6.752164454543247,
+          "rows15": 9.506928626928627,
+          "rows16": 10.693321755667395
         },
         "perGroupN": {
-          "rows8": 657,
-          "rows9": 657,
-          "rows10": 657,
-          "rows11": 657,
-          "rows12": 656,
-          "rows13": 2654,
-          "rows14": 654,
-          "rows15": 654,
-          "rows16": 2854
+          "rows8": 612,
+          "rows9": 612,
+          "rows10": 612,
+          "rows11": 612,
+          "rows12": 612,
+          "rows13": 2660,
+          "rows14": 610,
+          "rows15": 610,
+          "rows16": 2810
         }
       },
       "profileIds": [
@@ -780,7 +827,7 @@
         "id": "PLINKO-09",
         "artifact": "tests/plinko/rngSpecTests.ts + tests/plinko/rngTests.ts",
         "coverage": "full",
-        "note": "the docs/ALGORITHM.md spec self-test (55 checks: the page commitment example, vectors V1–V5 with digest, every row u32, bits, path and slot, the message format, path/slot properties, the range-2 bias report and input rejection), one captured bet reproduced from its revealed seed and the commitment-hash vector; mutations M01 (digest bytes read little-endian) and M35 (biased bit draw) kill it. Since 20 Oct 2026 src/rng.ts is rebuilt from the spec; the four earlier vectors at ranges 25, 52 and 3,000,000,000, two of which exercised the earlier port's rejection branch, were removed with it (the spec defines range 2 only, with no rejection step)"
+        "note": "the docs/ALGORITHM.md spec self-test (55 checks: the page commitment example, vectors V1–V5 with digest, every row u32, bits, path and slot, the message format, path/slot properties, the range-2 bias report and input rejection), two captured production bets reproduced from their revealed seeds and the commitment-hash vector; mutations M01 (digest bytes read little-endian) and M35 (biased bit draw) kill it. Since 20 Oct 2026 src/rng.ts is rebuilt from the spec; the four earlier vectors at ranges 25, 52 and 3,000,000,000, two of which exercised the earlier port's rejection branch, were removed with it (the spec defines range 2 only, with no rejection step)"
       },
       {
         "id": "PLINKO-23",
@@ -792,25 +839,25 @@
         "id": "PLINKO-24",
         "artifact": "verifier-parity/ + src/site-verifier.ts + Step 5 + scripts/check-site-verifier.mjs",
         "coverage": "full",
-        "note": "the site verifier the profile names — the ProvablyFair.org site repository VerifyBets games/plinko/derive.js, the two files it imports (lib/hmac-sha256.js, games/plinko/paytables.js) and the page's source card (games/plinko/source.js) — is HASH-MATCHED and EXECUTED: the four SHA-256 are recorded in src/site-verifier.ts SITE_VERIFIER_PINS (derive.js c4887e7b…) over byte-exact copies in verifier-parity/; Step 5 FAILs unless the copies hash to the pins, loads them with only the ES-module keywords removed (the loader of this audit's LIQD Mines package), runs the site's own derivePlinko on every captured bet (bound to EXPECTED_BETS) and FAILs on any path, slot, row-count or multiplier that differs from src/rng.ts revealPlinko or from the capture, on any paytable cell that differs from plinkoConfig.json, and on a source card whose text is not derive.js. Measured 2026-09-24: 4/4 pins, 10,100/10,100 bets — 0 path, 0 slot, 0 multiplier, 0 row mismatches; paytable 365/365 cells; source card = derive.js. scripts/check-site-verifier.mjs against the ProvablyFair.org site repository (branch main, HEAD 0625438, the four files clean): 4/4 MATCH, exit 0. What this parity is: hash-pinned behavioural equality on every captured bet, not a derive.js generated from the adapter. LIVE SITE: https://www.provablyfair.org/verify-bets is not covered — its HTML and the 18 script chunks it references contain no \"liqd\" string (GET 2026-09-24; runtime-loaded chunks not fetched). FAIL probed: M47 (byte changed, no re-pin), X14 (derive.js logic changed AND re-pinned), X15 (source card changed, re-pinned), X16 (site paytable cell changed, re-pinned). Not exercised by any captured bet: derive.js's all-chunks-rejected retry (unreachable for range 2; src/rng.ts, rebuilt from docs/ALGORITHM.md on 20 Oct 2026, has no rejection step) and non-hex server seeds (derive.js keys the HMAC with their UTF-8 bytes, src/rng.ts throws)"
+        "note": "the site verifier the profile names — the ProvablyFair.org site repository VerifyBets games/plinko/derive.js, the two files it imports (lib/hmac-sha256.js, games/plinko/paytables.js) and the page's source card (games/plinko/source.js) — is HASH-MATCHED and EXECUTED: the four SHA-256 are recorded in src/site-verifier.ts SITE_VERIFIER_PINS (derive.js c4887e7b…) over byte-exact copies in verifier-parity/; Step 5 FAILs unless the copies hash to the pins, loads them with only the ES-module keywords removed (the loader of this audit's LIQD Mines package), runs the site's own derivePlinko on every captured bet (bound to EXPECTED_BETS) and FAILs on any path, slot, row-count or multiplier that differs from src/rng.ts revealPlinko or from the capture, on any paytable cell that differs from plinkoConfig.json, and on a source card whose text is not derive.js. The measured counts are emitted (steps.step5.siteVerifier*). scripts/check-site-verifier.mjs compares a checkout of the ProvablyFair.org site repository with the pins (not run for this release: the site repository is not part of the package). What this parity is: hash-pinned behavioural equality on every captured bet, not a derive.js generated from the adapter; the same verifier is the one at https://www.provablyfair.org/verify-bets. FAIL probed: M47 (byte changed, no re-pin), X14 (derive.js logic changed AND re-pinned), X15 (source card changed, re-pinned), X16 (site paytable cell changed, re-pinned). Not exercised by any captured bet: derive.js's all-chunks-rejected retry (unreachable for range 2; src/rng.ts, rebuilt from docs/ALGORITHM.md on 20 Oct 2026, has no rejection step) and non-hex server seeds (derive.js keys the HMAC with their UTF-8 bytes, src/rng.ts throws)"
       },
       {
         "id": "PLINKO-25",
         "artifact": "README.md + MANIFEST.md#verify-a-bet",
         "coverage": "full",
-        "note": "the ordered player-verification path (commitment → per-row HMAC bits → winning slot → payout) with the bet SLOjmT9dyuUEi1que576R worked example and its full byte-by-byte derivation is in MANIFEST.md#verify-a-bet; README.md points to it"
+        "note": "the ordered player-verification path (commitment → per-row HMAC bits → winning slot → payout) with the production bet 4PmgyUj9xOP9CXphd0Wi0 worked example and its full byte-by-byte derivation is in MANIFEST.md#verify-a-bet; README.md points to it"
       },
       {
         "id": "PLINKO-28",
         "artifact": "tests/verify.ts + src/diff.ts + src/diff-simulation.ts + npm test / npm run test:full",
         "coverage": "full",
-        "note": "npm test = standalone check → node test.js (57 unit tests) → node verify.js (zero-install bundle, 21 scored steps, PROVABLY FAIR — Full Pass, exit 0) → check-outputs → release-manifest --check; it writes only to outputs/run/ (never a pinned artifact) and diffs the committed artifacts field by field at 1e-14 + 1e-12·max (integers and strings exact), recording the Node runtime in outputs/run/diff.json and exiting 1 beyond tolerance. REGENERATION DIFFED (added 2026-09-24): `npm run test:full` = npm test + node replay.js + `npm run regen` (src/simulate.ts itself, SIM_SEEDS_FROM = the seed pairs saved in the committed rows, then src/calibrate.ts, into outputs/run/regen/) + `npm run diff-simulation` (field by field, the chart byte for byte → outputs/run/diff-simulation.json, verdict and runtime also added to outputs/run/diff.json). Measured 2026-09-24 on Node 22.23.1: test:full exit 0 in 19 min 34 s — simulation-results.json byte-identical, calibration-results.json 0 fields differ (its simulation-path leaf excluded, the simulation hash twin equal), rtp-convergence.html byte-identical, REPRODUCED. The first regeneration (same day) was NOT reproduced — the committed simulation artifact predated later generator revisions (one descriptive string still carrying a retracted R-CHERRY sentence; five calibrated-null fields the generator had started writing), the calibration artifact likewise (one string); the generator stopped writing the five undeclared fields and both artifacts were rewritten by their own generators with 0 numeric leaves moved and re-pinned (MANIFEST.md). Step count 21 in README.md, MANIFEST.md and the suite; audit ID PF-2026-LQ03; engines 22.x. FRESH-CLONE CHECK (emulated, 2026-09-24): the file set a commit of this working tree would carry (git ls-files + untracked-not-ignored: 109 files, no node_modules, no outputs/run) copied to a scratch directory; npm ci --offline exit 0; npm test exit 0 in 3 min 11 s — 58/58 unit tests (the count on that date; 60 from 2026-10-02, 57 since 20 Oct 2026), 21/21, PROVABLY FAIR — Full Pass, REPRODUCED; the committed outputs/ byte-unchanged afterwards. NOT an actual git clone of a pushed commit (nothing is committed), and not a second machine"
+        "note": "npm test = standalone check → node test.js (unit tests) → node verify.js (zero-install bundle, 21 scored steps) → check-outputs → release-manifest --check; it writes only to outputs/run/ (never a pinned artifact) and diffs the committed artifacts field by field at 1e-14 + 1e-12·max (integers and strings exact), recording the Node runtime in outputs/run/diff.json and exiting 1 beyond tolerance. REGENERATION DIFFED: `npm run test:full` = npm test + node replay.js + `npm run regen` (src/simulate.ts itself, SIM_SEEDS_FROM = the seed pairs saved in the committed rows, then src/calibrate.ts, into outputs/run/regen/) + `npm run diff-simulation` (field by field, the chart byte for byte → outputs/run/diff-simulation.json). Step count 21 in README.md, MANIFEST.md and the suite; audit ID PF-2026-LQ03; engines >=22.23.1 <23. The measured runs of this release are recorded in MANIFEST.md (release history)"
       },
       {
         "id": "PLINKO-29",
         "artifact": "tests/mutations.json + tests/mutations-extra.json + scripts/mutate.mjs",
         "coverage": "full",
-        "note": "73 registry entries driven by scripts/mutate.mjs (52 scored-step + 21 guard-script / full-replay / declared-survivor); every step that can FAIL or FLAG — steps 1..20 — has at least one mutation it must reject. Step 21 is informational (PLINKO-22) and cannot fail: M46 shows it reporting INFO while Steps 5 and 7 reject the same edit. Added 2026-09-24: M47 + X14..X16 (site verifier: unpinned byte, logic re-pinned, source card re-pinned, paytable re-pinned), M48/M49 (saved seed, one-ulp trace point), M50 (chart), X17/X18 (census pin, terminal point — `standalone` runner, full replay on worker threads), X19 (check-outputs refuses a canonical run whose Pass-1 replay was not full). Added 2026-10-02: M51 (published-RTP claim raised to 99.02%, Step 10 fails); M35 re-pointed from the bias-bound arithmetic in tests/steps/determinism.ts, which never calls src/rng.ts, to src/rng.ts itself (mocha; the two rejection vectors fail). Retargeted 20 Oct 2026 with the rebuild of src/rng.ts from docs/ALGORITHM.md: M01 (digest bytes read little-endian) and M35 (biased bit draw, u mod 3 then mod range), both killed by the spec self-test and the captured-bet unit test. Since 2026-10-02 the runner works in a temporary copy of the package, never in the working tree, and reads each verify/standalone run's step statuses from that run's scored record in outputs/run/ (emptied first), cross-checked against the last console marker per step — the console had shown Step 10 as PASS after the RTP-CLAIM rule re-scored it FAIL. Verify-runner mutations run with PF_P1_REPLAY=off (Step 16 capped at FLAG; each kill decided by its own step marker). Run 2026-10-02: 73/73 behaved as declared in 2 h 30 min, 32 touched files restored byte-identical in the working copy; declared survivor S00 SURVIVED as declared — 17 in-scope steps PASS, read from the run record, and Steps 5, 10, 16 and 17 reject it (Step 10 is detection by the published-RTP rule; 5, 16 and 17 are committed copies of the original table). Earlier run 2026-09-24: 71/72 in 1 h 50 min, the miss being S00's then-stale declaration"
+        "note": "registry entries driven by scripts/mutate.mjs (scored-step entries plus guard-script / full-replay / declared-survivor entries); every step that can FAIL or FLAG — steps 1..20 — has at least one mutation it must reject. Step 21 is informational (PLINKO-22) and cannot fail: M46 shows it reporting INFO while other steps reject the same edit. The runner works in a temporary copy of the package, never in the working tree, and reads each verify/standalone run's step statuses from that run's scored record in outputs/run/ (emptied first), cross-checked against the last console marker per step. Verify-runner mutations run with PF_P1_REPLAY=off (Step 16 capped at FLAG; each kill decided by its own step marker). Retargeted 10 Nov 2026 to the production dataset and artifacts (v1.1.0). The battery result of this release is recorded in MANIFEST.md"
       },
       {
         "id": "PLINKO-33",
@@ -834,91 +881,89 @@
         "id": "PLINKO-30",
         "artifact": "MANIFEST.md#limitations-and-trust + MANIFEST.md#evidence",
         "coverage": "full",
-        "note": "the DL register, the load-bearing premises table with \"Could the captured data contradict it?\" and the exhibits E01, E02 and E04–E20 (there is no E03) are all present; the image exhibits now carry SHA-256 hashes beside their dimensions, and no internal working notes ship inside the package"
+        "note": "the DL register, the load-bearing premises table with \"Could the captured data contradict it?\" and the exhibits E06–E24 are all present; no screenshot of the production UI is in this release (the UI evidence is the two saved page reads, E19 and E21), and no internal working notes ship inside the package"
       }
     ]
   },
   "info": [
     {
       "label": "Live RTP",
-      "detail": "80.6843% (10100 bets — informational, not authoritative)",
+      "detail": "81.9387% (9750 bets — informational, not authoritative)",
       "data": {
-        "liveRTP": 0.806842809364582,
-        "totalWagered": 2989.999999999872,
-        "totalPayout": 2412.459999999997,
-        "bets": 10100
+        "liveRTP": 0.8193874788493595,
+        "totalWagered": 2955.0000000001487,
+        "totalPayout": 2421.289999999979,
+        "bets": 9750
       }
     },
     {
       "label": "Lag-1 autocorr",
-      "detail": "r₁=0.0899 (informational; authoritative = Pass 1 simulation)",
+      "detail": "r₁=0.0758 (informational; authoritative = Pass 1 simulation)",
       "data": {
-        "lag1Autocorrelation": 0.08991386286721892,
-        "sequenceLength": 10100
+        "lag1Autocorrelation": 0.07583877862994377,
+        "sequenceLength": 9750
       }
     },
     {
       "label": "Win rate by config",
-      "detail": "strictly profitable (multiplier > 1): 0.3000% (13r/4) to 45.8716% (16r/1) | dataset result=='won' (multiplier >= 1): 0.3000% (13r/4) to 81.1927% (16r/1) | 28 configs",
+      "detail": "strictly profitable (multiplier > 1): 0.1951% (13r/4) to 47.0588% (12r/2) | dataset result=='won' (multiplier >= 1): 0.1951% (13r/4) to 80.3922% (14r/1) | 28 configs",
       "data": {
         "configs": 28,
-        "strictlyProfitableMinPct": 0.3,
-        "strictlyProfitableMaxPct": 45.87155963302752,
+        "strictlyProfitableMinPct": 0.1951219512195122,
+        "strictlyProfitableMaxPct": 47.05882352941177,
         "strictlyProfitableMinConfig": "13r/4",
-        "strictlyProfitableMaxConfig": "16r/1",
-        "resultWonMinPct": 0.3,
-        "resultWonMaxPct": 81.19266055045871,
+        "strictlyProfitableMaxConfig": "12r/2",
+        "resultWonMinPct": 0.1951219512195122,
+        "resultWonMaxPct": 80.3921568627451,
         "resultWonMinConfig": "13r/4",
-        "resultWonMaxConfig": "16r/1"
+        "resultWonMaxConfig": "14r/1"
       }
     },
     {
       "label": "Slot distribution",
-      "detail": "rows=8: n=657, max slot dev=55.9% | rows=9: n=657, max slot dev=133.8% | rows=10: n=657, max slot dev=100.0% | rows=11: n=657, max slot dev=211.7% | rows=12: n=656, max slot dev=108.1% | rows=13: n=2654, max slot dev=100.0% | rows=14: n=654, max slot dev=100.0% | rows=15: n=654, max slot dev=100.0% | rows=16: n=2854, max slot dev=187.0%",
+      "detail": "rows=8: n=612, max slot dev=67.3% | rows=9: n=612, max slot dev=100.0% | rows=10: n=612, max slot dev=100.0% | rows=11: n=612, max slot dev=234.6% | rows=12: n=612, max slot dev=569.3% | rows=13: n=2660, max slot dev=100.0% | rows=14: n=610, max slot dev=100.0% | rows=15: n=610, max slot dev=104.6% | rows=16: n=2810, max slot dev=2232.2%",
       "data": {
         "maxSlotDeviation": {
-          "rows8": 0.558599695585997,
-          "rows9": 1.3378995433789955,
+          "rows8": 0.673202614379085,
+          "rows9": 1,
           "rows10": 1,
-          "rows11": 2.1171993911719937,
-          "rows12": 1.08130081300813,
+          "rows11": 2.34640522875817,
+          "rows12": 5.69281045751634,
           "rows13": 1,
           "rows14": 1,
-          "rows15": 1,
-          "rows16": 1.8703573931324458
+          "rows15": 1.0464012490241998,
+          "rows16": 22.322419928825624
         },
         "groupN": {
-          "rows8": 657,
-          "rows9": 657,
-          "rows10": 657,
-          "rows11": 657,
-          "rows12": 656,
-          "rows13": 2654,
-          "rows14": 654,
-          "rows15": 654,
-          "rows16": 2854
+          "rows8": 612,
+          "rows9": 612,
+          "rows10": 612,
+          "rows11": 612,
+          "rows12": 612,
+          "rows13": 2660,
+          "rows14": 610,
+          "rows15": 610,
+          "rows16": 2810
         }
       }
     }
   ],
   "coverage": {
-    "note": "INFO only — payout-table cell coverage is a property of capture design, not a scored integrity check. Step 7 verifies that every OBSERVED payout matches the pinned table; the unexercised cells rest on the hash-pinned plinkoConfig.json (see MANIFEST.md), not on live data.",
+    "note": "INFO only — payout-table cell coverage is a property of capture design, not a scored integrity check. Step 7 verifies that every OBSERVED payout matches the pinned table; the unexercised cells have no payout witness: they rest on the pinned plinkoConfig.json, each cell of which equals what the production game page displayed (Step 20; see MANIFEST.md).",
     "totalConfigs": 28,
     "totalCells": 365,
     "cellsExercised": 285,
     "cellsUnexercised": 80,
     "coveragePct": 78.1,
-    "rtpShareUnexercisedSummed": 0.07408553821551163,
-    "configsWithUnhitCells": 25,
+    "rtpShareUnexercisedSummed": 0.0758940758339747,
+    "configsWithUnhitCells": 27,
     "fullyExercisedConfigs": [
-      "rows 8 risk 1",
-      "rows 8 risk 3",
-      "rows 9 risk 2"
+      "rows 8 risk 1"
     ],
     "wtfTails": {
       "slot0Observed": false,
       "slot13Observed": false,
-      "note": "WTF 1000x tails slots 0 and 13 were never observed in the capture — they rest on the hash-pinned config."
+      "note": "WTF 1000x tails slots 0 and 13 were never observed in the capture — they have no payout witness and rest on the pinned config."
     },
     "perConfig": [
       {
@@ -949,6 +994,28 @@
         "wtf": false,
         "slots": 9,
         "observed": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "unhit": [
+          8
+        ],
+        "exercised": 8,
+        "rtpShareUnexercised": 0.05134281200631912
+      },
+      {
+        "config": "rows 8 risk 3",
+        "rows": 8,
+        "riskLevel": 3,
+        "wtf": false,
+        "slots": 9,
+        "observed": [
           1,
           2,
           3,
@@ -962,28 +1029,7 @@
           0
         ],
         "exercised": 8,
-        "rtpShareUnexercised": 0.05134281200631912
-      },
-      {
-        "config": "rows 8 risk 3",
-        "rows": 8,
-        "riskLevel": 3,
-        "wtf": false,
-        "slots": 9,
-        "observed": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8
-        ],
-        "unhit": [],
-        "exercised": 9,
-        "rtpShareUnexercised": 0
+        "rtpShareUnexercised": 0.1143533123028391
       },
       {
         "config": "rows 9 risk 1",
@@ -1015,7 +1061,6 @@
         "wtf": false,
         "slots": 10,
         "observed": [
-          0,
           1,
           2,
           3,
@@ -1026,9 +1071,11 @@
           8,
           9
         ],
-        "unhit": [],
-        "exercised": 10,
-        "rtpShareUnexercised": 0
+        "unhit": [
+          0
+        ],
+        "exercised": 9,
+        "rtpShareUnexercised": 0.035460992907801414
       },
       {
         "config": "rows 9 risk 3",
@@ -1037,7 +1084,6 @@
         "wtf": false,
         "slots": 10,
         "observed": [
-          0,
           1,
           2,
           3,
@@ -1048,10 +1094,11 @@
           8
         ],
         "unhit": [
+          0,
           9
         ],
-        "exercised": 9,
-        "rtpShareUnexercised": 0.08477917981072555
+        "exercised": 8,
+        "rtpShareUnexercised": 0.1695583596214511
       },
       {
         "config": "rows 10 risk 1",
@@ -1116,14 +1163,14 @@
           6,
           7,
           8,
-          9
-        ],
-        "unhit": [
-          0,
+          9,
           10
         ],
-        "exercised": 9,
-        "rtpShareUnexercised": 0.1498422712933754
+        "unhit": [
+          0
+        ],
+        "exercised": 10,
+        "rtpShareUnexercised": 0.0749211356466877
       },
       {
         "config": "rows 11 risk 1",
@@ -1140,15 +1187,15 @@
           6,
           7,
           8,
-          9
+          9,
+          10
         ],
         "unhit": [
           0,
-          10,
           11
         ],
-        "exercised": 9,
-        "rtpShareUnexercised": 0.024561057407772736
+        "exercised": 10,
+        "rtpShareUnexercised": 0.008285657920694418
       },
       {
         "config": "rows 11 risk 2",
@@ -1157,7 +1204,9 @@
         "wtf": false,
         "slots": 12,
         "observed": [
+          0,
           1,
+          2,
           3,
           4,
           5,
@@ -1165,15 +1214,13 @@
           7,
           8,
           9,
-          10
-        ],
-        "unhit": [
-          0,
-          2,
           11
         ],
-        "exercised": 9,
-        "rtpShareUnexercised": 0.10502958579881656
+        "unhit": [
+          10
+        ],
+        "exercised": 11,
+        "rtpShareUnexercised": 0.03254437869822485
       },
       {
         "config": "rows 11 risk 3",
@@ -1182,7 +1229,6 @@
         "wtf": false,
         "slots": 12,
         "observed": [
-          1,
           2,
           3,
           4,
@@ -1190,15 +1236,16 @@
           6,
           7,
           8,
-          9,
+          9
+        ],
+        "unhit": [
+          0,
+          1,
           10,
           11
         ],
-        "unhit": [
-          0
-        ],
-        "exercised": 11,
-        "rtpShareUnexercised": 0.059090013787669884
+        "exercised": 8,
+        "rtpShareUnexercised": 0.26984439629702583
       },
       {
         "config": "rows 12 risk 1",
@@ -1216,15 +1263,15 @@
           7,
           8,
           9,
-          10
+          10,
+          11
         ],
         "unhit": [
           0,
-          11,
           12
         ],
-        "exercised": 10,
-        "rtpShareUnexercised": 0.01381283607123477
+        "exercised": 11,
+        "rtpShareUnexercised": 0.004933155739726703
       },
       {
         "config": "rows 12 risk 2",
@@ -1241,16 +1288,16 @@
           7,
           8,
           9,
-          10
+          10,
+          12
         ],
         "unhit": [
           0,
           1,
-          11,
-          12
+          11
         ],
-        "exercised": 9,
-        "rtpShareUnexercised": 0.08138903960933261
+        "exercised": 10,
+        "rtpShareUnexercised": 0.07325013564839936
       },
       {
         "config": "rows 12 risk 3",
@@ -1259,7 +1306,6 @@
         "wtf": false,
         "slots": 13,
         "observed": [
-          1,
           2,
           3,
           4,
@@ -1268,11 +1314,12 @@
           7,
           8,
           9,
-          10
+          10,
+          11
         ],
         "unhit": [
           0,
-          11,
+          1,
           12
         ],
         "exercised": 10,
@@ -1394,7 +1441,6 @@
         "wtf": false,
         "slots": 15,
         "observed": [
-          1,
           2,
           3,
           4,
@@ -1404,16 +1450,17 @@
           8,
           9,
           10,
-          11,
-          12
+          11
         ],
         "unhit": [
           0,
+          1,
+          12,
           13,
           14
         ],
-        "exercised": 12,
-        "rtpShareUnexercised": 0.020099635000493245
+        "exercised": 10,
+        "rtpShareUnexercised": 0.07232169280852324
       },
       {
         "config": "rows 14 risk 3",
@@ -1422,6 +1469,7 @@
         "wtf": false,
         "slots": 15,
         "observed": [
+          2,
           3,
           4,
           5,
@@ -1436,12 +1484,11 @@
         "unhit": [
           0,
           1,
-          2,
           13,
           14
         ],
-        "exercised": 10,
-        "rtpShareUnexercised": 0.24949742856085738
+        "exercised": 11,
+        "rtpShareUnexercised": 0.1484898190742819
       },
       {
         "config": "rows 15 risk 1",
@@ -1489,17 +1536,17 @@
           9,
           10,
           11,
-          12,
-          13
+          12
         ],
         "unhit": [
           0,
           1,
+          13,
           14,
           15
         ],
-        "exercised": 12,
-        "rtpShareUnexercised": 0.02207165272288978
+        "exercised": 11,
+        "rtpShareUnexercised": 0.05767606458732791
       },
       {
         "config": "rows 15 risk 3",
@@ -1508,35 +1555,6 @@
         "wtf": false,
         "slots": 16,
         "observed": [
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10,
-          11,
-          12
-        ],
-        "unhit": [
-          0,
-          1,
-          2,
-          13,
-          14,
-          15
-        ],
-        "exercised": 10,
-        "rtpShareUnexercised": 0.28968535239914944
-      },
-      {
-        "config": "rows 16 risk 1",
-        "rows": 16,
-        "riskLevel": 1,
-        "wtf": false,
-        "slots": 17,
-        "observed": [
           2,
           3,
           4,
@@ -1554,20 +1572,19 @@
           0,
           1,
           14,
-          15,
-          16
+          15
         ],
         "exercised": 12,
-        "rtpShareUnexercised": 0.008631345965924679
+        "rtpShareUnexercised": 0.11494961323923696
       },
       {
-        "config": "rows 16 risk 2",
+        "config": "rows 16 risk 1",
         "rows": 16,
-        "riskLevel": 2,
+        "riskLevel": 1,
         "wtf": false,
         "slots": 17,
         "observed": [
-          2,
+          1,
           3,
           4,
           5,
@@ -1581,14 +1598,44 @@
         ],
         "unhit": [
           0,
-          1,
+          2,
           13,
           14,
           15,
           16
         ],
         "exercised": 11,
-        "rtpShareUnexercised": 0.0852743051808919
+        "rtpShareUnexercised": 0.02219488962666346
+      },
+      {
+        "config": "rows 16 risk 2",
+        "rows": 16,
+        "riskLevel": 2,
+        "wtf": false,
+        "slots": 17,
+        "observed": [
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ],
+        "unhit": [
+          0,
+          1,
+          2,
+          14,
+          15,
+          16
+        ],
+        "exercised": 11,
+        "rtpShareUnexercised": 0.060610731737394605
       },
       {
         "config": "rows 16 risk 3",
@@ -1597,6 +1644,7 @@
         "wtf": false,
         "slots": 17,
         "observed": [
+          0,
           2,
           3,
           4,
@@ -1613,12 +1661,11 @@
           15
         ],
         "unhit": [
-          0,
           1,
           16
         ],
-        "exercised": 14,
-        "rtpShareUnexercised": 0.06289967501834574
+        "exercised": 15,
+        "rtpShareUnexercised": 0.04748308800404531
       },
       {
         "config": "WTF (rows 13 risk 4)",

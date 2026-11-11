@@ -3,15 +3,15 @@
  *
  * A mistake in `src/domains.ts` is expensive whichever way it falls: too loose and a
  * forged value ships behind a Full Pass (the defect itself); too tight and a
- * GENUINE audit is rejected for producing an honest number (the mines G-VALID defect,
- * which cost a whole review round). So this suite pins both edges:
+ * GENUINE audit is rejected for producing an honest number (the G-VALID
+ * defect). So this suite pins both edges:
  *
  *   1. Every numeric leaf of every committed artifact satisfies its declared domain.
  *      If a rule is too tight, this fails immediately rather than at delivery.
  *   2. Every numeric leaf PATH is covered by an explicit rule. There is no silent
  *      fallback, so adding a field to an artifact without declaring what it physically
  *      admits fails here — that is what stops the class reopening.
- *   3. The specific impossible values from the round-4 probes are rejected.
+ *   3. The specific impossible values of the domain probes are rejected.
  *   4. Honest values that a naive classifier would wrongly reject are ACCEPTED.
  */
 
@@ -68,7 +68,7 @@ describe('value domains: the committed artifacts are all inside their declared d
   }
 });
 
-describe('value domains: the round-4 impossible values are rejected', () => {
+describe('value domains: the probed impossible values are rejected', () => {
   const rules = domainRules(cfg);
 
   it('a negative count of configurations is rejected (the executed probe)', () => {
@@ -125,7 +125,7 @@ describe('value domains: the round-4 impossible values are rejected', () => {
     assert.equal(min, 0.5);
     assert.equal(max, 5.6);
     assert.ok(0 < min, 'a 0% window RTP is impossible on a board whose smallest multiplier is 0.5');
-    assert.ok(min <= 1.0028 && 1.0028 <= max, 'the committed rtpEarly must stay inside its own board range');
+    assert.ok(min <= 1.0028 && 1.0028 <= max, 'a window RTP just above 1 is inside this board range');
   });
 
   it('a field with no declared domain is reported rather than waved through', () => {
@@ -139,16 +139,17 @@ describe('value domains: G-VALID — honest values are NOT rejected', () => {
   // Each of these is a real value from the committed artifacts that a naive name-based
   // classifier gets wrong. Rejecting any of them is the mines defect, and it is just as
   // expensive as accepting a forgery.
-  it('an expected COUNT is a real, not an integer (expectedFlagsByChance = 9.595)', () => {
-    assert.ok(!NONNEG_INT.ok(9.595), 'sanity: 9.595 is not an integer');
+  it('an expected COUNT is a real, not an integer (expectedFlagsByChance = 2.47)', () => {
+    // 52 seeds × 0.05 × 0.95 on the production dataset.
+    assert.ok(!NONNEG_INT.ok(52 * 0.05 * 0.95), 'sanity: 2.47 is not an integer');
     const rules = domainRules(cfg);
     const doc = JSON.parse(readFileSync(path.join(OUTPUTS, 'simulation-results.json'), 'utf8'));
-    assert.equal(doc.pass2_casino_seeds.expectedFlagsByChance, 9.595);
+    assert.equal(doc.pass2_casino_seeds.expectedFlagsByChance, 52 * 0.05 * 0.95);
     const r = validateDomains(doc, rules['simulation-results.json']);
     assert.ok(!r.violations.some(v => v.path.endsWith('expectedFlagsByChance')));
   });
 
-  it('a window RTP above 1 is attainable and accepted (rtpEarly = 1.0028…)', () => {
+  it('a window RTP above 1 is attainable and accepted (committed rows with rtpEarly > 1)', () => {
     const rules = domainRules(cfg);
     const doc = JSON.parse(readFileSync(path.join(OUTPUTS, 'simulation-results.json'), 'utf8'));
     const above = doc.pass2_casino_seeds.results.filter((r: { rtpEarly: number }) => r.rtpEarly > 1);
@@ -189,7 +190,7 @@ describe('value domains: G-VALID — honest values are NOT rejected', () => {
   });
 
   it('the committed edge-hit counts are ACCEPTED — the new bound is not too tight', () => {
-    // G-VALID, the mirror of the probe above. 1,063 and 1,020 are the honest counts; a bound
+    // G-VALID, the mirror of the probe above. The committed counts are honest; a bound
     // that rejected them would cost exactly as much as the one that accepted a billion.
     const rules = domainRules(cfg);
     const doc = JSON.parse(readFileSync(path.join(OUTPUTS, 'simulation-results.json'), 'utf8'));
@@ -203,7 +204,7 @@ describe('value domains: G-VALID — honest values are NOT rejected', () => {
 
   it('every committed Pass 2 window RTP is inside ITS OWN board\'s range', () => {
     // The per-board bound is applied per row in tests/steps/simulation.ts. Asserting it here
-    // over all 202 committed rows is the "too tight" half: if any honest row fell outside its
+    // over all 52 committed rows is the "too tight" half: if any honest row fell outside its
     // board range, the new check would reject a genuine audit.
     const doc = JSON.parse(readFileSync(path.join(OUTPUTS, 'simulation-results.json'), 'utf8'));
     const rows = doc.pass2_casino_seeds.results as { rows: number; riskLevel?: number; rtpEarly: number; rtpLate: number }[];

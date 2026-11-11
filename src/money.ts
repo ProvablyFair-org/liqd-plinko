@@ -11,7 +11,8 @@
  * and measures 9.9e-7, which any bound at 1e-6 admits. The framework floor is exact,
  * or ≤ 1e-8.
  *
- * Two copies of a rule are two rules, so the rule lives here and the steps import it.
+ * Two copies of a rule are two rules, so the rule lives here and Step 8 imports it. Step 18 (tests/steps/
+ * standardization.ts) does not: it converts the Phase C amounts to 1e-8 units with its own Math.round.
  */
 
 /** 8 decimals — the captured game-accounting precision. `betAmount` and `winningAmount` are 8-dp strings. */
@@ -19,7 +20,7 @@ export const GRID = 1e8;
 
 /**
  * Tolerance for snapping a JSON double back onto the grid, IN GRID UNITS — not a
- * tolerance on money. Measured over the committed dataset: 10,100 bets, 0 amounts off
+ * tolerance on money. Measured by Step 8 on every run over the committed dataset: 0 amounts off
  * the grid and 0 units of deviation between `betAmount × multiplier` and
  * `winningAmount`. This bound exists only so a double that reads back as
  * 4.6000000000000005 still lands on 460,000,000 units; it is 1/1000 of the smallest

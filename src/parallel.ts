@@ -9,8 +9,8 @@
  *   * the exact lattice convolution in `src/calibration.ts`, run once per DISTINCT
  *     (rows, riskLevel) board — 28 independent DPs that share no state; and
  *   * the Pass-2 execution attestation in `tests/steps/simulation.ts`, which replays
- *     `noncesPerSeed` drops per revealed epoch through the HMAC — 202 independent
- *     scans that share no state.
+ *     `noncesPerSeed` drops per revealed epoch through the HMAC — one independent
+ *     scan per epoch, sharing no state.
  *
  * Since 2026-09-24 there is a third: the full Pass-1 replay in Step 16 (src/pass1.ts), 28
  * independent configurations × 1,000,000 rounds, one configuration per job.

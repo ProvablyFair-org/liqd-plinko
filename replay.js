@@ -16,7 +16,7 @@ const node_fs_1 = require("node:fs");
 const node_crypto_1 = require("node:crypto");
 const node_path_1 = require("node:path");
 const CONFIG_PATH = (0, node_path_1.join)(__dirname, '..', 'plinkoConfig.json');
-exports.PLINKO_CONFIG_SHA256 = 'f8eaf67e1ffc63ee0dc21123447581c55f443c167dcb451b45ab7cd108fe712f';
+exports.PLINKO_CONFIG_SHA256 = '09bfaeab2b7885ef63d72cebcfe1a667cb8ec604c887cebcdea22e56c2960f0a';
 function configSha256() {
     return (0, node_crypto_1.createHash)('sha256').update((0, node_fs_1.readFileSync)(CONFIG_PATH)).digest('hex');
 }

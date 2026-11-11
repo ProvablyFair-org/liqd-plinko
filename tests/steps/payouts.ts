@@ -33,7 +33,7 @@ export function run(ctx: VerifyContext): StepResult[] {
   const { bets, cfg, phaseA } = ctx;
 
   // ── Step 7: Multiplier lookup ─────────────────────────────────────────────────
-  // Covers all configs including WTF (rows 13, risk 4).
+  // Covers every bet, on all 28 configurations (the 27 standard and WTF, rows 13 / risk 4).
   let multErrors = 0, multChecked = 0;
   for (const b of bets) {
     const table = payoutTable(cfg, b.numberOfRows, b.riskLevel);
@@ -46,23 +46,21 @@ export function run(ctx: VerifyContext): StepResult[] {
         || Math.abs(expected - b.multiplier) > 1e-9) multErrors++;
   }
   // DECLARED LIMITATION S00, stated where the reader meets the conformance claim. This step can
-  // only check cells that were actually PAID. The capture landed on 285 of the 365 payout-table
-  // cells; the other 80 — including both WTF 1000× tails — rest on our hand-transcription of the
-  // operator's client bundle, hash-pinned as plinkoConfig.json, and carry 7.41% of summed
-  // theoretical RTP (up to 29.0% on 15r/3). Nothing offline can distinguish a correct
-  // transcription of a never-paid cell from a wrong one that keeps every board within the
-  // published-RTP band (at or above 98.9%); the residual is executed every battery run as declared
-  // survivor S00 in tests/mutations-extra.json, which mis-transcribes both 1000× tails, regenerates
-  // the config pin and propagates it to every chapter. 17 of the 21 scored steps still pass it;
-  // see S00's guard for the four that reject it and which of those is detection (Step 10, via the
-  // published-RTP rule). Exact per-cell coverage is emitted to outputs/coverage-results.json.
+  // only check cells that were actually PAID. The cells no captured drop landed on have no payout
+  // witness: they rest on the pinned plinkoConfig.json, whose every cell is held to what the
+  // production game page displayed (Step 20, src/page-labels.ts) — a display, not a payment. The
+  // counts and their share of theoretical RTP are emitted (data below, Step 9 and
+  // outputs/coverage-results.json), never typed here. Nothing offline can distinguish a correct
+  // value in a never-paid cell from a wrong one that keeps every board within the published-RTP
+  // band and is also wrong on the saved page read; the residual is executed every battery run as
+  // declared survivor S00 in tests/mutations-extra.json. See S00's guard for the steps that reject it.
   const observedCells = new Set(bets.map(b => `${b.numberOfRows}:${b.riskLevel}:${b.winningSlot}`));
   const totalCells = allConfigs(cfg).reduce((a, c) => a + (isWtf(c.riskLevel) ? cfg.wtf_mode.odds.length : c.rows + 1), 0);
   const s7 = step(7, 'Multiplier Lookup',
     multErrors === 0 ? 'PASS' : 'FAIL',
     `${multChecked} bets checked (incl. WTF) at 1e-9 tolerance; multiplier == payoutTable[winningSlot] (both required finite); ${multErrors} mismatches. `
     + `SCOPE (declared limitation S00): this compares PAID multipliers only — ${observedCells.size}/${totalCells} payout-table cells were exercised by the capture; `
-    + `the remaining ${totalCells - observedCells.size} (incl. both WTF 1000× tails) rest on the hash-pinned transcription in plinkoConfig.json, not on live data. `
+    + `the remaining ${totalCells - observedCells.size} have no payout witness and rest on the pinned plinkoConfig.json, each cell of which equals what the production game page displayed (Step 20). `
     + `See outputs/coverage-results.json, MANIFEST 'Declared limitations' and declared survivor S00 in tests/mutations-extra.json`,
     {
       betsChecked: multChecked,
@@ -79,7 +77,7 @@ export function run(ctx: VerifyContext): StepResult[] {
   // equality; the only tolerance is inside unitsOf(), snapping a JSON double back onto
   // the grid. Framework floor: exact, or <= 1e-8.
   //
-  // Measured over this dataset: 10,100 bets, 0 off-grid amounts and 0 units of
+  // Measured over this dataset: 0 off-grid amounts and 0 units of
   // deviation — exactness is what the data supports, not an aspiration.
   let payErrors = 0, offGrid = 0, worstUnits = 0, worstExample = '';
   for (const b of bets) {
@@ -107,10 +105,11 @@ export function run(ctx: VerifyContext): StepResult[] {
   // ── Step 9: Config completeness, Phase-A floor & never-paid cell coverage ─────
   // PLINKO-15. Three things, all scored HERE so the coverage the report cites is a scored
   // artifact rather than the unscored coverage block alone:
-  //   (a) every published standard config appears at all (presence);
-  //   (b) every published standard config carries at least the Phase-A floor of bets
+  //   (a) every published config appears at all (presence): the 27 standard and WTF;
+  //   (b) every one of the 28 carries at least the Phase-A floor of bets
   //       (MIN_PHASE_A_BETS_PER_CONFIG in src/loader.ts — the declared floor, not a count
-  //       read from the dataset). WTF is captured in its own Phase E and checked by Step 15;
+  //       read from the dataset). WTF's Phase A drops are plan id A+W; its own Phase E is
+  //       checked by Step 15;
   //   (c) the never-paid payout-table cells are enumerated with their share of theoretical
   //       RTP (a coverage artifact), so the reader knows what the live sample did and did not
   //       exercise. This is the same computation the unscored coverage block emits, moved
@@ -134,6 +133,8 @@ export function run(ctx: VerifyContext): StepResult[] {
     .filter(c => c.bets < MIN_PHASE_A_BETS_PER_CONFIG);
   const minPhaseA = phaseACounts.length ? Math.min(...phaseACounts) : 0;
   const maxPhaseA = phaseACounts.length ? Math.max(...phaseACounts) : 0;
+  const wtfPhaseA = phaseAByConfig.get(`${cfg.wtf_mode.rows}:${cfg.wtf_mode.riskLevel}`) ?? 0;
+  const wtfFloorOk = wtfPhaseA >= MIN_PHASE_A_BETS_PER_CONFIG;
 
   // (c) Never-paid cells and their share of theoretical RTP, per config and summed.
   const observedSlots = new Map<string, Set<number>>();
@@ -166,22 +167,23 @@ export function run(ctx: VerifyContext): StepResult[] {
   }
   const neverPaidRtpShareSummed = theoreticalRtpSum > 0 ? neverPaidRtp / theoreticalRtpSum : 0;
 
-  const floorOk = missingStd.length === 0 && wtfPresent && belowFloor.length === 0;
+  const floorOk = missingStd.length === 0 && wtfPresent && belowFloor.length === 0 && wtfFloorOk;
   const s9 = step(9, 'Config Completeness (27 standard + WTF)',
     floorOk ? 'PASS' : 'FLAG',
     `${stdCount}/27 standard configs + ${wtfPresent ? 'WTF' : 'no WTF'} present`
-      + `; Phase A per standard config ≥ ${MIN_PHASE_A_BETS_PER_CONFIG}-bet floor (src/loader.ts MIN_PHASE_A_BETS_PER_CONFIG): `
-      + `${expectedStd.length - belowFloor.length}/27 meet it (observed ${minPhaseA}–${maxPhaseA} bets/config)`
+      + `; Phase A per config ≥ ${MIN_PHASE_A_BETS_PER_CONFIG}-bet floor (src/loader.ts MIN_PHASE_A_BETS_PER_CONFIG): `
+      + `${expectedStd.length - belowFloor.length}/27 standard configs meet it (observed ${minPhaseA}–${maxPhaseA} bets/config) and WTF ${wtfFloorOk ? 'meets' : 'DOES NOT meet'} it (${wtfPhaseA} Phase A bets)`
       + (belowFloor.length > 0 ? `; BELOW FLOOR: ${belowFloor.slice(0, 5).map(c => `${c.config}=${c.bets}`).join(', ')}` : '')
       + (missingStd.length > 0 ? `; missing config: ${missingStd.slice(0, 5).join(', ')}` : '')
       + `; never-paid cells ${neverPaidCount}/${totalCoverageCells} carrying ${(neverPaidRtpShareSummed * 100).toFixed(2)}% of summed theoretical RTP `
-      + `(coverage artifact — the unexercised cells rest on the hash-pinned plinkoConfig.json, not on live data; per-cell RTP shares in data.neverPaidCellRtpShare)`,
+      + `(coverage artifact — the unexercised cells have no payout witness and rest on the pinned plinkoConfig.json; per-cell RTP shares in data.neverPaidCellRtpShare)`,
     {
       standardConfigsPresent: stdCount,
       wtfPresent,
       phaseAFloor: MIN_PHASE_A_BETS_PER_CONFIG,
       phaseAMinPerConfig: minPhaseA,
       phaseAMaxPerConfig: maxPhaseA,
+      phaseAWtfBets: wtfPhaseA,
       configsBelowFloor: belowFloor.length,
       neverPaidCells: neverPaidCount,
       coverageCellsTotal: totalCoverageCells,

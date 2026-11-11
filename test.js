@@ -4,7 +4,7 @@ const __modules = {
 "src/calibration.js": function(module, exports, require, __filename, __dirname) {
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.countBelowThreshold = exports.CALIBRATION_METHOD = exports.EXACT_LEFT_TAIL_SLOTS = exports.Z_LEFT_TAIL = void 0;
+exports.countBelowThreshold = exports.CALIBRATION_METHOD = exports.EXACT_LEFT_TAIL_SLOTS = exports.PASS2_SUMMARY_TOLERANCE = exports.Z_LEFT_TAIL = void 0;
 exports.payoutMuSd = payoutMuSd;
 exports.payoutValueDistribution = payoutValueDistribution;
 exports.leftTailSumThreshold = leftTailSumThreshold;
@@ -24,6 +24,7 @@ const config_1 = require("./config");
 const rng_1 = require("./rng");
 const parallel_1 = require("./parallel");
 exports.Z_LEFT_TAIL = 1.645;
+exports.PASS2_SUMMARY_TOLERANCE = 1e-6;
 const LATTICE_SCALE = 10;
 function payoutMuSd(cfg, rows, riskLevel) {
     const t = (0, config_1.payoutTable)(cfg, rows, riskLevel);
@@ -350,7 +351,7 @@ const node_fs_1 = require("node:fs");
 const node_crypto_1 = require("node:crypto");
 const node_path_1 = require("node:path");
 const CONFIG_PATH = (0, node_path_1.join)(__dirname, '..', 'plinkoConfig.json');
-exports.PLINKO_CONFIG_SHA256 = 'f8eaf67e1ffc63ee0dc21123447581c55f443c167dcb451b45ab7cd108fe712f';
+exports.PLINKO_CONFIG_SHA256 = '09bfaeab2b7885ef63d72cebcfe1a667cb8ec604c887cebcdea22e56c2960f0a';
 function configSha256() {
     return (0, node_crypto_1.createHash)('sha256').update((0, node_fs_1.readFileSync)(CONFIG_PATH)).digest('hex');
 }
@@ -578,13 +579,14 @@ function domainRules(cfg) {
             { path: /^\.steps\.step5\.(siteVerifierFilesPinned|siteVerifierFilesMatchingPin)$/, domain: (0, exports.intAtMost)(4, 'site-verifier files pinned in src/site-verifier.ts') },
             { path: /^\.steps\.step5\.(siteVerifierBetsRun|siteVerifierPathMismatches|siteVerifierSlotMismatches|siteVerifierMultiplierMismatches|siteVerifierRowMismatches)$/, domain: BET_COUNT },
             { path: /^\.steps\.step5\.(siteVerifierPaytableCells|siteVerifierPaytableCellsDiffering)$/, domain: CELL_COUNT },
+            { path: /^\.steps\.step2\.(preCommitmentsChecked|preCommitmentFails|epochTransitions|preCaptureAnchors|captures)$/, domain: SEED_COUNT },
             { path: /^\.steps\.step6\.(tested|expectedTested|changed|samePath)$/, domain: BET_COUNT },
             { path: /^\.steps\.step6\.expectedSamePath$/, domain: exports.NONNEG_REAL },
             { path: /^\.steps\.step6\.(samePathSurvivalP|alpha)$/, domain: exports.PROBABILITY },
             { path: /^\.steps\.step7\.(betsChecked|mismatches)$/, domain: BET_COUNT },
             { path: /^\.steps\.step7\.(cellsExercised|cellsTotal|cellsUnexercised)$/, domain: CELL_COUNT },
             { path: /^\.steps\.step9\.(standardConfigsPresent|configsBelowFloor)$/, domain: CFG_COUNT },
-            { path: /^\.steps\.step9\.(phaseAFloor|phaseAMinPerConfig|phaseAMaxPerConfig)$/, domain: BET_COUNT },
+            { path: /^\.steps\.step9\.(phaseAFloor|phaseAMinPerConfig|phaseAMaxPerConfig|phaseAWtfBets)$/, domain: BET_COUNT },
             { path: /^\.steps\.step9\.(neverPaidCells|coverageCellsTotal)$/, domain: CELL_COUNT },
             { path: /^\.steps\.step9\.neverPaidRtpShareSummed$/, domain: exports.NONNEG_REAL },
             { path: /^\.steps\.step9\.neverPaidCellRtpShare\.\d+:\d+:\d+$/, domain: exports.NONNEG_REAL },
@@ -595,20 +597,24 @@ function domainRules(cfg) {
             { path: /^\.steps\.step11\.(betsLoaded|expectedBets|planSum|metaPlannedTotal)$/, domain: BET_COUNT },
             { path: /^\.steps\.step11\.(seedRecords|expectedSeeds)$/, domain: SEED_COUNT },
             { path: /^\.steps\.step11\.(phaseCounts|expectedPhaseBets)\.[A-E]$/, domain: BET_COUNT },
-            { path: /^\.steps\.step12\.(epochsByHash|epochIndexes|expectedSeeds|seedRecords)$/, domain: SEED_COUNT },
-            { path: /^\.steps\.step12\.(minEpochSize|maxEpochSize|expectedEpochSize|metaEpochSize)$/, domain: (0, exports.intAtMost)(loader_1.EXPECTED_BETS, 'bets in an epoch') },
+            { path: /^\.steps\.step12\.(epochsByHash|epochIndexes|expectedSeeds|seedRecords|epochsOnPlan)$/, domain: SEED_COUNT },
+            { path: /^\.steps\.step12\.(minEpochSize|maxEpochSize|primaryWindowNonces)$/, domain: (0, exports.intAtMost)(loader_1.EXPECTED_BETS, 'bets in an epoch') },
+            { path: /^\.steps\.step12\.epochsPerPlanEntry\.[A-E](\+W)?$/, domain: SEED_COUNT },
+            { path: /^\.steps\.step12\.betsPerPlanEntry\.[A-E](\+W)?$/, domain: BET_COUNT },
             { path: /^\.steps\.step13\.rowsAudited$/, domain: (0, exports.intBetween)(1, cfg.rows.max, 'board sizes audited') },
             { path: /^\.steps\.step13\.worstRows$/, domain: (0, exports.intBetween)(cfg.rows.min, cfg.rows.max, 'rows on a board') },
             { path: /^\.steps\.step13\.(maxAbsCoefficientError|maxAbsSumMinusOne|sumTolerance)$/, domain: exports.NONNEG_REAL },
-            { path: /^\.steps\.step14\.(phaseDBets|recomputed|exposedBets)$/, domain: BET_COUNT },
-            { path: /^\.steps\.step14\.distinctClientSeeds$/, domain: BET_COUNT },
-            { path: /^\.steps\.step14\.(phaseDWagered|phaseDPaid|exposedWagered|exposedPaid)$/, domain: exports.NONNEG_REAL },
-            { path: /^\.steps\.step14\.(predictableEpochs\[\]|exposedEpochs\[\])$/, domain: EPOCH_IDX },
-            { path: /^\.steps\.step14\.unresolvedPredictabilityEpoch$/, domain: (0, exports.intBetween)(-1, loader_1.EXPECTED_SEEDS - 1, 'epoch index, or -1 for none') },
-            { path: /^\.steps\.step15\.(wtfBets|recomputed|multipliersChecked)$/, domain: BET_COUNT },
+            { path: /^\.steps\.step14\.(phaseDBets|phaseDRecomputed|seededBets|betsCarryingEpochSeed|recomputed)$/, domain: BET_COUNT },
+            { path: /^\.steps\.step14\.(phaseDEpochs|distinctPlayerSetSeeds|playerSetSeedFloor|playerSetShapedSeeds|playerSetSeedsOutsidePhaseD|phaseDCommittedBeforeClientSeed|distinctClientSeeds|epochsReusingPreCaptureSeed|epochsCommittedBeforeClientSeed|auditShapedSeeds)$/, domain: SEED_COUNT },
+            { path: /^\.steps\.step14\.phaseDSettings$/, domain: CFG_COUNT },
+            { path: /^\.steps\.step14\.(phaseDWagered|phaseDPaid)$/, domain: exports.NONNEG_REAL },
+            { path: /^\.steps\.step15\.(wtfBets|wtfBetsAll|wtfBetsPhaseATopUp|wtfPayingDrops|recomputed|multipliersChecked)$/, domain: BET_COUNT },
+            { path: /^\.steps\.step15\.wtfSlotsReached\[\]$/, domain: (0, exports.intAtMost)((0, config_1.slotCount)(cfg.rows.max) - 1, 'slot index on a board') },
             { path: /^\.steps\.step15\.wtfTheoreticalRTP$/, domain: RTP },
             { path: /^\.steps\.step15\.(payingSlots|totalSlots)$/, domain: (0, exports.intAtMost)((0, config_1.slotCount)(cfg.rows.max), 'slots on a board') },
             { path: /^\.steps\.step15\.(pZeroPayout|pPayingSlot)$/, domain: exports.PROBABILITY },
+            { path: /^\.steps\.step18\.(phaseCBets|phaseCFloor|recomputed|recomputeMismatches|betsOffStake|payoutMismatches)$/, domain: BET_COUNT },
+            { path: /^\.steps\.step18\.drawArity$/, domain: (0, exports.intAtMost)(16, 'declared parameters of the draw function') },
             { path: /^\.steps\.step16\.(expectedConfigs|resultRows|boardsPresentExactlyOnce|missingConfigs|strangerConfigs|duplicateConfigs|chi2BonferroniFails|serialUncorrectedFails|serialBonferroniFails|rtpWithin6SE|theoryRowsAgreeingWithPinnedConfig|serialPairsMeasured|aggregateDisagreements)$/, domain: CFG_COUNT },
             { path: /^\.steps\.step16\.(roundsPerConfig|totalRounds)$/, domain: exports.NONNEG_INT },
             { path: /^\.steps\.step16\.(replayConfigs|tracesBoundToHistogram)$/, domain: CFG_COUNT },
@@ -635,6 +641,8 @@ function domainRules(cfg) {
             { path: /^\.steps\.step17\.summaryFieldsRecomputed$/, domain: exports.NONNEG_INT },
             { path: /^\.steps\.step(16|17|20)\.(domainLeavesChecked|domainViolations|domainUndeclaredFields|domainFailures)$/, domain: exports.NONNEG_INT },
             { path: /^\.steps\.step20\.hexTokensDrifted$/, domain: exports.NONNEG_INT },
+            { path: /^\.steps\.step20\.pageReadBoards$/, domain: CFG_COUNT },
+            { path: /^\.steps\.step20\.(pageReadCells|pageReadCellsByNumericLabel|pageReadCellsBy1kLabel|pageReadCellsByPageStatement|pageReadMismatches)$/, domain: CELL_COUNT },
             { path: /^\.steps\.step21\.drops$/, domain: BET_COUNT },
             { path: /^\.steps\.step21\.seeds$/, domain: SEED_COUNT },
             { path: /^\.steps\.step21\.groups$/, domain: CFG_COUNT },
@@ -704,7 +712,8 @@ function describeDomainFailures(artifact, r) {
 "src/loader.js": function(module, exports, require, __filename, __dirname) {
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MIN_PHASE_A_BETS_PER_CONFIG = exports.EXPECTED_PHASE_BETS = exports.EXPECTED_EPOCH_SIZE = exports.EXPECTED_SEEDS = exports.EXPECTED_BETS = exports.EXPECTED_DATASET_SHA256 = void 0;
+exports.MIN_PHASE_C_BETS = exports.MIN_PHASE_D_PLAYER_SEEDS = exports.MIN_PHASE_A_BETS_PER_CONFIG = exports.PRIMARY_WINDOW_NONCES = exports.EXPECTED_CAPTURE_EPOCHS = exports.EXPECTED_PHASE_BETS = exports.EXPECTED_EPOCH_SIZE = exports.EXPECTED_PLAN = exports.EXPECTED_PHASES = exports.EXPECTED_SEEDS = exports.EXPECTED_BETS = exports.DATASET_FILE = exports.EXPECTED_DATASET_SHA256 = void 0;
+exports.planEntry = planEntry;
 exports.loadDataset = loadDataset;
 exports.revealedSeedMap = revealedSeedMap;
 exports.seedByEpoch = seedByEpoch;
@@ -712,12 +721,29 @@ exports.betsByEpoch = betsByEpoch;
 exports.phaseBets = phaseBets;
 const node_crypto_1 = require("node:crypto");
 const node_fs_1 = require("node:fs");
-exports.EXPECTED_DATASET_SHA256 = '871c485ef0d55ca38af2cece4880abdc32fe8b62584468c5d4cfdfd01506fc95';
-exports.EXPECTED_BETS = 10100;
-exports.EXPECTED_SEEDS = 202;
-exports.EXPECTED_EPOCH_SIZE = 50;
-exports.EXPECTED_PHASE_BETS = { A: 5400, B: 2000, C: 200, D: 500, E: 2000 };
+exports.EXPECTED_DATASET_SHA256 = '83965cdc5381db3ad99bf7c1c1e1d2e0d90f574132f96642027599c0edea8a16';
+exports.DATASET_FILE = 'data/plinko-prod-9750bets.json';
+exports.EXPECTED_BETS = 9750;
+exports.EXPECTED_SEEDS = 52;
+exports.EXPECTED_PHASES = ['A', 'B', 'C', 'D', 'E'];
+exports.EXPECTED_PLAN = [
+    { id: 'A', phase: 'A', capture: 1, bets: 5000, epochs: 25, epochSize: 200, stake: '0.10000000' },
+    { id: 'D', phase: 'D', capture: 2, bets: 500, epochs: 5, epochSize: 100, stake: '0.10000000' },
+    { id: 'B', phase: 'B', capture: 2, bets: 2000, epochs: 10, epochSize: 200, stake: '0.10000000' },
+    { id: 'A+W', phase: 'A', capture: 2, bets: 50, epochs: 1, epochSize: 50, stake: '0.10000000' },
+    { id: 'E', phase: 'E', capture: 2, bets: 2000, epochs: 10, epochSize: 200, stake: '0.10000000' },
+    { id: 'C', phase: 'C', capture: 3, bets: 200, epochs: 1, epochSize: 200, stake: '10.00000000' },
+];
+exports.EXPECTED_EPOCH_SIZE = Object.freeze(Object.fromEntries(exports.EXPECTED_PLAN.map(e => [e.id, e.epochSize])));
+function planEntry(id) {
+    return exports.EXPECTED_PLAN.find(e => e.id === id);
+}
+exports.EXPECTED_PHASE_BETS = { A: 5050, B: 2000, C: 200, D: 500, E: 2000 };
+exports.EXPECTED_CAPTURE_EPOCHS = [25, 26, 1];
+exports.PRIMARY_WINDOW_NONCES = 50;
 exports.MIN_PHASE_A_BETS_PER_CONFIG = 50;
+exports.MIN_PHASE_D_PLAYER_SEEDS = 2;
+exports.MIN_PHASE_C_BETS = 100;
 function loadDataset(path, expectedSha256) {
     if (!(0, node_fs_1.existsSync)(path)) {
         console.error(`ERROR: dataset not found at ${path}`);
@@ -1226,7 +1252,7 @@ describe('value domains: the committed artifacts are all inside their declared d
         });
     }
 });
-describe('value domains: the round-4 impossible values are rejected', () => {
+describe('value domains: the probed impossible values are rejected', () => {
     const rules = (0, domains_1.domainRules)(cfg);
     it('a negative count of configurations is rejected (the executed probe)', () => {
         const p = path.join(OUTPUTS, 'coverage-results.json');
@@ -1262,7 +1288,7 @@ describe('value domains: the round-4 impossible values are rejected', () => {
         assert_1.strict.equal(min, 0.5);
         assert_1.strict.equal(max, 5.6);
         assert_1.strict.ok(0 < min, 'a 0% window RTP is impossible on a board whose smallest multiplier is 0.5');
-        assert_1.strict.ok(min <= 1.0028 && 1.0028 <= max, 'the committed rtpEarly must stay inside its own board range');
+        assert_1.strict.ok(min <= 1.0028 && 1.0028 <= max, 'a window RTP just above 1 is inside this board range');
     });
     it('a field with no declared domain is reported rather than waved through', () => {
         const doc = { totalConfigs: 28, somethingNobodyDeclared: 7 };
@@ -1271,15 +1297,15 @@ describe('value domains: the round-4 impossible values are rejected', () => {
     });
 });
 describe('value domains: G-VALID — honest values are NOT rejected', () => {
-    it('an expected COUNT is a real, not an integer (expectedFlagsByChance = 9.595)', () => {
-        assert_1.strict.ok(!domains_1.NONNEG_INT.ok(9.595), 'sanity: 9.595 is not an integer');
+    it('an expected COUNT is a real, not an integer (expectedFlagsByChance = 2.47)', () => {
+        assert_1.strict.ok(!domains_1.NONNEG_INT.ok(52 * 0.05 * 0.95), 'sanity: 2.47 is not an integer');
         const rules = (0, domains_1.domainRules)(cfg);
         const doc = JSON.parse((0, fs_1.readFileSync)(path.join(OUTPUTS, 'simulation-results.json'), 'utf8'));
-        assert_1.strict.equal(doc.pass2_casino_seeds.expectedFlagsByChance, 9.595);
+        assert_1.strict.equal(doc.pass2_casino_seeds.expectedFlagsByChance, 52 * 0.05 * 0.95);
         const r = (0, domains_1.validateDomains)(doc, rules['simulation-results.json']);
         assert_1.strict.ok(!r.violations.some(v => v.path.endsWith('expectedFlagsByChance')));
     });
-    it('a window RTP above 1 is attainable and accepted (rtpEarly = 1.0028…)', () => {
+    it('a window RTP above 1 is attainable and accepted (committed rows with rtpEarly > 1)', () => {
         const rules = (0, domains_1.domainRules)(cfg);
         const doc = JSON.parse((0, fs_1.readFileSync)(path.join(OUTPUTS, 'simulation-results.json'), 'utf8'));
         const above = doc.pass2_casino_seeds.results.filter((r) => r.rtpEarly > 1);
@@ -1352,48 +1378,48 @@ function runSelftest() {
     }
     const vectors = [
         {
-            id: "V1", serverSeed: "fc9a1d6fad00e0832fddfdea45435c85",
-            commitment: "3b34a0fce5732f2d9c89b16fca9c2b6a231c2b7f2de29bbc41e141861dc39d36",
-            clientSeed: "auditb1141320acde", nonce: 0, rows: 8,
-            digest1: "1bc5cc26bf9ba6d661badc7907e87182fd2a3b9e3a9f4e183789cbd37d14db12",
-            u32: [465947686, 261972339, 3688591245, 4099969822, 3461456877, 91014705, 217623221, 325826245],
-            path: "01101111", slot: 6,
+            id: "V1", serverSeed: "9ef0b85313bd2d1b8d96e22df9b08ff4",
+            commitment: "fc09cc34555528c74b6242b31ea0fbe2e4a51b085b66d58c5aa50d68b1c090fd",
+            clientSeed: "auditf011676cf201", nonce: 0, rows: 8,
+            digest1: "5269454bf2bc713c77ed5c6f9fb6c4a14d689cd68b8b9ac1f21453cd547e9c21",
+            u32: [1382630731, 2843172180, 3774875546, 736692549, 4033295762, 990658859, 1408222412, 2487925249],
+            path: "10010101", slot: 4,
         },
         {
-            id: "V2", serverSeed: "ea78c284099479c0624dcc65bd49a6b4",
-            commitment: "4a20f49109bae29e360b795bb26ee9d2d1a41545cfd9e7db9d55c5291d4d752a",
-            clientSeed: "auditfdbdfd859cad", nonce: 4, rows: 16,
-            digest1: "14a65daf28f097e59a986d398ba5c41975fc2c8ffb33c4c08e55e9e2d77e1939",
-            u32: [346447279, 1187183741, 504372685, 2146127743, 3132006485, 4121536863, 3580981619, 1665279301,
-                3177010849, 2445154865, 2892111452, 3238620967, 1061105011, 1168669417, 1313618577, 2487409767],
-            path: "1111111111011111", slot: 15,
+            id: "V2", serverSeed: "715bcb6f4a43571308e03e95b99931bc",
+            commitment: "bc99a69f4b131bf7cebc8cd4267b8559c7524769eaade6737314528257fa4d03",
+            clientSeed: "audit08d03eedd4b7", nonce: 122, rows: 16,
+            digest1: "10a520d28b3ee526a0b0b8cb1edd7aac8d7bf539442f93514483ec59510b010c",
+            u32: [279257298, 2459872134, 847434472, 2983027234, 3429187080, 2721595078, 3082358334, 2282858064,
+                735793118, 430178866, 461077886, 4170719104, 3446436280, 1367243104, 3863180374, 1986618352],
+            path: "0000000000000000", slot: 0,
         },
         {
-            id: "V3", serverSeed: "7946393604bd5d1a42972a32dcb34a6c",
-            commitment: "ac6291949101c6057cb6d48818b13229ee3085fb9877642c5c64118343cacf50",
-            clientSeed: "audit4235425fddbb", nonce: 18, rows: 16,
-            digest1: "8f6617f7a56642a390b297adfb8cba0fdf324414a97b72a2bfe60b18f3db617d",
-            u32: [2405832695, 842234661, 2664265389, 1239853252, 555793299, 1955308833, 1660070429, 700809953,
-                3925203730, 3097751101, 2464513283, 3083207281, 634065437, 907262603, 4272985791, 1693099616],
-            path: "1110111101111110", slot: 13,
+            id: "V3", serverSeed: "eb417d31525821f1278b0ccea8edeb18",
+            commitment: "45996e535bce855e59b8f945d0f3adb3447e4040b7f3ddbed25c48551fe087de",
+            clientSeed: "audit65a06fd5119c", nonce: 9, rows: 16,
+            digest1: "fd807e735aff094bb3759c956e5b4396ec3f5f89233cba9d6e65bd461aac32a7",
+            u32: [4253056627, 853350442, 3769460548, 1875099557, 2991491813, 2444037069, 977134801, 2770240191,
+                1524905081, 2936522273, 2279798965, 3273965895, 2417993271, 3757241147, 683083631, 2935554119],
+            path: "1001111111111111", slot: 14,
         },
         {
-            id: "V4", serverSeed: "d7fc3e5d19db3e1646ffc5ec1da2bb9a",
-            commitment: "d36168fe4bd1110de73dd9bf67919c3f6c12414468f5fce7b811c90d5be9ac9a",
-            clientSeed: "pfaudit-1783390325646-152", nonce: 13, rows: 12,
-            digest1: "b09c64f83793d74eff688e3cc48642d1d7f13edab56cccb64e5a5b876e724fdb",
-            u32: [2963039480, 609955217, 1753020910, 2092186930, 3168917280, 4228365897, 2546896041, 408347392,
-                1501153080, 100619428, 1009938668, 1422609502],
-            path: "010001100000", slot: 3,
+            id: "V4", serverSeed: "afdbff1826807b581e82e15ccd53a90d",
+            commitment: "df6243d149a59eafbd9e6e6986bdc7c1806f25a12960d4452f6019e539a9b0af",
+            clientSeed: "pfaudit-prod-plinko-d3-b43f85abca8a", nonce: 15, rows: 16,
+            digest1: "f7d4c4c1a6efbbee65b1f04957bba49aa9b53f85e77273ca7d90f0ae04ef7c80",
+            u32: [4157916353, 2112150979, 2642622427, 3886798582, 639340445, 2478021331, 1753002797, 3587131851,
+                3629458181, 4153036531, 3354855894, 2658060931, 1018867619, 1939733663, 3834424449, 3586559355],
+            path: "1110111111011111", slot: 14,
         },
         {
-            id: "V5", serverSeed: "0d249f81e03a903d6b17c71ebc82817a",
-            commitment: "1e74e08a9dd50f50ef689e15b52a37ca15c83fbcb1b166202a85f7ea78cec70b",
-            clientSeed: "auditc680c9435be0", nonce: 32, rows: 13,
-            digest1: "a8a25bc36f1d2b339d641ada2ad3a1fa653ef6cbba4dd9ff9c2fa7a464b88450",
-            u32: [2829212611, 3975601995, 3693746059, 345428137, 2205473013, 320649226, 2045002243, 2307408443,
-                2466660811, 2056615533, 5637941, 1289934329, 2014158041],
-            path: "1111101111111", slot: 12,
+            id: "V5", serverSeed: "0d37ca1328cc862aead5e3aa5f2d853d",
+            commitment: "136668587a94490a30f2802f6060ccbac102697707d70e4cca914ab345d79b9f",
+            clientSeed: "audit2737549576ae", nonce: 34, rows: 13,
+            digest1: "ad3c9e7d1040b1f075bc27ab79b4ec7390e7faadbd5850f659a2054a30804e2f",
+            u32: [2906431101, 1901887950, 2075721589, 334739687, 2593919865, 3658226095, 3128206033, 1524910409,
+                1515008241, 2858343663, 189450267, 684219243, 4291166137],
+            path: "1011111111111", slot: 12,
         },
     ];
     const pageSeed = "c732c958f6d41e0a7b3549ce8f2b1d64a09e5837cc4b1f2ae6d80935b7c4a1e2";
@@ -1419,7 +1445,7 @@ function runSelftest() {
         check(`${v.id} path`, out.path === v.path, out.path);
         check(`${v.id} slot`, out.winningSlot === v.slot, String(out.winningSlot));
     }
-    check("message example auditb1141320acde:0:8", (0, rng_1.getProvablyFairHmacSalt)("auditb1141320acde", 0, 8) === "auditb1141320acde:0:8");
+    check("message example auditf011676cf201:0:8", (0, rng_1.getProvablyFairHmacSalt)("auditf011676cf201", 0, 8) === "auditf011676cf201:0:8");
     let rangeOk = true;
     let consistOk = true;
     let ones = 0;
@@ -1478,15 +1504,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const node_assert_1 = require("node:assert");
 const rng_1 = require("../../src/rng");
 describe('plinko: real captured bet reproduction', () => {
-    it('serverSeed fc9a… clientSeed auditb1141320acde nonce=0 rows=8 -> dropDetails "01101111" slot 6', () => {
-        const { path, winningSlot } = (0, rng_1.revealPlinko)('fc9a1d6fad00e0832fddfdea45435c85', 'auditb1141320acde', 0, 8);
-        node_assert_1.strict.equal(path, '01101111');
-        node_assert_1.strict.equal(winningSlot, 6);
+    it('serverSeed 9ef0… clientSeed auditf011676cf201 nonce=0 rows=8 -> dropDetails "10010101" slot 4', () => {
+        const { path, winningSlot } = (0, rng_1.revealPlinko)('9ef0b85313bd2d1b8d96e22df9b08ff4', 'auditf011676cf201', 0, 8);
+        node_assert_1.strict.equal(path, '10010101');
+        node_assert_1.strict.equal(winningSlot, 4);
+    });
+    it('serverSeed 715b… clientSeed audit08d03eedd4b7 nonce=122 rows=16 -> sixteen lefts, slot 0', () => {
+        const { path, winningSlot } = (0, rng_1.revealPlinko)('715bcb6f4a43571308e03e95b99931bc', 'audit08d03eedd4b7', 122, 16);
+        node_assert_1.strict.equal(path, '0000000000000000');
+        node_assert_1.strict.equal(winningSlot, 0);
     });
 });
 describe('rng: commitment hash (SHA-256 of utf8 hex string)', () => {
     it('commitHash reproduces a known hashedServerSeed', () => {
-        node_assert_1.strict.equal((0, rng_1.commitHash)('fc9a1d6fad00e0832fddfdea45435c85'), '3b34a0fce5732f2d9c89b16fca9c2b6a231c2b7f2de29bbc41e141861dc39d36');
+        node_assert_1.strict.equal((0, rng_1.commitHash)('ddcda6f7c125e6494b4f090024ed3090'), '3de47d79a186ad44530ee8c65f292879e3d3b47ce31a0dd454e947216861c222');
     });
 });
 

@@ -1,9 +1,15 @@
-// Types mirror the exact capture schema in data/plinko-master-10100bets.json
-// (liqd-plinko-capture-v1). Field names match the dataset verbatim — do not rename.
+// Types mirror the scored dataset, data/plinko-prod-9750bets.json (three liqd-plinko-prod-capture-v1 exports
+// converted into one { meta, seeds, bets } file). Field names match the dataset verbatim — do not rename.
 
 export interface Seed {
-  epoch: number;
-  phase: string;                    // A | B | C | D | E
+  epoch: number;                    // 0..51 across the three captures, in the order played
+  phase: string;                    // plan phase letter: A | B | C | D | E
+  phaseId: string;                  // plan entry: the letter, or 'A+W' (Phase A's drops on the WTF board)
+  capture: number;                  // 1-based index into meta.captures
+  captureEpoch: number;             // the epoch number inside its own capture file
+  seedTag: string;                  // 'player' (a Phase D player-set client seed) | 'audit' (the runner's per-epoch seed)
+  plannedBets: number;              // the runner's planned length of the epoch
+  stake: string;                    // the runner's planned stake of the epoch
   at: string;
   clientSeed: string;
   hashedServerSeed: string;         // SHA-256(utf8(serverSeed)) commitment
@@ -17,8 +23,10 @@ export interface Seed {
 
 export interface Bet {
   at: string;
+  capture: number;                  // 1-based index into meta.captures
   epoch: number;
-  phase: string;                    // A | B | C | D | E
+  phase: string;                    // plan phase letter: A | B | C | D | E
+  phaseId: string;                  // plan entry: the letter, or 'A+W'
   id: string;
   gameId: string;                   // fast-games-5
   numberOfRows: number;             // 8..16 (standard) or 13 (WTF)
@@ -29,13 +37,10 @@ export interface Bet {
   clientSeed: string;
   serverSeedId: string;
   hashedServerSeed: string;
-  betAmount: string;                // decimal string, full precision
-  winningAmount: string;
+  betAmount: string;                // the served stake, 8-dp decimal string
+  winningAmount: string;            // the served credit: 8-dp decimal string, or "0" on a WTF drop that pays nothing
   multiplier: number;
-  coefficient: number;
   result: string;                   // won | lost
-  currentGameSettings: string;      // JSON string: minBet/maxBet/maxProfit/houseEdge...
-  createdAt: string;
   // Capture-side self-verification fields (informational; verify re-derives independently)
   localPath?: string | null;
   localSlot?: number | null;
@@ -52,6 +57,27 @@ export interface PreCapture {
   commitVerified: boolean | null;
 }
 
+/** One capture file (one run of the runner) and its own pre-capture anchor. */
+export interface CaptureRecord {
+  capture: number;
+  file: string;
+  sha256: string;
+  bytes: number;
+  lines: number;
+  runner: string;
+  firstEpoch: number;
+  lastEpoch: number;
+  epochs: number;
+  bets: number;
+  startedAt: string;
+  firstRoundAt: string;
+  lastRoundAt: string;
+  finishedAt: string | null;
+  status: string;
+  preCapture: PreCapture;
+  [k: string]: unknown;
+}
+
 export interface DatasetMeta {
   audit: string;
   platform: string;
@@ -59,13 +85,14 @@ export interface DatasetMeta {
   schema: string;
   houseEdge: number;
   currency: string;
-  epochSize: number;
   plannedTotal: number;
-  phases: Record<string, { bets: number; amount: number; mode?: string; riskLevel?: number; rows?: number }>;
+  phases: Record<string, { bets: number; stake: string; amount: number; epochs: number; epochSizes: number[]; ids: Record<string, number> }>;
   startedAt: string;
   finishedAt?: string;
   progress?: Record<string, unknown>;
-  preCapture?: PreCapture;
+  captures: CaptureRecord[];
+  /** Converter provenance: field-by-field origin. */
+  conversion?: Record<string, unknown>;
 }
 
 export interface Dataset {

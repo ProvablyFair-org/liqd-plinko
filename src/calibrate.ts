@@ -6,18 +6,18 @@
  * ("how many of the revealed seeds have an early-window RTP below z = −1.645?") and
  * writes it to its own artifact, at two window lengths.
  *
- * The top level is the PRIMARY window — `EXPECTED_EPOCH_SIZE` = 50 nonces, what was played
- * under each server seed in this capture. The capture rotated the seed pair every 50 bets (the
- * dataset header's meta.epochSize = 50; SEED_ROTATE_EVERY = 50 in the capture/ reference scripts);
- * nothing in the captured records shows LIQD limiting a seed pair to 50 bets. These are the
- * drops actually observed under each seed, so this is the window the audit scores, and its
+ * The top level is the PRIMARY window — `PRIMARY_WINDOW_NONCES` = 50 nonces, the first 50 drops of
+ * every server seed in this capture. The capture rotated the seed pair every 200, 100 or 50 bets
+ * (src/loader.ts EXPECTED_PLAN); 50 is the shortest epoch, so it is the longest window that EVERY
+ * seed actually played. Nothing in the captured records shows LIQD limiting a seed pair to any of
+ * those lengths. These are drops actually observed under each seed, so this is the window the audit scores, and its
  * observed count is recomputed here from the revealed seeds (`windowStats`), not read out of
  * simulation-results.json, which only ever measured the longer window.
  *
  * `extendedWindow` is the secondary figure: floor(noncesPerSeed / 2) = 5,000 nonces, the
  * synthetic long window Pass 2 extends each seed to. It has far more power against a seed
- * biased across its whole stream and it is kept for that reason, but 5,000 drops is a
- * hundred times what was played under any seed in this capture, so it is reported, not scored.
+ * biased across its whole stream and it is kept for that reason, but 5,000 drops is 25 to 100
+ * times what was played under any seed in this capture, so it is reported, not scored.
  *
  * WHY A SEPARATE ARTIFACT, NOT A FIELD IN simulation-results.json
  * ---------------------------------------------------------------
@@ -31,7 +31,7 @@
  *   2. It can be produced WITHOUT re-running the 28,000,000-round Pass 1. audit-rules
  *      9.4 forbids re-running a fresh-seed simulation once the report cites its output,
  *      and this fix does not require regenerating it — so the committed Pass 1 artifact
- *      stays exactly the one the external reviewers reproduced.
+ *      stays exactly the one the report cites.
  *   3. The producer and the verifier read the same `src/calibration.ts`, so the number
  *      in the artifact, the number in the Step 17 detail string and the number in the
  *      chapters all come from one computation.
@@ -44,7 +44,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { createHash } from 'node:crypto';
 
-import { loadDataset, EXPECTED_DATASET_SHA256, EXPECTED_EPOCH_SIZE } from './loader';
+import { loadDataset, EXPECTED_DATASET_SHA256, PRIMARY_WINDOW_NONCES, DATASET_FILE } from './loader';
 import { loadPlinkoConfig, PLINKO_CONFIG_SHA256 } from './config';
 import {
   Z_LEFT_TAIL,
@@ -57,7 +57,7 @@ import {
   windowStats,
 } from './calibration';
 
-const DATASET_PATH = path.join(__dirname, '..', 'data', 'plinko-master-10100bets.json');
+const DATASET_PATH = path.join(__dirname, '..', DATASET_FILE);
 // Single-sourced in src/loader.ts, like tests/verify.ts and src/simulate.ts.
 const EXPECTED_DATASET_HASH = EXPECTED_DATASET_SHA256;
 // `SIM_OUT_DIR` binds a calibration to the output set it was computed for. It
@@ -96,13 +96,13 @@ if (typeof observedCount !== 'number' || !Number.isInteger(observedCount) || obs
 }
 
 // ── The two windows ──────────────────────────────────────────────────────────
-// PRIMARY: the EXPECTED_EPOCH_SIZE nonces played under each seed in this capture (the capture
+// PRIMARY: the first PRIMARY_WINDOW_NONCES nonces played under each seed in this capture (the capture
 // tool's rotation setting). They are the only drops observed under any seed, so this is the
 // window the audit scores.
 // EXTENDED: half the synthetic nonce stream Pass 2 extends each seed to. Retained as a
 // secondary figure — far more power against a seed biased across its whole stream — but no
 // seed in this capture was played that long, so it is not the result.
-const primaryWindowNonces = EXPECTED_EPOCH_SIZE;
+const primaryWindowNonces = PRIMARY_WINDOW_NONCES;
 const extendedWindowNonces = Math.floor(noncesPerSeed / 2);
 
 // Population from the DATASET, never from the artifact (G-BIND).
@@ -119,7 +119,7 @@ console.log('═'.repeat(60));
 console.log('  LIQD PLINKO — CALIBRATED NULL FOR THE PAYOUT-WEIGHTED COUNT');
 console.log('═'.repeat(60));
 console.log(`  Revealed epochs: ${epochs.length}   z = ${Z_LEFT_TAIL}`);
-console.log(`  Primary window : ${primaryWindowNonces.toLocaleString()} nonces (played per seed in this capture — scored)`);
+console.log(`  Primary window : ${primaryWindowNonces.toLocaleString()} nonces (the first nonces of every seed, all played — scored)`);
 console.log(`  Extended window: ${extendedWindowNonces.toLocaleString()} nonces (secondary)`);
 console.log(`  Method: ${CALIBRATION_METHOD}`);
 console.log('');
@@ -144,7 +144,7 @@ for (const c of calibration.byConfig) {
 }
 
 console.log('');
-console.log(`  PRIMARY (${primaryWindowNonces} nonces — played per seed in this capture)`);
+console.log(`  PRIMARY (${primaryWindowNonces} nonces — the first nonces of every seed, all played)`);
 console.log(`    Calibrated expectation : ${calibration.expectedZEarlyBelow1645Calibrated.toFixed(6)} (sd ${calibration.sdCalibrated.toFixed(6)})`);
 console.log(`    Naive 0.05·n expectation: ${naiveExpectation.toFixed(6)}`);
 console.log(`    Observed count          : ${primaryObservedCount}`);
@@ -173,16 +173,16 @@ const output = {
     + 'its legitimate absence where the payout support is too large for the closed form), and all '
     + 'perEpoch rows, whose (rows, riskLevel) are re-derived from the DATASET rather than read here — '
     + 'for the primary window at the top level and for the extendedWindow block alike. '
-    + 'The top level is the PRIMARY window: the 50 nonces played under each server seed in this '
-    + 'capture (the capture rotated the seed pair every 50 bets; nothing in the captured records '
-    + 'shows LIQD limiting a seed pair to 50 bets), whose observed count is recomputed from the revealed '
+    + `The top level is the PRIMARY window: the first ${PRIMARY_WINDOW_NONCES} nonces played under each server seed in this `
+    + `capture (the shortest epoch of the capture plan, so every seed played at least that many; nothing in the captured records `
+    + 'shows LIQD limiting a seed pair to any length), whose observed count is recomputed from the revealed '
     + 'seeds, not read from the simulation artifact. '
     + 'extendedWindow is the secondary 5,000/5,000 split Pass 2 measured. '
     + 'Not re-derived: the source[].file path strings and the descriptive strings '
     + 'audit/artifact/note/deterministic/windowScope/extendedWindow.scope. No numeric field, and no '
     + 'timestamp, is exempt — there is no timestamp in this file to exempt.',
   source: {
-    dataset: { file: 'data/plinko-master-10100bets.json', sha256: dataset.sha256 },
+    dataset: { file: DATASET_FILE, sha256: dataset.sha256 },
     config: { file: 'plinkoConfig.json', sha256: PLINKO_CONFIG_SHA256 },
     // the calibration names the output set it was paired with. `outputs` is the
     // canonical set; anything else is a fresh experiment and must not be mixed with it.
@@ -197,7 +197,7 @@ const output = {
   // The top level of this artifact is the PRIMARY calibration, at the capture's epoch size.
   // Its observed count is recomputed here from the revealed seeds; the extended-window
   // block below carries the 5,000/5,000 figures, whose observed count is Pass 2's.
-  windowScope: 'primary — the nonces played under each server seed in this capture (EXPECTED_EPOCH_SIZE per seed; the capture rotated the seed pair every 50 bets)',
+  windowScope: `primary — the first ${PRIMARY_WINDOW_NONCES} nonces played under each server seed in this capture (PRIMARY_WINDOW_NONCES: the shortest epoch of the capture plan)`,
   windowNonces: calibration.windowNonces,
   epochs: calibration.epochs,
   expectedZEarlyBelow1645Calibrated: calibration.expectedZEarlyBelow1645Calibrated,
@@ -216,7 +216,7 @@ const output = {
   extendedWindow: {
     scope:
       'secondary — half of the synthetic nonce stream Pass 2 extends each seed to. More powerful '
-      + 'against a seed biased across its whole stream, but 100x longer than what was played under '
+      + `against a seed biased across its whole stream, but ${extended.windowNonces / PRIMARY_WINDOW_NONCES}x the scored window and far longer than what was played under `
       + 'any seed in this capture, so it is reported and not scored.',
     windowNonces: extended.windowNonces,
     epochs: extended.epochs,

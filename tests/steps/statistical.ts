@@ -12,7 +12,7 @@ export function run(ctx: VerifyContext): InfoItem[] {
   const items: InfoItem[] = [];
 
   if (bets.length === 0) {
-    items.push({ label: 'Live bets', detail: 'No bets in dataset (PROVISIONAL)' });
+    items.push({ label: 'Live bets', detail: 'No bets in dataset' });
     return items;
   }
 
@@ -38,8 +38,7 @@ export function run(ctx: VerifyContext): InfoItem[] {
   // ── Per-configuration win rates (informational) ───────────────────────────────
   // The composition figure MANIFEST.md cites when it explains why the POOLED
   // lag-1 is not evidence of within-config dependence. Emitted under TWO definitions,
-  // because they differ materially and the chapter has to say which it means (round-3
-  // external review K14):
+  // because they differ materially and the chapter has to say which it means (K14):
   //   strictly profitable — multiplier > 1, the drop returns more than it cost;
   //   dataset `result`    — result === 'won', which is multiplier >= 1 and therefore
   //                         counts the stake-returning 1.0x cells as wins.

@@ -25,28 +25,25 @@
  *
  * SCOPE — a SYNTHETIC FIXED-BOARD PROBE. Each epoch is evaluated on ONE
  *   board, selected by the explicit nonce rule in `boardOfEpoch` (the epoch's
- *   lowest-nonce bet). For 192 epochs that is the only board played. The ten Phase D
- *   epochs 152–161 each spread 50 bets over all 27 standard boards, so for those this
- *   is NOT a replay of the actual mixed-board payout schedule, and the 5,000-nonce
- *   early window is two orders of magnitude longer than the 50 bets observed under the
- *   seed. Read the result as a property of the seed's payout stream on the stated
- *   board, not as an estimate of what the epoch actually paid.
+ *   lowest-nonce bet). For the single-board epochs (Phases B, C and E and the WTF epoch
+ *   of Phase A) that is the only board played. The Phase A epochs on the standard
+ *   settings and the Phase D epochs each spread their drops over all 27 standard boards,
+ *   so for those this is NOT a replay of the actual mixed-board payout schedule. On every
+ *   epoch the 5,000-nonce early window is far longer than the 50 to 200 drops observed
+ *   under the seed. Read the result as a property of the seed's payout stream on the
+ *   stated board, not as an estimate of what the epoch actually paid. The counts of
+ *   single-board and mixed-board epochs are computed below and written into the artifact.
  *
- * CHERRY-PICK SCOPE — three tiers, not two, and the first is conditional:
- *     * 192 epochs: the server-seed hash was published before the client seed EXISTED,
- *       so seed substitution is blocked. This is structural, but it is still
- *       CONDITIONAL on authentic commitment timing (premise P1 / DL-3) — commitment
- *       equality and chronology inside one self-published file do not establish that
- *       the commitment was public before the client seed was chosen.
- *     * epoch 152: UNRESOLVED. Its client seed carries the `pfaudit-<run-id>-<epoch>`
- *       pattern whose run-id is a millisecond timestamp. Prior publication of the hash
- *       blocks later seed SUBSTITUTION; it does not rule out grinding against a
- *       PREDICTABLE future client seed. The audit assumes ~10^4 timestamp candidates
- *       carry negligible cherry-pick power and does NOT demonstrate that assumption.
- *       Neither "safe" nor "compromised" is asserted.
- *     * 9 epochs 153–161: predictable client seeds the operator already held at
- *       commitment (rotation N returns the N+1 commitment). Containment there is
- *       statistical only — this test and Step 21.
+ * CHERRY-PICK SCOPE: every epoch was opened by a rotation that submitted a client seed
+ *   generated in the auditor's browser, after the epoch's commitment had been published
+ *   as the previous state's next-seed hash (Step 14). Seed SUBSTITUTION is therefore
+ *   blocked on every epoch — structural, but CONDITIONAL on authentic commitment timing
+ *   (premise P1 / DL-3): commitment equality and chronology inside one self-published
+ *   file do not establish that the commitment was public before the client seed was
+ *   chosen. The five Phase D seeds were drawn when the plan was built, before their
+ *   epochs' commitments were published, and were sent only at the rotation opening each
+ *   epoch; like the other seeds they carry 6 bytes from the browser CSPRNG, whose entropy
+ *   the dataset does not demonstrate (DL-5).
  *
  * Anti-circularity: expected slot distribution is pure binomial — never from any
  * operator payout table.
@@ -60,7 +57,7 @@ import { randomBytes } from 'node:crypto';
 
 import { playPass1Config, simulateSlot } from './pass1';
 import { renderConvergenceChart } from './convergence-chart';
-import { loadDataset, EXPECTED_DATASET_SHA256 } from './loader';
+import { loadDataset, EXPECTED_DATASET_SHA256, DATASET_FILE } from './loader';
 import {
   combination,
   chiSquaredTest,
@@ -98,7 +95,7 @@ const ROUNDS_PER_CONFIG = Number(process.env.ROUNDS_PER_CONFIG) || 1_000_000;
 const PASS2_NONCES = Number(process.env.PASS2_NONCES) || PASS2_NONCES_PUBLISHED;
 const HOUSE_EDGE = cfg.houseEdge;
 
-const DATASET_PATH = path.join(__dirname, '..', 'data', 'plinko-master-10100bets.json');
+const DATASET_PATH = path.join(__dirname, '..', DATASET_FILE);
 // Same pin as tests/verify.ts. Pass 2 seeds its casino-seed cherry-pick test from this
 // dataset, so it must be loaded through the SHA-256-guarded loader BEFORE any result is
 // written — an edited dataset must abort at startup, not after a ~22-minute run has already
@@ -297,8 +294,8 @@ let cherryPickFlags = 0;
 // board selection is an EXPLICIT NONCE RULE (the epoch's lowest-nonce bet),
 // defined once in src/calibration.ts and read from there by the simulator, the
 // calibration producer and the Step 17 verifier. It used to be file-array order, which
-// meant a re-serialisation of the same records changed the board chosen for each of the
-// ten mixed-board Phase D epochs — and therefore changed the scored null.
+// meant a re-serialisation of the same records changed the board chosen for a mixed-board
+// epoch — and therefore changed the scored null.
 const ds = dataset;
 const betsByEpochHash = betsByHash(ds.bets);
 const boardByHash = new Map<string, { rows: number; riskLevel: number }>();
@@ -307,6 +304,11 @@ for (const [hash, epochBets] of betsByEpochHash) {
   if (board) boardByHash.set(hash, board);
 }
 const revealedSeeds = ds.seeds.filter(s => s.serverSeed);
+// How many epochs played ONE board and how many spread their drops over several — counted from the
+// dataset, for the scope sentence the artifact carries.
+const mixedBoardEpochs = [...betsByEpochHash.values()].filter(eb => new Set(eb.map(b => `${b.numberOfRows}/${b.riskLevel}`)).size > 1).length;
+const singleBoardEpochs = betsByEpochHash.size - mixedBoardEpochs;
+const epochLengths = [...new Set([...betsByEpochHash.values()].map(eb => eb.length))].sort((a, b) => a - b);
 
 // Exact per-config payout mean/SD from the independent binomial and the pinned table.
 // Defined ONCE in src/calibration.ts and read from there by the simulator, the
@@ -367,7 +369,7 @@ process.stdout.write('\n');
 const pass2ElapsedMs = Date.now() - pass2Start;
 // Expected flags by chance: P(early<0.05 AND late>=0.05) = 0.05 × 0.95 = 0.0475 per seed.
 //
-// DECLARED ASSUMPTION (round-3 external review K8, disclosed not closed). This is a NOMINAL
+// DECLARED ASSUMPTION (K8, disclosed not closed). This is a NOMINAL
 // null: it takes the tail-merged slot chi² to have size exactly 0.05. The windows are disjoint
 // nonce ranges, so the independence half is sound, but the size half is not derived anywhere —
 // the statistic is a discrete multinomial goodness-of-fit with merged tails, whose true size at
@@ -431,9 +433,9 @@ console.log(`  Time: ${(pass2ElapsedMs / 1000).toFixed(1)}s\n`);
 // ── Write outputs ─────────────────────────────────────────────────────────────
 
 // ── a fresh experiment does NOT overwrite the historical evidence ───────
-// Round-4 client QA. This command draws fresh crypto.randomBytes seeds, so every run is
+// This command draws fresh crypto.randomBytes seeds, so every run is
 // a NEW EXPERIMENT — and it used to write straight over outputs/simulation-results.json,
-// the artifact of record that two external reviewers independently reproduced, before any
+// the artifact of record, before any
 // validation had run. A failed validation then left the canonical report associated with
 // an artifact nobody had checked.
 //
@@ -476,7 +478,7 @@ const output = {
     results: pass1Results,
   },
   pass2_casino_seeds: {
-    description: 'Casino seeds from the captured dataset (revealed serverSeeds). Extends each seed nonce stream and runs two seed-consistency checks: an early-window vs late-window slot chi², and a payout-weighted window-RTP z-test (the economically relevant statistic). SCOPE: this is a SYNTHETIC FIXED-BOARD PROBE — each epoch is evaluated on the single board of its lowest-nonce bet (boardOfEpoch), and the 5,000-nonce early window is far longer than the 50 bets observed per seed, so for the ten mixed-board Phase D epochs 152-161 it does not replay the actual payout schedule. CHERRY-PICK SCOPE: seed SUBSTITUTION is blocked for 192 epochs by prior publication of the hash, conditional on authentic commitment timing (DL-3); epoch 152 is UNRESOLVED, because a prior hash does not rule out grinding against a predictable future client seed and the negligible-power assumption for its ~10^4 timestamp candidates is not demonstrated; the nine Phase D epochs 153-161 used client seeds the operator already held at commitment, so containment there is statistical only.',
+    description: 'Casino seeds from the captured dataset (revealed serverSeeds). Extends each seed nonce stream and runs two seed-consistency checks: an early-window vs late-window slot chi², and a payout-weighted window-RTP z-test (the economically relevant statistic). SCOPE: this is a SYNTHETIC FIXED-BOARD PROBE — each epoch is evaluated on the single board of its lowest-nonce bet (boardOfEpoch). ' + `${singleBoardEpochs} of the ${betsByEpochHash.size} epochs played one board only; the other ${mixedBoardEpochs} spread their drops over several boards, so for those it does not replay the actual payout schedule. The 5,000-nonce early window is far longer than the ${epochLengths.join(', ')} drops observed per seed. ` + 'CHERRY-PICK SCOPE: every epoch was opened with a client seed generated in the auditor\'s browser and submitted after the epoch\'s commitment was published, so seed SUBSTITUTION is blocked on every epoch, conditional on authentic commitment timing (DL-3); the entropy of the seed generator is not demonstrated by the dataset (DL-5).',
     noncesPerSeed: PASS2_NONCES,
     seeds_tested: seedsTested,
     cherryPickFlags,

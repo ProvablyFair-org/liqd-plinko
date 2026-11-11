@@ -12,16 +12,16 @@ const CONFIG_PATH = join(__dirname, '..', 'plinkoConfig.json');
  * this file, not on live data. Both verify.ts and simulate.ts load through here, so
  * any single-byte change to the tables aborts the whole suite at startup.
  */
-export const PLINKO_CONFIG_SHA256 = 'f8eaf67e1ffc63ee0dc21123447581c55f443c167dcb451b45ab7cd108fe712f';
+export const PLINKO_CONFIG_SHA256 = '09bfaeab2b7885ef63d72cebcfe1a667cb8ec604c887cebcdea22e56c2960f0a';
 
 export function configSha256(): string {
   return createHash('sha256').update(readFileSync(CONFIG_PATH)).digest('hex');
 }
 
 /**
- * liqd Plinko config — the authoritative multiplier tables (PLINKO_FIXED_ODDS +
- * PLINKO_WTF_ODDS), extracted from the liqd game client bundle and cross-verified:
- * every one of the 10,100 captured bets matches this table exactly.
+ * LIQD Plinko config — the audited multiplier tables (27 standard boards + WTF). Every cell is
+ * held to what liqd.com/originals/plinko displayed on 20 October 2026 (src/page-labels.ts, Step 20)
+ * and every multiplier paid in the production captures equals its cell (Step 7).
  *
  *   payout_tables[rows] = [ low[], medium[], high[] ]   (riskLevel 1,2,3 → index 0,1,2)
  *   wtf_mode            = { riskLevel: 4, rows: 13, odds[] }
@@ -62,18 +62,18 @@ export const CONVERGENCE_STEP = 50_000;
  *
  * It is what makes an edge-hit count falsifiable on its face: Pass 2 splits each seed's
  * nonce stream into two windows of `floor(PASS2_NONCES_PUBLISHED / 2)` drops, so across the
- * `EXPECTED_SEEDS` revealed epochs a single window contains 202 × 5,000 = 1,010,000 drops
+ * `EXPECTED_SEEDS` revealed epochs a single window contains 52 × 5,000 = 260,000 drops
  * and cannot produce more edge hits than that. `src/domains.ts` derives the bound from here;
  * `src/simulate.ts` uses it as the default scale and `tests/steps/simulation.ts` as the
  * publication-scale floor. A deliberate change of scale is a visible source edit that
  * re-dates every Pass 2 figure in the report — that cost is the point.
  *
- * THIS IS THE EXTENDED WINDOW, NOT THE RESULT. 5,000 nonces is a hundred times the 50 played
- * under each seed in this capture (the capture's rotation setting), so a cherry-pick statistic
- * computed on it measures a session nobody in this capture played. The SCORED window is
- * `EXPECTED_EPOCH_SIZE` in src/loader.ts — an
- * epoch size is a property of the captured dataset, so it is declared where the audit states
- * what it captured, and `src/calibrate.ts` and `tests/steps/simulation.ts` import it from
+ * THIS IS THE EXTENDED WINDOW, NOT THE RESULT. 5,000 nonces is 25 to 100 times what was played
+ * under any seed in this capture (epochs ran 200, 100 or 50 drops, the capture's rotation plan), so a
+ * cherry-pick statistic computed on it measures a session nobody in this capture played. The SCORED
+ * window is `PRIMARY_WINDOW_NONCES` in src/loader.ts (50: the shortest planned epoch, the longest window
+ * every seed actually played) — it is a property of the captured dataset, so it is declared where the
+ * audit states what it captured, and `src/calibrate.ts` and `tests/steps/simulation.ts` import it from
  * there. The 5,000/5,000 split is reported alongside it as the extended-window figure, where
  * it retains its value: far more power against a seed biased across its whole stream.
  */

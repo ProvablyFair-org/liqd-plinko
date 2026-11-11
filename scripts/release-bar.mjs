@@ -1,9 +1,8 @@
 /**
- * release-bar.mjs — the package-level release bar (Framework 1.0 review of 2026-09-28, item 14:
- * F12 second-machine reproduction, F15 LICENSE + manifest by script, F16 no CDN script in a
- * pinned chart, F20 one summary shape).
+ * release-bar.mjs — the package-level release bar: second-machine reproduction, LICENSE + manifest
+ * by script, no CDN script in a pinned chart, one summary shape.
  *
- * This file is byte-identical in every audit package of this release. `scripts/release-manifest.mjs`
+ * Every audit package of this release carries this bar. `scripts/release-manifest.mjs`
  * imports it, so `node scripts/release-manifest.mjs --check` (the last command of `npm test`)
  * fails whenever any of the four is missing. The bar is a gate, not a note: a package that
  * loses its LICENSE, loads a chart library from a CDN, writes a different summary shape or

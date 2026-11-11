@@ -1,0 +1,27 @@
+liqd-plinko-prod-capture-2026-11-09T23-47-31-606Z.ndjson
+LIQD plinko PROD capture check: ALL CHECKS PASS
+  PASS  file                           13709 lines, 0 unreadable, SHA-256 aede849a1eda06b59df1acbbada1e7d13e0e08094e7ec99d097c0684c8385eb5
+  PASS  secret scan                    clean (JWT, e-mail, public IPv4, secret-looking keys, also inside reply bodies)
+  PASS  plan                           liqd.com (https://liqd.com), 26 epochs, 4550 rounds in phases D 500 at 0.10000000, B 2000 at 0.10000000, A+W 50 at 0.10000000, E 2000 at 0.10000000 USDT (currencyId 3); every phase at or above its floor; runner plinko-prod-capture-runner 2026-11-03 build 5646c06628df
+  ----  options                        place-bet api 'originals' (UNCONFIRMED path); plinkoConfig.json SHA-256 f8eaf67e1ffc63ee... = the pin
+  PASS  pre-capture anchor             active 95ca6faa7991... read and revealed before any bet: commit OK, link OK
+  PASS  epoch commitments              26/26 epochs: sha256(revealed server seed) = the hash committed before its first round (26 closed by a rotation)
+  PASS  chain                          26/26: each epoch's next hash is the hash active after its rotation
+  PASS  client seeds                   26/26 submitted client seeds accepted; 26/26 drawn after the commitment they were used under was published
+  PASS  player-set seeds               5 Phase D epochs, 5 distinct player-set seeds (floor 2); submitted at the rotation opening their epoch 5/5; taken by the site 5/5; every round of the epoch played under it 500/500; used outside Phase D 0
+  PASS  bet count                      4550 rounds recorded (cap 4550), 0 recorded twice; 4550 rounds started; 0 reply lost; 0 refused and skipped
+  PASS  round seeds                    seed hash 4550/4550 (4550 served in the reply, the rest carry none); client seed 4550/4550 (4550 served); nonce sequence 4550/4550
+  PASS  phases                         every round records its phase, phase id and the phase's stake 4550/4550; rounds per phase D 500/500, B 2000/2000, A+W 50/50, E 2000/2000
+  PASS  request = served               request body as planned (the phase's stake) 4550/4550; rows and risk served as requested 4550/4550; stake = the phase's stake (0.10 / 10.00) 4550/4550
+  PASS  drop (src/rng.ts)              drop path in row order 4550/4550; slot = count of rights 4550/4550
+  PASS  multiplier vs table            served multiplier = the plinkoConfig.json cell (risk 1-3: payout_tables; WTF 4/13: wtf_mode.odds) 4550/4550; table file = the pin 4550/4550
+  PASS  payout                         winningAmount = stake x multiplier in 1e-8 units 4550/4550; won/lost (won when multiplier >= 1) 4550/4550
+  PASS  coverage                       30/30 settings reached; rounds per setting 18..2000
+  ----  WTF (4/13)                     2050 rounds; slots reached 1,2,3,4,5,6,7,8,9,10,11,12; paying rounds 4 (wtf_mode.odds [1000,235,0,0,0,0,0,0,0,0,0,0,235,1000])
+  PASS  verifier replies               4550/4550 rounds have a verify reply (HTTP 200, the expected shape); 0 other replies stored (refusals, kept as received)
+  PASS  verifier requests              request = the round's revealed inputs 4550/4550; POST https://liqd.com/api/v1/originals/plinko/verify 4550/4550
+  PASS  verifier = served round        echo 4550/4550; drops 4550/4550, ones 4550/4550, multiplier 4550/4550 equal the served round; drops = the src/rng.ts recompute 4550/4550
+  ----  run record                     refusals 0, re-sent after a stop 0, lost replies 0, skipped 0, gaps 0, resume checks 0, steps 0, stops 0
+  ----  money                          staked 455.00000000 USDT, paid 453.10000000, net -1.90000000 (live rounds illustrate variance only)
+  ----  window                         rounds 2026-11-09T20:51:05.346Z .. 2026-11-09T22:31:25.905Z; verify replies dated Mon, 09 Nov 2026 22:31:27 GMT .. Mon, 09 Nov 2026 23:47:30 GMT
+  PASS  export redaction               1 IP address(es) replaced by "[ip redacted]" in the exported copy (IPv4 1, IPv6 0; in line 1 (meta)); 1 marker(s) found in the file
